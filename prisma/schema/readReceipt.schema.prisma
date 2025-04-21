@@ -1,0 +1,10 @@
+model ReadReceipt {
+    id         String   @id @default(uuid())
+    messageId  String
+    providerId String
+    readAt     DateTime @default(now())
+
+    message ChatMessage @relation(fields: [messageId], references: [id])
+
+    @@unique([messageId, providerId]) // Ensure only one read receipt per user per message
+}

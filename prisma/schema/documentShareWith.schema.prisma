@@ -1,0 +1,21 @@
+model DocumentShareWith {
+    id         String  @id @default(uuid())
+    eSignature String?
+    isAgree    Boolean @default(false)
+    // Relation with Client (A document is shared with a client)
+    clientId   String?
+    client     Client? @relation(fields: [clientId], references: [id])
+
+    // Relation with Provider (A provider shares the document)
+    providerId String?
+    provider   Provider? @relation(fields: [providerId], references: [id])
+
+    // Relation with Document (Which document is being shared?)
+    documentId String
+    document   Document @relation(fields: [documentId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now())
+
+    @@unique([documentId, clientId])
+}

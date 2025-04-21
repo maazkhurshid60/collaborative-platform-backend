@@ -1,0 +1,32 @@
+// model ChatMessage {
+//     id            String       @id @default(uuid())
+//     chatChannelId String?
+//     senderId      String // The provider who sent the message
+//     message       String
+//     createdAt     DateTime     @default(now())
+//     mediaUrl      String
+//     type          String
+//     group         GroupChat[]
+//     // Relations
+//     chatChannel   ChatChannel? @relation(fields: [chatChannelId], references: [id])
+//     sender        Provider     @relation(fields: [senderId], references: [id])
+// }
+
+model ChatMessage {
+    id            String   @id @default(uuid())
+    chatChannelId String?
+    senderId      String // The provider who sent the message
+    message       String
+    createdAt     DateTime @default(now())
+    mediaUrl      String?
+    type          String
+    groupId       String? // The ID of the group this message belongs to
+
+    // Relations
+    chatChannel ChatChannel? @relation(fields: [chatChannelId], references: [id])
+    sender      Provider     @relation(fields: [senderId], references: [id])
+    group       GroupChat?   @relation(fields: [groupId], references: [id])
+
+    readReceipts      ReadReceipt[]
+    groupReadReceipts GroupReadReceipt[]
+}

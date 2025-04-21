@@ -1,0 +1,18 @@
+model Provider {
+    id             String              @id @default(uuid())
+    email          String              @unique
+    password       String
+    user           User                @relation(fields: [userId], references: [id])
+    userId         String              @unique
+    clientList     ProviderOnClient[]
+    sharedDocument DocumentShareWith[]
+    department     String
+
+    // Relations to chat
+    chatChannelsA ChatChannel[]  @relation("chatA")
+    chatChannelsB ChatChannel[]  @relation("chatB")
+    messagesSent  ChatMessage[]
+    createdAt     DateTime       @default(now())
+    updatedAt     DateTime       @default(now())
+    group         GroupMembers[]
+}

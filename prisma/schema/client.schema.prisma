@@ -1,0 +1,13 @@
+model Client {
+    id                          String              @id @default(uuid())
+    isAccountCreatedByOwnClient Boolean             @default(false)
+    eSignature                  String?
+    email                       String              @unique
+    password                    String?
+    createdAt                   DateTime            @default(now())
+    updatedAt                   DateTime            @default(now())
+    providerList                ProviderOnClient[]
+    user                        User                @relation(fields: [userId], references: [id])
+    userId                      String              @unique
+    recievedDocument            DocumentShareWith[]
+}

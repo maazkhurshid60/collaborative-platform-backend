@@ -1,0 +1,9 @@
+model Document {
+    id            String              @id @default(uuid())
+    url           String
+    name          String
+    createdAt     DateTime            @default(now())
+    updatedAt     DateTime            @default(now())
+    // Relation: A document can be shared multiple times
+    sharedRecords DocumentShareWith[]
+}
