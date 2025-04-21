@@ -28,6 +28,7 @@ const document_route_1 = __importDefault(require("./route/document/document.rout
 const morgan_middleware_1 = __importDefault(require("./middlewares/morgan.middleware"));
 // Declaration of Express App
 const app = (0, express_1.default)();
+app.set('trust proxy', 1);
 dotenv_1.default.config({
     path: ".env"
 });

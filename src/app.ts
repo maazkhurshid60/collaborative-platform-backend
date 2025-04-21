@@ -28,7 +28,7 @@ import morganMiddleware from "./middlewares/morgan.middleware";
 
 // Declaration of Express App
 const app = express();
-
+app.set('trust proxy', 1);
 dotenv.config(
     {
         path: ".env"
