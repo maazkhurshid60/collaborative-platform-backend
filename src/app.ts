@@ -12,7 +12,6 @@ import cookieParser from 'cookie-parser';
 import express from "express";
 
 // Middlewares Imports 
-import morganMiddleware from "../src/middlewares/morgan.middleware";
 import { ALLOWED_HEADERS, ALLOWED_METHODS } from "./utils/constants";
 // Routers Imports
 import healthCheckRouter from "./route/healthCheck/healthCheck.route";
@@ -24,6 +23,7 @@ import chatChannelRouter from "./route/chatChannel/chatChannel.route";
 import chatGroupRouter from "./route/chatGroup/chatGroup.route";
 import { authJWT } from "./middlewares/auth.middleware";
 import documentRouter from "./route/document/document.route";
+import morganMiddleware from "./middlewares/morgan.middleware";
 
 
 // Declaration of Express App

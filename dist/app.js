@@ -14,7 +14,6 @@ const hpp_1 = __importDefault(require("hpp"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const express_1 = __importDefault(require("express"));
 // Middlewares Imports 
-const morgan_middleware_1 = __importDefault(require("../src/middlewares/morgan.middleware"));
 const constants_1 = require("./utils/constants");
 // Routers Imports
 const healthCheck_route_1 = __importDefault(require("./route/healthCheck/healthCheck.route"));
@@ -26,6 +25,7 @@ const chatChannel_route_1 = __importDefault(require("./route/chatChannel/chatCha
 const chatGroup_route_1 = __importDefault(require("./route/chatGroup/chatGroup.route"));
 const auth_middleware_1 = require("./middlewares/auth.middleware");
 const document_route_1 = __importDefault(require("./route/document/document.route"));
+const morgan_middleware_1 = __importDefault(require("./middlewares/morgan.middleware"));
 // Declaration of Express App
 const app = (0, express_1.default)();
 dotenv_1.default.config({
