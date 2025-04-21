@@ -5,7 +5,6 @@
 //     chatMessageId String?
 //     members       GroupMembers[]
 // }
-
 model GroupChat {
     id           String         @id @default(uuid())
     name         String
