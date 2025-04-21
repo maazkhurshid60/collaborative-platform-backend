@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const document_controller_1 = require("../../controller/document/document.controller");
+const documentRouter = (0, express_1.Router)();
+documentRouter.post("/create-document", document_controller_1.addDocumentApi);
+documentRouter.get("/get-all-document", document_controller_1.getAllDocumentApi);
+documentRouter.post("/document-shared-by-provider", document_controller_1.documentSharedWithClientApi);
+documentRouter.patch("/document-sign-by-client", document_controller_1.documentSignByClientApi);
+documentRouter.get("/get-all-shared-document", document_controller_1.getAllSharedDocumentWithClientApi);
+exports.default = documentRouter;
