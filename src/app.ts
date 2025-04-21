@@ -87,3 +87,4 @@ app.use("/api/v1/chat-group", authJWT, chatGroupRouter);
 app.use("/api/v1/document", authJWT, documentRouter);
 
 export default app;
+
