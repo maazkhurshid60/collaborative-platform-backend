@@ -66,7 +66,7 @@ app.use("/api", limitter);
 // Routers Imports
 app.use("/api/v1/health", healthCheck_route_1.default);
 app.use("/api/v1/auth", auth_route_1.default);
-app.use("/api/v1/client", auth_middleware_1.authJWT, client_route_1.default);
+app.use("/api/v1/client", client_route_1.default);
 app.use("/api/v1/provider", auth_middleware_1.authJWT, provider_route_1.default);
 app.use("/api/v1/chat", auth_middleware_1.authJWT, chat_route_1.default);
 app.use("/api/v1/chat-channel", auth_middleware_1.authJWT, chatChannel_route_1.default);

@@ -78,7 +78,7 @@ app.use("/api", limitter)
 // Routers Imports
 app.use("/api/v1/health", healthCheckRouter);
 app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/client", authJWT, clientRouter);
+app.use("/api/v1/client", clientRouter);
 app.use("/api/v1/provider", authJWT, providerRouter);
 app.use("/api/v1/chat", authJWT, chatRouter);
 app.use("/api/v1/chat-channel", authJWT, chatChannelRouter);
@@ -87,4 +87,5 @@ app.use("/api/v1/chat-group", authJWT, chatGroupRouter);
 app.use("/api/v1/document", authJWT, documentRouter);
 
 export default app;
+
 

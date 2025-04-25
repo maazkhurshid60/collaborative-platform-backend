@@ -5,7 +5,7 @@ const zod_1 = require("zod");
 // Client Schema (Extends User)
 exports.clientSchema = zod_1.z.object({
     eSignature: zod_1.z.string().optional(),
-    clientId: zod_1.z.string().nonempty("Client Id is required"),
+    clientId: zod_1.z.string().optional(),
     email: zod_1.z.string().nonempty("Email is required").email("Invalid email format"),
     password: zod_1.z
         .string()
@@ -25,5 +25,6 @@ exports.clientSchema = zod_1.z.object({
     status: zod_1.z.enum(["active", "disable"], { message: "Status must be either active or disable" }),
     cnic: zod_1.z.string().nonempty().min(12, { message: "Not" }),
     isAccountCreatedByOwnClient: zod_1.z.boolean().default(false),
-    role: zod_1.z.string().optional()
+    role: zod_1.z.string().optional(),
+    providerId: zod_1.z.string().optional()
 });

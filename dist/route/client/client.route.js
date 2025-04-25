@@ -2,8 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const client_controller_1 = require("../../controller/client/client.controller");
+const auth_middleware_1 = require("../../middlewares/auth.middleware");
 const clientRouter = (0, express_1.Router)();
-clientRouter.delete("/delete-client", client_controller_1.deletClient);
-clientRouter.patch("/update-client", client_controller_1.updateClient);
-clientRouter.get("/get-all-clients", client_controller_1.getAllClients);
+clientRouter.delete("/delete-client", auth_middleware_1.authJWT, client_controller_1.deletClient);
+clientRouter.patch("/update-client", auth_middleware_1.authJWT, client_controller_1.updateClient);
+clientRouter.patch("/update-existing-client", client_controller_1.updateExistingClientOnCNIC);
+clientRouter.post("/add-client", auth_middleware_1.authJWT, client_controller_1.addClient);
+clientRouter.post("/get-all-clients", auth_middleware_1.authJWT, client_controller_1.getAllClients);
+clientRouter.get("/get-total-clients", auth_middleware_1.authJWT, client_controller_1.getTotalClient);
 exports.default = clientRouter;

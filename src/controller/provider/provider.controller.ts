@@ -7,8 +7,9 @@ import { Role } from "@prisma/client";
 import { providerSchema } from "../../schema/provider/provider.schema";
 
 
-const getAllProviders = asyncHandler(async (req: Request, res: Response) => {
+const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) => {
     const { loginUserId } = req.body;
+
     // Get the login user details
     const loginUser = await prisma.user.findUnique({ where: { id: loginUserId } });
 
@@ -20,12 +21,38 @@ const getAllProviders = asyncHandler(async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit
-    const allProviders = await prisma.provider.findMany({ skip, take: limit, include: { user: true, sharedDocument: { include: { document: true, client: { include: { user: true } } } } } })
-
+    const allProviders = await prisma.provider.findMany({
+        skip, take: limit, orderBy: {
+            createdAt: 'desc'  // 👈 Get latest first
+        }, include: {
+            user: true, sharedDocument: { include: { document: true, client: { include: { user: true } } } }, clientList: {
+                include: {
+                    client: {
+                        include: { user: true }
+                    }
+                }
+            }
+        }
+    })
+    console.log("all providers", allProviders);
+    //Only those providers will be shown which are not blocked by the login user
     const filteredProviders = allProviders.filter(provider => !loginUser.blockedMembers.includes(provider.user.id))
     const totalDocument = filteredProviders.length
 
     res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { totalDocument: totalDocument, providers: filteredProviders }, "All Providers fetched successfully"))
+
+})
+
+
+const getTotalProviders = asyncHandler(async (req: Request, res: Response) => {
+
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const skip = (page - 1) * limit
+    const allProviders = await prisma.provider.findMany({ skip, take: limit, include: { user: true, sharedDocument: { include: { document: true, client: { include: { user: true } } } } } })
+
+
+    res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { totalDocument: allProviders.length, providers: allProviders }, "All Providers fetched successfully"))
 
 })
 
@@ -123,4 +150,4 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
 
 
 
-export { getAllProviders, deletProvider, updateProvider }
+export { getAllUnblockProviders, deletProvider, updateProvider, getTotalProviders }

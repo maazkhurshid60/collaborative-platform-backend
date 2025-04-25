@@ -3,7 +3,7 @@ import { z } from "zod";
 // Client Schema (Extends User)
 export const clientSchema = z.object({
     eSignature: z.string().optional(),
-    clientId: z.string().nonempty("Client Id is required"),
+    clientId: z.string().optional(),
     email: z.string().nonempty("Email is required").email("Invalid email format"),
     password: z
         .string()
@@ -23,6 +23,7 @@ export const clientSchema = z.object({
     status: z.enum(["active", "disable"], { message: "Status must be either active or disable" }),
     cnic: z.string().nonempty().min(12, { message: "Not" }),
     isAccountCreatedByOwnClient: z.boolean().default(false),
-    role: z.string().optional()
+    role: z.string().optional(),
+    providerId: z.string().optional()
 
 })

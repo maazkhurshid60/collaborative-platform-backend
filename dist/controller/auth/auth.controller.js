@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMeApi = exports.deleteMeAccountApi = exports.updateMeApi = exports.logout = exports.unblockUser = exports.blockUser = exports.logInApi = exports.signupApi = void 0;
+exports.findByCNIC = exports.getAllUsersApi = exports.getMeApi = exports.deleteMeAccountApi = exports.updateMeApi = exports.logoutApi = exports.unblockUserApi = exports.blockUserApi = exports.logInApi = exports.signupApi = void 0;
 const asyncHandler_1 = require("../../utils/asyncHandler");
 const auth_schema_1 = require("../../schema/auth/auth.schema");
 const apiResponse_1 = require("../../utils/apiResponse");
@@ -29,7 +29,7 @@ const signupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
     }
     //get data for user
-    const { fullName, gender, age, contactNo, address, status, cnic, role } = userParsedData.data;
+    const { fullName, gender = "male", age, contactNo, address, status = "active", cnic, role } = userParsedData.data;
     // Check if User Exists
     const existingUser = yield db_config_1.default.user.findFirst({ where: { cnic } });
     if (existingUser) {
@@ -96,6 +96,7 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
     if (!userParsedData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
     }
+    console.log(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.body);
     const { loginUserId } = req.body;
     const isUserExist = yield db_config_1.default.user.findFirst({ where: { id: loginUserId } });
     //Check user exist 
@@ -133,7 +134,10 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
         if (existingProvider) {
             return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed"));
         }
-        const hashedPassword = yield bcrypt_1.default.hash(password, 10);
+        let hashedPassword;
+        if (password) {
+            hashedPassword = yield bcrypt_1.default.hash(password, 10);
+        }
         const providerUpdate = yield db_config_1.default.provider.update({ where: { userId: loginUserId }, data: { email, password: hashedPassword, department }, include: { user: true } });
         return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, providerUpdate, "User updated successfully"));
     }
@@ -172,7 +176,7 @@ const logInApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { token, user }, "Login successful"));
 }));
 exports.logInApi = logInApi;
-const blockUser = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const blockUserApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { blockUserid, loginUserId } = req.body;
     // 1. Check if block user exists
     const isBlockUserExist = yield db_config_1.default.user.findUnique({ where: { id: blockUserid } });
@@ -190,6 +194,7 @@ const blockUser = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     }
     // 4. Add blockUserid to blockedMembers list
     const updatedBlockedMembers = [...loginUser.blockedMembers, blockUserid];
+    console.log("updatedBlockedMembers", updatedBlockedMembers);
     // 5. Update user
     const updatedUser = yield db_config_1.default.user.update({
         where: { id: loginUserId },
@@ -199,8 +204,13 @@ const blockUser = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     });
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { user: updatedUser }, "User blocked successfully"));
 }));
-exports.blockUser = blockUser;
-const unblockUser = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.blockUserApi = blockUserApi;
+const getAllUsersApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const allUsers = yield db_config_1.default.user.findMany();
+    return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { totalDocument: allUsers.length, user: allUsers }, "User fetched successfully"));
+}));
+exports.getAllUsersApi = getAllUsersApi;
+const unblockUserApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const { blockUserid, loginUserId } = req.body;
     // 1. Check if block user exists
@@ -222,8 +232,8 @@ const unblockUser = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
     });
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { user: updatedUser }, "User unblocked successfully"));
 }));
-exports.unblockUser = unblockUser;
-const logout = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+exports.unblockUserApi = unblockUserApi;
+const logoutApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // Clearing the cookies by setting them to empty with an expiration time in the past
     return res
         .clearCookie("accessToken", constants_1.cookiesOptions)
@@ -231,29 +241,44 @@ const logout = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, 
         .status(200)
         .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, {}, "Logout successful"));
 }));
-exports.logout = logout;
+exports.logoutApi = logoutApi;
 const deleteMeAccountApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { loginUserId } = req.body;
+    console.log("id>>>>>>>>", loginUserId);
     const isUserExist = yield db_config_1.default.user.findFirst({ where: { id: loginUserId } });
+    console.log(">>>>>>>>>>", isUserExist);
     if (!isUserExist) {
         return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"));
     }
+    console.log("<<<<<<<<<<<", loginUserId);
+    const isUserDeleted = yield db_config_1.default.user.delete({ where: { id: loginUserId } });
+    console.log(">>>>>>>>>>>>>>>", isUserDeleted);
+    return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { message: "" }, "User deleted successfully"));
 }));
 exports.deleteMeAccountApi = deleteMeAccountApi;
 const getMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { loginUserId, role } = req.body;
     let getMeDetails;
-    // Handle Client Signup
+    // Handle Client
     if (role === client_1.Role.client) {
         getMeDetails = yield db_config_1.default.client.findFirst({ where: { id: loginUserId }, include: { user: true } });
-        console.log("<>", getMeDetails);
         return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { data: getMeDetails }, "OK"));
     }
-    // Handle Provider Signup
+    // Handle Provider
     else if (role === client_1.Role.provider) {
         getMeDetails = yield db_config_1.default.provider.findFirst({ where: { id: loginUserId }, include: { user: true } });
-        console.log("<>", getMeDetails);
         return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { data: getMeDetails }, "OK"));
     }
 }));
 exports.getMeApi = getMeApi;
+const findByCNIC = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { cnic } = req.body;
+    if (cnic === "") {
+        return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { message: " CNIC isrequired" }, "Validation failed"));
+    }
+    const cnicFound = yield db_config_1.default.user.findFirst({
+        where: { cnic }, include: { client: true }
+    });
+    return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { data: cnicFound }, "Record found."));
+}));
+exports.findByCNIC = findByCNIC;

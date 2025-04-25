@@ -7,7 +7,7 @@ model Client {
     createdAt                   DateTime            @default(now())
     updatedAt                   DateTime            @default(now())
     providerList                ProviderOnClient[]
-    user                        User                @relation(fields: [userId], references: [id])
+    user                        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId                      String              @unique
     recievedDocument            DocumentShareWith[]
 }

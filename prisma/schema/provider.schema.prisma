@@ -2,7 +2,7 @@ model Provider {
     id             String              @id @default(uuid())
     email          String              @unique
     password       String
-    user           User                @relation(fields: [userId], references: [id])
+    user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId         String              @unique
     clientList     ProviderOnClient[]
     sharedDocument DocumentShareWith[]

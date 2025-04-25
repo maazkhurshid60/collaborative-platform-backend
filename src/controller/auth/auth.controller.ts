@@ -9,6 +9,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { cookiesOptions } from "../../utils/constants";
 
+
 const signupApi = asyncHandler(async (req: Request, res: Response) => {
     // Validate User Schema
     const userParsedData = userSchema.safeParse(req.body);
@@ -18,15 +19,17 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
         );
     }
     //get data for user
-    const { fullName, gender, age, contactNo, address, status, cnic, role } = userParsedData.data;
+    const { fullName, gender = "male", age, contactNo, address, status = "active", cnic, role } = userParsedData.data;
 
     // Check if User Exists
     const existingUser = await prisma.user.findFirst({ where: { cnic } });
     if (existingUser) {
+
         return res.status(StatusCodes.CONFLICT).json(
             new ApiResponse(StatusCodes.CONFLICT, { error: `CNIC ${cnic} is already registered.` }, "Validation failed")
         );
     }
+
 
     const userData: any = {
         fullName, gender, age, contactNo, address, status, cnic, role
@@ -108,6 +111,9 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
             new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
         );
     }
+    console.log(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.body);
+
+
     const { loginUserId } = req.body;
     const isUserExist = await prisma.user.findFirst({ where: { id: loginUserId } })
     //Check user exist 
@@ -163,15 +169,14 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
                 new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
             );
         }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const providerUpdate = await prisma.provider.update({ where: { userId: loginUserId }, data: { email, password: hashedPassword, department }, include: { user: true } });
+        let hashedPassword
+        if (password) {
+            hashedPassword = await bcrypt.hash(password, 10);
+        } const providerUpdate = await prisma.provider.update({ where: { userId: loginUserId }, data: { email, password: hashedPassword, department }, include: { user: true } });
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, providerUpdate, "User updated successfully")
         );
     }
-
-
 })
 
 const logInApi = asyncHandler(async (req: Request, res: Response) => {
@@ -228,7 +233,7 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
-const blockUser = asyncHandler(async (req: Request, res: Response) => {
+const blockUserApi = asyncHandler(async (req: Request, res: Response) => {
     const { blockUserid, loginUserId } = req.body;
 
     // 1. Check if block user exists
@@ -256,6 +261,7 @@ const blockUser = asyncHandler(async (req: Request, res: Response) => {
 
     // 4. Add blockUserid to blockedMembers list
     const updatedBlockedMembers = [...loginUser.blockedMembers, blockUserid];
+    console.log("updatedBlockedMembers", updatedBlockedMembers);
 
     // 5. Update user
     const updatedUser = await prisma.user.update({
@@ -270,7 +276,14 @@ const blockUser = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
-const unblockUser = asyncHandler(async (req: Request, res: Response) => {
+const getAllUsersApi = asyncHandler(async (req: Request, res: Response) => {
+    const allUsers = await prisma.user.findMany()
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, { totalDocument: allUsers.length, user: allUsers }, "User fetched successfully")
+    );
+})
+
+const unblockUserApi = asyncHandler(async (req: Request, res: Response) => {
     const { blockUserid, loginUserId } = req.body;
 
     // 1. Check if block user exists
@@ -302,7 +315,7 @@ const unblockUser = asyncHandler(async (req: Request, res: Response) => {
     );
 })
 
-const logout = asyncHandler(async (req: Request, res: Response) => {
+const logoutApi = asyncHandler(async (req: Request, res: Response) => {
     // Clearing the cookies by setting them to empty with an expiration time in the past
     return res
         .clearCookie("accessToken", cookiesOptions)
@@ -313,23 +326,35 @@ const logout = asyncHandler(async (req: Request, res: Response) => {
 
 const deleteMeAccountApi = asyncHandler(async (req: Request, res: Response) => {
     const { loginUserId } = req.body
+    console.log("id>>>>>>>>", loginUserId);
 
     const isUserExist = await prisma.user.findFirst({ where: { id: loginUserId } })
+    console.log(">>>>>>>>>>", isUserExist);
+
     if (!isUserExist) {
         return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"))
     }
 
+    console.log("<<<<<<<<<<<", loginUserId);
+
+    const isUserDeleted = await prisma.user.delete({ where: { id: loginUserId } })
+    console.log(">>>>>>>>>>>>>>>", isUserDeleted);
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, { message: "" }, "User deleted successfully")
+    );
 
 })
 
-const getMeApi = asyncHandler(async (req: any, res: any) => {
+
+
+const getMeApi = asyncHandler(async (req: Request, res: Response) => {
     const { loginUserId, role } = req.body
 
     let getMeDetails
-    // Handle Client Signup
+    // Handle Client
     if (role === Role.client) {
         getMeDetails = await prisma.client.findFirst({ where: { id: loginUserId }, include: { user: true } })
-        console.log("<>", getMeDetails);
 
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, { data: getMeDetails }, "OK")
@@ -337,10 +362,9 @@ const getMeApi = asyncHandler(async (req: any, res: any) => {
 
 
     }
-    // Handle Provider Signup
+    // Handle Provider
     else if (role === Role.provider) {
         getMeDetails = await prisma.provider.findFirst({ where: { id: loginUserId }, include: { user: true } })
-        console.log("<>", getMeDetails);
 
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, { data: getMeDetails }, "OK")
@@ -348,4 +372,26 @@ const getMeApi = asyncHandler(async (req: any, res: any) => {
     }
 });
 
-export { signupApi, logInApi, blockUser, unblockUser, logout, updateMeApi, deleteMeAccountApi, getMeApi };
+
+const findByCNIC = asyncHandler(async (req: Request, res: Response) => {
+    const { cnic } = req.body
+    if (cnic === "") {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { message: " CNIC isrequired" }, "Validation failed")
+        );
+    }
+
+    const cnicFound = await prisma.user.findFirst({
+        where: { cnic }, include: { client: true }
+    })
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, { data: cnicFound }, "Record found.")
+    );
+
+
+})
+
+
+
+
+export { signupApi, logInApi, blockUserApi, unblockUserApi, logoutApi, updateMeApi, deleteMeAccountApi, getMeApi, getAllUsersApi, findByCNIC };

@@ -12,7 +12,7 @@ exports.userSchema = zod_1.z.object({
     contactNo: zod_1.z.string().nonempty().min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }).optional(),
     address: zod_1.z.string().nonempty().min(10, { message: "Not less then 10letters" }).optional(),
     status: zod_1.z.enum(["active", "disable"], { message: "Status must be either active or disable" }).optional(),
-    cnic: zod_1.z.string().nonempty().min(12, { message: "Not" }),
+    cnic: zod_1.z.string().nonempty().min(12, { message: "CNIC could not less then 12 character" }).max(20, { message: "CNIC could not more then 20 character" }),
     role: zod_1.z.enum(["client", "provider"], { message: "Role must be either client or provider" })
 });
 // Client Schema (Extends User)
@@ -22,10 +22,7 @@ exports.clientSchema = exports.userSchema.extend({
     password: zod_1.z
         .string()
         .min(10, { message: "Password not less then 10letters" })
-        .max(50, "Password not more then 50letters")
-        .optional().refine((password) => !password || (password.length >= 10 && password.length <= 50), {
-        message: "Password must be between 10 and 50 characters",
-    }),
+        .max(50, "Password not more then 50letters").optional(),
     isAccountCreatedByOwnClient: zod_1.z.boolean().default(false)
 });
 // Provider Schema (Extends User)
@@ -34,7 +31,7 @@ exports.providerSchema = exports.userSchema.extend({
     password: zod_1.z
         .string()
         .min(10, { message: "Password not less then 10letters" })
-        .max(50, "Password not more then 50letters"),
+        .max(50, "Password not more then 50letters").optional(),
     department: zod_1.z.string().nonempty("Department is required"),
 });
 // Login Schema

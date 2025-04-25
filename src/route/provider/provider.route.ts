@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { deletProvider, getAllProviders, updateProvider } from "../../controller/provider/provider.controller";
+import { deletProvider, getAllUnblockProviders, updateProvider, getTotalProviders } from "../../controller/provider/provider.controller";
 
 
 const providerRouter = Router()
 providerRouter.delete("/delete-provider", deletProvider)
 providerRouter.patch("/update-provider", updateProvider)
-providerRouter.get("/get-all-providers", getAllProviders)
+providerRouter.post("/get-all-providers", getAllUnblockProviders)
+providerRouter.get("/get-total-providers", getTotalProviders)
 
 export default providerRouter

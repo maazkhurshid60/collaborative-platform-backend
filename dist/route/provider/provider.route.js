@@ -5,5 +5,6 @@ const provider_controller_1 = require("../../controller/provider/provider.contro
 const providerRouter = (0, express_1.Router)();
 providerRouter.delete("/delete-provider", provider_controller_1.deletProvider);
 providerRouter.patch("/update-provider", provider_controller_1.updateProvider);
-providerRouter.get("/get-all-providers", provider_controller_1.getAllProviders);
+providerRouter.post("/get-all-providers", provider_controller_1.getAllUnblockProviders);
+providerRouter.get("/get-total-providers", provider_controller_1.getTotalProviders);
 exports.default = providerRouter;
