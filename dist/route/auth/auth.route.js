@@ -14,4 +14,5 @@ authRouter.patch("/update-me", auth_middleware_1.authJWT, auth_controller_1.upda
 authRouter.delete("/delete-me-account", auth_middleware_1.authJWT, auth_controller_1.deleteMeAccountApi);
 authRouter.post("/get-me", auth_middleware_1.authJWT, auth_controller_1.getMeApi);
 authRouter.get("/get-all-users", auth_middleware_1.authJWT, auth_controller_1.getAllUsersApi);
+authRouter.patch("/change-password", auth_middleware_1.authJWT, auth_controller_1.changePasswordApi);
 exports.default = authRouter;

@@ -193,8 +193,22 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = parsedLoginData.data;
 
     // Check if user exists in 'client' or 'provider'
-    const user = await prisma.provider.findFirst({ where: { email }, include: { user: true } })
-        || await prisma.client.findFirst({ where: { email }, include: { user: true } });
+    const user = await prisma.provider.findFirst({
+        where: { email },
+        include: {
+            user: true,
+            clientList: {
+                include: {
+                    client: {
+                        include: {
+                            user: true
+                        }
+                    }
+                }
+            }
+        }
+    })
+        || await prisma.client.findFirst({ where: { email }, include: { user: true, providerList: true } });
 
     if (!user) {
         return res.status(StatusCodes.BAD_REQUEST).json(
@@ -364,7 +378,20 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
     }
     // Handle Provider
     else if (role === Role.provider) {
-        getMeDetails = await prisma.provider.findFirst({ where: { id: loginUserId }, include: { user: true } })
+        getMeDetails = await prisma.provider.findFirst({
+            where: { id: loginUserId }, include: {
+                user: true,
+                clientList: {
+                    include: {
+                        client: {
+                            include: {
+                                user: true
+                            }
+                        }
+                    }
+                }
+            }
+        })
 
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, { data: getMeDetails }, "OK")
@@ -392,6 +419,110 @@ const findByCNIC = asyncHandler(async (req: Request, res: Response) => {
 })
 
 
+const changePasswordApi = asyncHandler(async (req: Request, res: Response) => {
+    const { oldPassword,
+        newPassword,
+        loginUserId, confirmPassword, role } = req.body
+
+    if (oldPassword === "" ||
+        newPassword === "") {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { message: "All fields are isrequired" }, "Validation failed")
+        );
+    }
 
 
-export { signupApi, logInApi, blockUserApi, unblockUserApi, logoutApi, updateMeApi, deleteMeAccountApi, getMeApi, getAllUsersApi, findByCNIC };
+    if (newPassword !== confirmPassword) {
+        return res.status(StatusCodes.CONFLICT).json(
+            new ApiResponse(StatusCodes.CONFLICT, { message: "Confirm and New Password should be matched" }, "Validation failed")
+        );
+    }
+
+
+    if (role === Role.provider) {
+        const findUser = await prisma.provider.findFirst({ where: { id: loginUserId }, include: { user: true } })
+
+        if (!findUser) {
+
+            return res.status(StatusCodes.BAD_REQUEST).json(
+                new ApiResponse(StatusCodes.BAD_REQUEST, { message: " User does not exist." }, "Validation failed")
+            );
+        }
+
+        const isPasswordMatch = await bcrypt.compare(oldPassword, findUser?.password)
+        if (isPasswordMatch) {
+            const hashedPassword = await bcrypt.hash(newPassword ?? "", 10);
+            const updatePassword = await prisma.provider.update({
+                where: { id: loginUserId }, data: {
+                    password: hashedPassword
+
+                }
+            })
+
+            if (updatePassword) {
+
+                return res.status(StatusCodes.OK).json(
+                    new ApiResponse(StatusCodes.OK, { message: "Password has updated successfully" }, "Password has updated successfully")
+                );
+            }
+            else {
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+                    new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { message: "Internal Server Error" }, "Internal Server Error")
+                );
+            }
+        }
+        else {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, { message: "Password not Matched" }, "Password not Match")
+            );
+        }
+
+
+    }
+
+    if (role === Role.client) {
+        const findUser = await prisma.client.findFirst({ where: { id: loginUserId }, include: { user: true } })
+
+        if (!findUser) {
+
+            return res.status(StatusCodes.BAD_REQUEST).json(
+                new ApiResponse(StatusCodes.BAD_REQUEST, { message: " User does not exist." }, "Validation failed")
+            );
+        }
+
+        const isPasswordMatch = await bcrypt.compare(
+            oldPassword ?? "",
+            findUser?.password ?? ""
+        ); if (isPasswordMatch) {
+            const hashedPassword = await bcrypt.hash(newPassword ?? "", 10);
+            const updatePassword = await prisma.client.update({
+                where: { id: loginUserId }, data: {
+                    password: hashedPassword
+
+                }
+            })
+
+            if (updatePassword) {
+
+                return res.status(StatusCodes.OK).json(
+                    new ApiResponse(StatusCodes.OK, { message: "Password has updated successfully" }, "Password has updated successfully")
+                );
+            }
+            else {
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+                    new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { message: "Internal Server Error" }, "Internal Server Error")
+                );
+            }
+        }
+        else {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, { message: "Password not Matched" }, "Password not Match")
+            );
+        }
+
+
+    }
+
+})
+
+export { signupApi, logInApi, blockUserApi, unblockUserApi, logoutApi, updateMeApi, deleteMeAccountApi, getMeApi, getAllUsersApi, findByCNIC, changePasswordApi };

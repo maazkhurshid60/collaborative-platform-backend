@@ -53,5 +53,21 @@ const createChatChannel = (0, asyncHandler_1.asyncHandler)((req, res) => __await
 }));
 exports.createChatChannel = createChatChannel;
 const getAllChatChannel = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { loginUserId } = req.body;
+    const findAllChatChannel = yield db_config_1.default.chatChannel.findMany({
+        where: {
+            OR: [
+                { providerAId: loginUserId },
+                { providerBId: loginUserId }
+            ]
+        },
+        include: {
+            providerA: { include: { user: true } },
+            providerB: { include: { user: true } },
+        }
+    });
+    return res
+        .status(http_status_codes_1.StatusCodes.OK)
+        .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { findAllChatChannel }, "Chat Channels fetched successfully"));
 }));
 exports.getAllChatChannel = getAllChatChannel;

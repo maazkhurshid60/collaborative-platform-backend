@@ -13,6 +13,7 @@ const getAllSingleConservationMessage = asyncHandler(async (req: Request, res: R
         const chatChannel = await prisma.chatChannel.findUnique({
             where: { id: chatChannelId },
             select: {
+
                 providerAId: true,
                 providerBId: true,
             },
@@ -31,7 +32,7 @@ const getAllSingleConservationMessage = asyncHandler(async (req: Request, res: R
             where: { chatChannelId },
             orderBy: { createdAt: 'asc' },
             include: {
-                sender: true,
+                sender: { include: { user: true } },
                 readReceipts: {
                     where: { providerId: loginUserId }, // Get read receipt for the logged-in user
                 }
@@ -94,6 +95,9 @@ const sendMessageToSingleConservation = asyncHandler(async (req: Request, res: R
     }
 });
 
+
+
+
 const deleteMessageToSingleConservation = asyncHandler(async (req: Request, res: Response) => {
     const { channelId, messageId, loginUserId } = req.body;
 
@@ -144,77 +148,3 @@ const deleteMessageToSingleConservation = asyncHandler(async (req: Request, res:
 export { getAllSingleConservationMessage, sendMessageToSingleConservation, deleteMessageToSingleConservation }
 
 
-
-//code without read/unread status tracking will be removed if above api worked correct at frontend
-
-
-// const sendMessageToSingleConservation = asyncHandler(async (req: Request, res: Response) => {
-//     const { chatChannelId, message, mediaUrl, type, senderId } = req.body;
-
-//     try {
-//         // Check if the chatChannelId exists
-//         const channel = await prisma.chatChannel.findUnique({
-//             where: {
-//                 id: chatChannelId // Ensure the chatChannelId exists in the database
-//             }
-//         });
-
-//         // If the channel does not exist, return an error
-//         if (!channel) {
-//             return res.status(400).json({ message: 'Chat channel does not exist' });
-//         }
-
-//         // Create the message in the database
-//         const chatMessage = await prisma.chatMessage.create({
-//             data: {
-//                 senderId,
-//                 message,
-//                 chatChannelId,
-//                 mediaUrl: mediaUrl || '',  // Default to empty if not provided
-//                 type: type || 'text'  // Default to 'text' if type is not provided
-//             }
-//         });
-
-//         return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { chatMessage }, "Message sent successfully"));
-
-//     } catch (err) {
-//         res.status(500).json({ message: 'Error sending message', error: err });
-//     }
-// });
-
-
-// const getAllSingleConservationMessage = asyncHandler(async (req: Request, res: Response) => {
-//     const { chatChannelId, loginUserId } = req.body;
-
-//     try {
-//         // Fetch the chat channel to check if the user is part of the channel
-//         const chatChannel = await prisma.chatChannel.findUnique({
-//             where: { id: chatChannelId },
-//             select: {
-//                 providerAId: true,
-//                 providerBId: true,
-//             },
-//         });
-
-//         if (!chatChannel) {
-//             return res.status(404).json({ message: 'Chat channel not found' });
-//         }
-
-//         // Ensure the logged-in user is either providerA or providerB in the channel
-//         if (![chatChannel.providerAId, chatChannel.providerBId].includes(loginUserId)) {
-//             return res.status(403).json({ message: 'You are not authorized to view this chat' });
-//         }
-
-//         // Now, fetch the messages for the specific channel and ensure the user can see them
-//         const messages = await prisma.chatMessage.findMany({
-//             where: { chatChannelId },
-//             orderBy: { createdAt: 'asc' },
-//             include: { sender: true },
-//         });
-
-//         return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { messages }, "Messages fetched successfully"));
-
-//     } catch (err) {
-//         res.status(500).json({ message: 'Error fetching messages', error: err });
-//     }
-// });

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { blockUserApi, deleteMeAccountApi, findByCNIC, getAllUsersApi, getMeApi, logInApi, logoutApi, signupApi, unblockUserApi, updateMeApi } from "../../controller/auth/auth.controller";
+import { blockUserApi, changePasswordApi, deleteMeAccountApi, findByCNIC, getAllUsersApi, getMeApi, logInApi, logoutApi, signupApi, unblockUserApi, updateMeApi } from "../../controller/auth/auth.controller";
 import { authJWT } from "../../middlewares/auth.middleware";
 const authRouter = Router()
 authRouter.post("/signup", signupApi)
@@ -12,6 +12,7 @@ authRouter.patch("/update-me", authJWT, updateMeApi)
 authRouter.delete("/delete-me-account", authJWT, deleteMeAccountApi)
 authRouter.post("/get-me", authJWT, getMeApi)
 authRouter.get("/get-all-users", authJWT, getAllUsersApi)
+authRouter.patch("/change-password", authJWT, changePasswordApi)
 
 
 export default authRouter

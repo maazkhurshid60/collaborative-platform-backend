@@ -48,8 +48,30 @@ const createChatChannel = asyncHandler(async (req: Request, res: Response) => {
 
 
 const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
+    const { loginUserId } = req.body;
 
-})
+    const findAllChatChannel = await prisma.chatChannel.findMany({
+        where: {
+            OR: [
+                { providerAId: loginUserId },
+                { providerBId: loginUserId }
+            ]
+        },
+        include: {
+            providerA: { include: { user: true } },
+            providerB: { include: { user: true } },
+        }
+    });
+
+    return res
+        .status(StatusCodes.OK)
+        .json(new ApiResponse(
+            StatusCodes.OK,
+            { findAllChatChannel },
+            "Chat Channels fetched successfully"
+        ));
+});
+
 
 
 export { createChatChannel, getAllChatChannel }
