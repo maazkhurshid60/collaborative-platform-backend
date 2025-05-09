@@ -66,8 +66,38 @@ const getAllChatChannel = (0, asyncHandler_1.asyncHandler)((req, res) => __await
             providerB: { include: { user: true } },
         }
     });
+    // AFTER fetching findAllChatChannel
+    const enrichedChannels = yield Promise.all(findAllChatChannel.map((channel) => __awaiter(void 0, void 0, void 0, function* () {
+        const otherUserId = channel.providerAId === loginUserId ? channel.providerBId : channel.providerAId;
+        const unreadCount = yield db_config_1.default.chatMessage.count({
+            where: {
+                chatChannelId: channel.id,
+                senderId: otherUserId, // sent by other user
+                readReceipts: {
+                    none: {
+                        providerId: loginUserId
+                    }
+                }
+            }
+        });
+        const lastMessage = yield db_config_1.default.chatMessage.findFirst({
+            where: { chatChannelId: channel.id },
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                message: true,
+                createdAt: true
+            }
+        });
+        return Object.assign(Object.assign({}, channel), { totalUnread: unreadCount, lastMessage: lastMessage || null // <-- include this
+         });
+        // return {
+        //     ...channel,
+        //     totalUnread: unreadCount
+        // };
+    })));
     return res
         .status(http_status_codes_1.StatusCodes.OK)
-        .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { findAllChatChannel }, "Chat Channels fetched successfully"));
+        .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { findAllChatChannel: enrichedChannels }, "Chat Channels fetched successfully"));
 }));
 exports.getAllChatChannel = getAllChatChannel;

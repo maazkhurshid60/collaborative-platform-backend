@@ -6,9 +6,9 @@ import { authJWT } from "../../middlewares/auth.middleware";
 const chatGroupRouter = Router()
 
 chatGroupRouter.post("/create-group", authJWT, ouRoleCheck(["provider"]), createGroupApi);
-chatGroupRouter.get("/get-group-messages", getGroupMessageApi)
+chatGroupRouter.post("/get-group-messages", getGroupMessageApi)
 chatGroupRouter.post("/send-message-to-group", sendMessageToGroupApi)
-chatGroupRouter.get("/get-all-group", getAllGroupsApi)
+chatGroupRouter.post("/get-all-group", getAllGroupsApi)
 chatGroupRouter.patch("/update-group", updateGroupApi)
 chatGroupRouter.delete("/delete-group-message", deleteGroupMessageApi)
 

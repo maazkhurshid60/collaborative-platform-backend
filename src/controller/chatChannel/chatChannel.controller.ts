@@ -62,14 +62,46 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
             providerB: { include: { user: true } },
         }
     });
+    // AFTER fetching findAllChatChannel
+    const enrichedChannels = await Promise.all(findAllChatChannel.map(async (channel) => {
+        const otherUserId = channel.providerAId === loginUserId ? channel.providerBId : channel.providerAId;
+
+        const unreadCount = await prisma.chatMessage.count({
+            where: {
+                chatChannelId: channel.id,
+                senderId: otherUserId, // sent by other user
+                readReceipts: {
+                    none: {
+                        providerId: loginUserId
+                    }
+                }
+            }
+        });
+        const lastMessage = await prisma.chatMessage.findFirst({
+            where: { chatChannelId: channel.id },
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                message: true,
+                createdAt: true
+            }
+        });
+
+        return {
+            ...channel,
+            totalUnread: unreadCount,
+            lastMessage: lastMessage || null // <-- include this
+        };
+        // return {
+        //     ...channel,
+        //     totalUnread: unreadCount
+        // };
+    }));
 
     return res
         .status(StatusCodes.OK)
-        .json(new ApiResponse(
-            StatusCodes.OK,
-            { findAllChatChannel },
-            "Chat Channels fetched successfully"
-        ));
+        .json(new ApiResponse(StatusCodes.OK, { findAllChatChannel: enrichedChannels }, "Chat Channels fetched successfully"));
+
 });
 
 

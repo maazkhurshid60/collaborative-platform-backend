@@ -6,9 +6,9 @@ const roleCheck_middleware_1 = require("../../middlewares/roleCheck.middleware")
 const auth_middleware_1 = require("../../middlewares/auth.middleware");
 const chatGroupRouter = (0, express_1.Router)();
 chatGroupRouter.post("/create-group", auth_middleware_1.authJWT, (0, roleCheck_middleware_1.ouRoleCheck)(["provider"]), chatGroup_controller_1.createGroupApi);
-chatGroupRouter.get("/get-group-messages", chatGroup_controller_1.getGroupMessageApi);
+chatGroupRouter.post("/get-group-messages", chatGroup_controller_1.getGroupMessageApi);
 chatGroupRouter.post("/send-message-to-group", chatGroup_controller_1.sendMessageToGroupApi);
-chatGroupRouter.get("/get-all-group", chatGroup_controller_1.getAllGroupsApi);
+chatGroupRouter.post("/get-all-group", chatGroup_controller_1.getAllGroupsApi);
 chatGroupRouter.patch("/update-group", chatGroup_controller_1.updateGroupApi);
 chatGroupRouter.delete("/delete-group-message", chatGroup_controller_1.deleteGroupMessageApi);
 exports.default = chatGroupRouter;

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteMessageToSingleConservation = exports.sendMessageToSingleConservation = exports.getAllSingleConservationMessage = void 0;
+exports.markMessagesAsRead = exports.getAllConversations = exports.deleteMessageToSingleConservation = exports.sendMessageToSingleConservation = exports.getAllSingleConservationMessage = void 0;
 const asyncHandler_1 = require("../../utils/asyncHandler");
 const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
@@ -46,7 +46,8 @@ const getAllSingleConservationMessage = (0, asyncHandler_1.asyncHandler)((req, r
         });
         // Add a field to each message to show if it's read or unread
         const messagesWithReadStatus = messages.map(message => (Object.assign(Object.assign({}, message), { readStatus: message.readReceipts.length > 0 ? 'read' : 'unread' })));
-        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { messages: messagesWithReadStatus }, "Messages fetched successfully"));
+        const unreadMessagesCount = messagesWithReadStatus.filter(message => message.readStatus === 'unread').length;
+        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { messages: messagesWithReadStatus, unreadMessagesCount }, "Messages fetched successfully"));
     }
     catch (err) {
         res.status(500).json({ message: 'Error fetching messages', error: err });
@@ -80,6 +81,13 @@ const sendMessageToSingleConservation = (0, asyncHandler_1.asyncHandler)((req, r
         }));
         yield db_config_1.default.readReceipt.createMany({
             data: readReceipts,
+        });
+        // Update the updatedAt field of the chat channel to current time
+        yield db_config_1.default.chatChannel.update({
+            where: { id: chatChannelId },
+            data: {
+                updatedAt: new Date().toISOString(), // Set the current time as updatedAt
+            },
         });
         return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { chatMessage }, "Message sent successfully"));
     }
@@ -116,3 +124,82 @@ const deleteMessageToSingleConservation = (0, asyncHandler_1.asyncHandler)((req,
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { deletedMessage }, 'Message deleted successfully.'));
 }));
 exports.deleteMessageToSingleConservation = deleteMessageToSingleConservation;
+const getAllConversations = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { loginUserId } = req.body;
+    try {
+        // Fetch all chat channels for the logged-in user
+        const chatChannels = yield db_config_1.default.chatChannel.findMany({
+            where: {
+                OR: [
+                    { providerAId: loginUserId },
+                    { providerBId: loginUserId }
+                ]
+            },
+            select: {
+                id: true,
+                providerAId: true,
+                providerBId: true
+            }
+        });
+        if (chatChannels.length === 0) {
+            return res.status(404).json({ message: 'No chat channels found for this user' });
+        }
+        // For each channel, fetch the last message
+        const chatChannelsWithLastMessage = yield Promise.all(chatChannels.map((channel) => __awaiter(void 0, void 0, void 0, function* () {
+            // Fetch the last message in the channel
+            const lastMessage = yield db_config_1.default.chatMessage.findFirst({
+                where: { chatChannelId: channel.id },
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    message: true,
+                    createdAt: true
+                }
+            });
+            return Object.assign(Object.assign({}, channel), { lastMessage: lastMessage || null // Include the last message (if any)
+             });
+        })));
+        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, {
+            chatChannels: chatChannelsWithLastMessage
+        }, "Chat channels fetched successfully"));
+    }
+    catch (err) {
+        res.status(500).json({ message: 'Error fetching chat channels', error: err });
+    }
+}));
+exports.getAllConversations = getAllConversations;
+// POST /chat/read-messages
+const markMessagesAsRead = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { loginUserId, chatChannelId } = req.body;
+    try {
+        // Get all unread messages for this user in the chat
+        const unreadMessages = yield db_config_1.default.chatMessage.findMany({
+            where: {
+                chatChannelId,
+                readReceipts: {
+                    none: {
+                        providerId: loginUserId
+                    }
+                },
+                NOT: {
+                    senderId: loginUserId
+                }
+            },
+            select: { id: true }
+        });
+        // Create read receipts for each unread message
+        yield db_config_1.default.readReceipt.createMany({
+            data: unreadMessages.map(msg => ({
+                messageId: msg.id,
+                providerId: loginUserId
+            })),
+            skipDuplicates: true,
+        });
+        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, null, 'Messages marked as read'));
+    }
+    catch (error) {
+        console.error('Error marking messages as read:', error);
+        return res.status(500).json({ message: 'Error marking messages as read' });
+    }
+}));
+exports.markMessagesAsRead = markMessagesAsRead;
