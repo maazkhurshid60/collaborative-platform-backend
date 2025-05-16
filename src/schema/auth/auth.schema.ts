@@ -19,8 +19,12 @@ export const clientSchema = userSchema.extend({
     email: z.string().nonempty("Email is required").email("Invalid email format"),
     password: z
         .string()
-        .min(10, { message: "Password not less then 10letters" })
-        .max(50, "Password not more then 50letters").optional(),
+        .optional()
+        .refine(
+            (val) => !val || val.length >= 10,
+            { message: "Password is required and should not be less than 10 characters" }
+        ),
+
     isAccountCreatedByOwnClient: z.boolean().default(false)
 })
 

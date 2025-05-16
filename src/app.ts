@@ -24,6 +24,7 @@ import chatGroupRouter from "./route/chatGroup/chatGroup.route";
 import { authJWT } from "./middlewares/auth.middleware";
 import documentRouter from "./route/document/document.route";
 import morganMiddleware from "./middlewares/morgan.middleware";
+import path from "path";
 
 
 // Declaration of Express App
@@ -37,6 +38,7 @@ dotenv.config(
 
 //helmet
 app.use(helmet())
+
 
 // Rate limitter middleware: to limit request from same api
 const limitter = rateLimit({
@@ -62,6 +64,18 @@ app.options("*", (req, res) => {
     res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
     res.sendStatus(204);
 });
+// Serve uploaded documents statically
+app.use('/uploads/docs', express.static(path.join(__dirname, '..', 'uploads/docs')));
+app.use(
+    '/uploads',
+    express.static(path.join(__dirname, '..', 'uploads'), {
+        setHeaders: (res, filePath) => {
+            console.log("Serving file:", filePath); // <== ADD THIS
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        }
+    })
+);
 
 // xss-clean middleware to protect against XSS attacks
 //prevent parameter pollution

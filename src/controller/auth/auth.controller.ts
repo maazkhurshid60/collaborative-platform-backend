@@ -111,7 +111,7 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
             new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
         );
     }
-    console.log(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.body);
+    console.log(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.file);
 
 
     const { loginUserId } = req.body;
@@ -148,7 +148,7 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         }
 
         const hashedPassword = await bcrypt.hash(password ?? "", 10);
-        const clientUpdate = await prisma.client.update({ where: { userId: loginUserId }, data: { email, password: hashedPassword }, include: { user: true } });
+        const clientUpdate = await prisma.client.update({ where: { userId: loginUserId }, data: { email, password: hashedPassword, eSignature: req.file?.path }, include: { user: true } });
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, clientUpdate, "User updated successfully")
         );
