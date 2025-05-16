@@ -1,13 +1,6 @@
-// model GroupChat {
-//     id            String         @id @default(uuid())
-//     name          String
-//     ChatMessage   ChatMessage?   @relation(fields: [chatMessageId], references: [id])
-//     chatMessageId String?
-//     members       GroupMembers[]
-// }
 model GroupChat {
-    id           String         @id @default(uuid())
-    name         String
-    chatMessages ChatMessage[] // A group can have many chat messages
-    members      GroupMembers[] // Relation to members of the group
+  id           String         @id @default(uuid())
+  name         String
+  chatMessages ChatMessage[]
+  members      GroupMembers[]
 }

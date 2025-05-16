@@ -1,17 +1,12 @@
 model ChatChannel {
-    id String @id @default(uuid())
+  id          String        @id @default(uuid())
+  providerAId String
+  providerBId String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now())
+  providerA   Provider      @relation("chatA", fields: [providerAId], references: [id])
+  providerB   Provider      @relation("chatB", fields: [providerBId], references: [id])
+  messages    ChatMessage[]
 
-    // Two providers in the chat
-    providerAId String
-    providerBId String
-    providerA   Provider @relation(fields: [providerAId], references: [id], name: "chatA")
-    providerB   Provider @relation(fields: [providerBId], references: [id], name: "chatB")
-
-    // One chat channel has many messages
-    messages ChatMessage[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @default(now())
-
-    @@unique([providerAId, providerBId]) // Ensure no duplicate channels between the same providers
+  @@unique([providerAId, providerBId])
 }

@@ -1,9 +1,9 @@
 model GroupReadReceipt {
-    id         String      @id @default(uuid())
-    messageId  String
-    providerId String
-    readAt     DateTime    @default(now())
-    message    ChatMessage @relation(fields: [messageId], references: [id])
+  id         String      @id @default(uuid())
+  messageId  String
+  providerId String
+  readAt     DateTime    @default(now())
+  message    ChatMessage @relation(fields: [messageId], references: [id])
 
-    @@unique([messageId, providerId]) // Ensure only one read receipt per user per message
+  @@unique([messageId, providerId])
 }

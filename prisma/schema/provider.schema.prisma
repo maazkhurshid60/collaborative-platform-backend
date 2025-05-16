@@ -1,18 +1,16 @@
 model Provider {
-    id             String              @id @default(uuid())
-    email          String              @unique
-    password       String
-    user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId         String              @unique
-    clientList     ProviderOnClient[]
-    sharedDocument DocumentShareWith[]
-    department     String
-
-    // Relations to chat
-    chatChannelsA ChatChannel[]  @relation("chatA")
-    chatChannelsB ChatChannel[]  @relation("chatB")
-    messagesSent  ChatMessage[]
-    createdAt     DateTime       @default(now())
-    updatedAt     DateTime       @default(now())
-    group         GroupMembers[]
+  id             String              @id @default(uuid())
+  email          String              @unique
+  password       String
+  userId         String              @unique
+  createdAt      DateTime            @default(now())
+  department     String
+  updatedAt      DateTime            @default(now())
+  chatChannelsA  ChatChannel[]       @relation("chatA")
+  chatChannelsB  ChatChannel[]       @relation("chatB")
+  messagesSent   ChatMessage[]
+  sharedDocument DocumentShareWith[]
+  group          GroupMembers[]
+  user           User                @relation(fields: [userId], references: [id])
+  clientList     ProviderOnClient[]
 }

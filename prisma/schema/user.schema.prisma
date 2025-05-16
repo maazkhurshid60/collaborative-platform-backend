@@ -1,25 +1,23 @@
 model User {
-    id           String  @id @default(uuid())
-    fullName     String
-    profileImage String?
-    gender       String?
-    age          Int?
-    contactNo    String?
-    address      String?
-    status       String?
-
-    cnic           String         @unique
-    role           Role
-    blockedMembers String[]
-    createdAt      DateTime       @default(now())
-    updatedAt      DateTime       @default(now())
-    notification   Notification[]
-    // Correct One-to-One Relations
-    provider       Provider?
-    client         Client?
+  id             String         @id @default(uuid())
+  fullName       String
+  profileImage   String?
+  gender         String?
+  age            Int?
+  contactNo      String?
+  address        String?
+  status         String?
+  cnic           String         @unique
+  blockedMembers String[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @default(now())
+  role           Role
+  client         Client?
+  notification   Notification[]
+  provider       Provider?
 }
 
 enum Role {
-    client
-    provider
+  client
+  provider
 }

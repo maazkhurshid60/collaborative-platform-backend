@@ -1,7 +1,7 @@
 model GroupMembers {
-    id          String     @id @default(uuid())
-    GroupChat   GroupChat? @relation(fields: [groupChatId], references: [id])
-    groupChatId String?
-    Provider    Provider?  @relation(fields: [providerId], references: [id])
-    providerId  String?
+  id          String     @id @default(uuid())
+  groupChatId String?
+  providerId  String?
+  GroupChat   GroupChat? @relation(fields: [groupChatId], references: [id])
+  Provider    Provider?  @relation(fields: [providerId], references: [id])
 }
