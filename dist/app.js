@@ -26,6 +26,7 @@ const chatGroup_route_1 = __importDefault(require("./route/chatGroup/chatGroup.r
 const auth_middleware_1 = require("./middlewares/auth.middleware");
 const document_route_1 = __importDefault(require("./route/document/document.route"));
 const morgan_middleware_1 = __importDefault(require("./middlewares/morgan.middleware"));
+const path_1 = __importDefault(require("path"));
 // Declaration of Express App
 const app = (0, express_1.default)();
 app.set('trust proxy', 1);
@@ -54,6 +55,15 @@ app.options("*", (req, res) => {
     res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
     res.sendStatus(204);
 });
+// Serve uploaded documents statically
+app.use('/uploads/docs', express_1.default.static(path_1.default.join(__dirname, '..', 'uploads/docs')));
+app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '..', 'uploads'), {
+    setHeaders: (res, filePath) => {
+        console.log("Serving file:", filePath); // <== ADD THIS
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    }
+}));
 // xss-clean middleware to protect against XSS attacks
 //prevent parameter pollution
 app.use((0, hpp_1.default)());

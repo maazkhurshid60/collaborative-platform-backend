@@ -91,12 +91,13 @@ const signupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
 }));
 exports.signupApi = signupApi;
 const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     // Validate User Schema
     const userParsedData = auth_schema_1.userSchema.safeParse(req.body);
     if (!userParsedData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
     }
-    console.log(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.body);
+    console.log(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.file);
     const { loginUserId } = req.body;
     const isUserExist = yield db_config_1.default.user.findFirst({ where: { id: loginUserId } });
     //Check user exist 
@@ -121,7 +122,7 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
             return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed"));
         }
         const hashedPassword = yield bcrypt_1.default.hash(password !== null && password !== void 0 ? password : "", 10);
-        const clientUpdate = yield db_config_1.default.client.update({ where: { userId: loginUserId }, data: { email, password: hashedPassword }, include: { user: true } });
+        const clientUpdate = yield db_config_1.default.client.update({ where: { userId: loginUserId }, data: { email, password: hashedPassword, eSignature: (_a = req.file) === null || _a === void 0 ? void 0 : _a.path }, include: { user: true } });
         return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, clientUpdate, "User updated successfully"));
     } // Handle Provider Signup
     else if (role === client_1.Role.provider) {
