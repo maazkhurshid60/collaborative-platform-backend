@@ -56,7 +56,8 @@ app.options("*", (req, res) => {
     res.sendStatus(204);
 });
 // Serve uploaded documents statically
-app.use('/uploads/docs', express_1.default.static(path_1.default.join(__dirname, '..', 'uploads/docs')));
+app.use("/uploads", express_1.default.static(path_1.default.join(__dirname, "..", "uploads")));
+// app.use('/uploads/docs', express.static(path.join(__dirname, '..', 'uploads/docs')));
 app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '..', 'uploads'), {
     setHeaders: (res, filePath) => {
         console.log("Serving file:", filePath); // <== ADD THIS
