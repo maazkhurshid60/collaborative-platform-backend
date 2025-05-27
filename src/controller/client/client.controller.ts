@@ -69,43 +69,42 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
 
 const deletClient = asyncHandler(async (req: Request, res: Response) => {
     const { clientId } = req.body;
+    console.log("client111111111111111111111", clientId);
 
-    // 1. Find the client by ID
-    const client = await prisma.client.findUnique({
-        where: { id: clientId },
-    });
+    const user = await prisma.user.findUnique({ where: { id: clientId } });
+    console.log("user2222222222222222222", user);
 
-    if (!client) {
-        return res.status(StatusCodes.NOT_FOUND).json(
-            new ApiResponse(StatusCodes.NOT_FOUND, { error: "Client does not exist." }, "")
-        );
+    if (!user) {
+        return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { error: "Client does not exist." }, ""));
+    }
+    console.log("user3333333333333333333", user);
+
+    // Manually delete related Client or Provider first
+    if (user.role === 'client') {
+        const client = await prisma.client.findUnique({ where: { userId: clientId } });
+
+        if (client) {
+            // Delete related ProviderOnClient
+            await prisma.providerOnClient.deleteMany({ where: { clientId: client.id } });
+
+            // Delete related DocumentShareWith entries
+            await prisma.documentShareWith.deleteMany({ where: { clientId: client.id } });
+
+            // Then delete the client record
+            await prisma.client.delete({ where: { userId: clientId } });
+        }
+    }
+    else if (user.role === 'provider') {
+        await prisma.provider.delete({ where: { userId: clientId } });
     }
 
-    const userId = client.userId;
+    console.log("user6666666666666666666666666666");
 
-    // 2. Delete the Client first
-    await prisma.client.delete({
-        where: { id: clientId },
-    });
 
-    // 3. Then delete the User
-    const isClientDeleted = await prisma.user.delete({
-        where: { id: userId },
-    });
+    const deletedUser = await prisma.user.delete({ where: { id: clientId } });
+    console.log("user4666666666666666666666666");
 
-    if (!isClientDeleted) {
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Internal Server Error." }, "")
-        );
-    }
-
-    return res.status(StatusCodes.OK).json(
-        new ApiResponse(
-            StatusCodes.OK,
-            { isClientDeleted },
-            `${isClientDeleted.fullName} deleted successfully`
-        )
-    );
+    return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { deletedUser }, `${deletedUser.fullName} deleted successfully`));
 });
 
 
