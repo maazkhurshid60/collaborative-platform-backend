@@ -68,19 +68,46 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
 
 
 const deletClient = asyncHandler(async (req: Request, res: Response) => {
-    const { clientId } = req.body
-    const isClientExist = await prisma.user.findFirst({ where: { id: clientId } })
-    console.log("clientid", isClientExist);
+    const { clientId } = req.body;
 
-    if (!isClientExist) {
-        return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { error: "Client does not exist." }, ""))
+    // 1. Find the client by ID
+    const client = await prisma.client.findUnique({
+        where: { id: clientId },
+    });
+
+    if (!client) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, { error: "Client does not exist." }, "")
+        );
     }
-    const isClientDeleted = await prisma.user.delete({ where: { id: clientId } })
+
+    const userId = client.userId;
+
+    // 2. Delete the Client first
+    await prisma.client.delete({
+        where: { id: clientId },
+    });
+
+    // 3. Then delete the User
+    const isClientDeleted = await prisma.user.delete({
+        where: { id: userId },
+    });
+
     if (!isClientDeleted) {
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Internal Server Error." }, ""))
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Internal Server Error." }, "")
+        );
     }
-    return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { isClientDeleted }, `${isClientDeleted.fullName} deleted successfully`))
-})
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(
+            StatusCodes.OK,
+            { isClientDeleted },
+            `${isClientDeleted.fullName} deleted successfully`
+        )
+    );
+});
+
 
 const updateClient = asyncHandler(async (req: Request, res: Response) => {
     if (req.body.age) {
