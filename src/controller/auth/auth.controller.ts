@@ -271,7 +271,6 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const { fullName, gender, age, contactNo, address, status, cnic, role } = userParsedData.data;
-
     // Update User
     const updatedUser = await prisma.user.update({
         where: { id: loginUserId },
