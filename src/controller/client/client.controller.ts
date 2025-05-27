@@ -83,6 +83,13 @@ const deletClient = asyncHandler(async (req: Request, res: Response) => {
 })
 
 const updateClient = asyncHandler(async (req: Request, res: Response) => {
+    if (req.body.age) {
+        req.body.age = Number(req.body.age);
+    }
+
+    if (req.body.isAccountCreatedByOwnClient) {
+        req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
+    }
 
     // Validate data
     const clientData = clientSchema.safeParse(req.body);
@@ -92,9 +99,25 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const { fullName, gender, age, contactNo, address, status, cnic, email, password, clientId } = clientData.data;
-    // Hash password if provided
-    const hashedPassword = await bcrypt.hash(password ?? "", 10);
+    const {
+        fullName,
+        gender,
+        age,
+        contactNo,
+        address,
+        status,
+        cnic,
+        email,
+        password,
+        clientId
+    } = clientData.data;
+
+    // Hash password only if provided
+    let hashedPassword: string | undefined;
+    if (password && password.trim() !== "") {
+        hashedPassword = await bcrypt.hash(password, 10);
+    }
+
     const isClientExist = await prisma.client.findFirst({ where: { id: clientId } });
     if (!isClientExist) {
         return res.status(StatusCodes.NOT_FOUND).json(
@@ -105,9 +128,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
     const isEmailExist = await prisma.client.findFirst({
         where: {
             email,
-            id: {
-                not: clientId
-            }
+            id: { not: clientId }
         }
     });
     if (isEmailExist) {
@@ -119,9 +140,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
     const isCnicExists = await prisma.user.findFirst({
         where: {
             cnic,
-            id: {
-                not: isClientExist.userId
-            }
+            id: { not: isClientExist.userId }
         }
     });
     if (isCnicExists) {
@@ -130,36 +149,60 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const isFullNameExist = await prisma.user.findFirst({ where: { fullName, id: { not: isClientExist.userId } } });
+    const isFullNameExist = await prisma.user.findFirst({
+        where: {
+            fullName,
+            id: { not: isClientExist.userId }
+        }
+    });
     if (isFullNameExist) {
         return res.status(StatusCodes.CONFLICT).json(
             new ApiResponse(StatusCodes.CONFLICT, { error: `Full Name ${fullName} already taken` }, "Duplicate Error")
         );
     }
 
-    const updatedClientData = { email, password: hashedPassword };
-    const updatedUserData = { fullName, gender, age, contactNo, address, status, cnic, role: Role.client };
+    let profileImageUrl: string | null = null;
+    if (req.file) {
+        profileImageUrl = `/uploads/${req.file.filename}`;
+    }
+
+    // Conditionally build update object
+    const updatedClientData: any = { email };
+    if (hashedPassword) {
+        updatedClientData.password = hashedPassword;
+    }
+
+    const updatedUserData = {
+        fullName,
+        gender,
+        age,
+        contactNo,
+        address,
+        status,
+        cnic,
+        role: Role.client,
+        profileImage: profileImageUrl
+    };
+    console.log("profile image", updatedUserData);
 
 
     const isUserUpdated = await prisma.user.update({
         where: { id: isClientExist.userId },
         data: updatedUserData,
     });
+
     const isClientUpdated = await prisma.client.update({
         where: { id: clientId },
         data: updatedClientData,
     });
-    const updatedData = { ...isUserUpdated, ...isClientUpdated }
-    if (!isClientUpdated) {
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Something went wrong. Try later" }, "")
-        );
-    }
+
+    const updatedData = { ...isUserUpdated, ...isClientUpdated };
 
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, { updatedData }, "Client updated successfully")
     );
 });
+
 
 const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
 
@@ -175,6 +218,14 @@ const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
 
 
 const addClient = asyncHandler(async (req: Request, res: Response) => {
+    // Convert age and boolean from strings to correct types
+    if (req.body.age) {
+        req.body.age = Number(req.body.age);
+    }
+
+    if (req.body.isAccountCreatedByOwnClient) {
+        req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
+    }
     // 1. Validate user schema
     const userParsedData = userSchema.safeParse(req.body);
     if (!userParsedData.success) {
@@ -192,9 +243,12 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
             new ApiResponse(StatusCodes.CONFLICT, { error: `CNIC ${cnic} is already registered.` }, "Validation failed")
         );
     }
-
+    let profileImageUrl: string | null = null;
+    if (req.file) {
+        profileImageUrl = `/uploads/${req.file.filename}`; // Or full URL if needed
+    }
     // 3. Create User
-    const userData: any = { fullName, gender, age, contactNo, address, status, cnic, role };
+    const userData: any = { fullName, gender, age, contactNo, address, status, cnic, role, profileImage: profileImageUrl };
     const userCreated = await prisma.user.create({ data: userData });
 
     // 4. Handle Client Signup

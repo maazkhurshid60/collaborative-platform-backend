@@ -17,10 +17,13 @@ const asyncHandler_1 = require("../../utils/asyncHandler");
 const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
 const apiResponse_1 = require("../../utils/apiResponse");
+const socket_1 = require("../../socket/socket");
 const addDocumentApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const file = req === null || req === void 0 ? void 0 : req.file;
+    const { type } = req.body;
     const name = (file === null || file === void 0 ? void 0 : file.originalname) || ((_a = req === null || req === void 0 ? void 0 : req.body) === null || _a === void 0 ? void 0 : _a.name); // Use filename or name from body
+    console.log("type", type);
     if (!file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
@@ -38,6 +41,7 @@ const addDocumentApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(
         data: {
             name,
             url: `/uploads/${file.filename}`,
+            type
         },
     });
     res.status(201).json({ message: 'Uploaded successfully', document });
@@ -116,53 +120,43 @@ const documentSharedWithClientApi = (0, asyncHandler_1.asyncHandler)((req, res) 
             provider: true,
         }
     })));
+    // Notify client
+    for (const doc of sharedDocuments) {
+        const clientUser = yield db_config_1.default.user.findUnique({
+            where: { id: doc.client.userId },
+            select: { id: true, fullName: true }
+        });
+        const providerUser = yield db_config_1.default.user.findUnique({
+            where: { id: doc.provider.userId },
+            select: { fullName: true }
+        });
+        if (!clientUser) {
+            console.warn(`⚠️ User not found for clientId: ${doc.client.userId}`);
+            continue; // Skip if client user doesn't exist
+        }
+        yield db_config_1.default.notification.create({
+            data: {
+                recipientId: clientUser.id,
+                title: 'New Document Shared',
+                message: `Provider ${(providerUser === null || providerUser === void 0 ? void 0 : providerUser.fullName) || "Provider"} shared a document with you.`,
+                type: 'DOCUMENT_SHARED'
+            }
+        });
+        socket_1.io.to(clientUser.id).emit('new_notification', {
+            title: 'New Document Shared',
+            message: `Provider ${(providerUser === null || providerUser === void 0 ? void 0 : providerUser.fullName) || "Provider"} shared a document with you.`,
+            type: 'DOCUMENT_SHARED',
+            recipientId: clientUser.id
+        });
+    }
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, {
         message: "Documents shared with client successfully.",
         data: sharedDocuments,
     }, "Fetched."));
 }));
 exports.documentSharedWithClientApi = documentSharedWithClientApi;
-// const documentSignByClientApi = asyncHandler(async (req: Request, res: Response) => {
-//     const { clientId, sharedDocumentId, eSignature, isAgree } = req.body;
-//     // Validate required fields
-//     if (!clientId || !sharedDocumentId || !eSignature || typeof isAgree !== "boolean") {
-//         return res.status(StatusCodes.BAD_REQUEST).json(
-//             new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Missing or invalid input fields." }, "Bad Request")
-//         );
-//     }
-//     // Check if shared document exists & belongs to client
-//     const isShareDocumentExist = await prisma.documentShareWith.findFirst({
-//         where: {
-//             id: sharedDocumentId,
-//             clientId: clientId, // validate ownership
-//         }
-//     });
-//     if (!isShareDocumentExist) {
-//         return res.status(StatusCodes.NOT_FOUND).json(
-//             new ApiResponse(StatusCodes.NOT_FOUND, { error: "Document not found or not assigned to this client." }, "Not Found")
-//         );
-//     }
-//     // Update response
-//     const documentUpdated = await prisma.documentShareWith.update({
-//         where: { id: sharedDocumentId },
-//         data: {
-//             eSignature,
-//             isAgree,
-//             updatedAt: new Date()
-//         }, include: {
-//             document: true,
-//             client: true,
-//             provider: true
-//         }
-//     });
-//     return res.status(StatusCodes.OK).json(
-//         new ApiResponse(StatusCodes.OK, {
-//             message: "Your response has been recorded successfully.",
-//             data: documentUpdated
-//         }, "Success")
-//     );
-// });
 const documentSignByClientApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c, _d, _e, _f;
     const { clientId, sharedDocumentId, isAgree } = req.body;
     const eSignatureFile = req.file;
     if (!clientId || !sharedDocumentId || !eSignatureFile || isAgree === undefined) {
@@ -180,15 +174,35 @@ const documentSignByClientApi = (0, asyncHandler_1.asyncHandler)((req, res) => _
     const documentUpdated = yield db_config_1.default.documentShareWith.update({
         where: { id: sharedDocumentId },
         data: {
-            eSignature: eSignatureFile.filename, // Save just the filename or full path
-            isAgree: isAgree === "true", // since it's coming from formData, it's a string
+            eSignature: eSignatureFile.filename,
+            isAgree: isAgree === "true",
             updatedAt: new Date()
         },
         include: {
             document: true,
-            client: true,
-            provider: true
+            client: { include: { user: true } },
+            provider: { include: { user: true } }
         }
+    });
+    // Notify provider (get their user.id)
+    const providerUserId = (_b = (_a = documentUpdated === null || documentUpdated === void 0 ? void 0 : documentUpdated.provider) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b.id;
+    console.log("providerid", providerUserId);
+    yield db_config_1.default.notification.create({
+        data: {
+            recipientId: providerUserId,
+            title: 'Document Signed',
+            message: `Client ${(_d = (_c = documentUpdated === null || documentUpdated === void 0 ? void 0 : documentUpdated.client) === null || _c === void 0 ? void 0 : _c.user) === null || _d === void 0 ? void 0 : _d.fullName} signed the document.`,
+            type: 'DOCUMENT_SIGNED'
+        }
+    });
+    if (!providerUserId) {
+        return res.status(404).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "Provider user ID not found" }, "Not Found"));
+    }
+    socket_1.io.to(providerUserId).emit('new_notification', {
+        title: 'Document Signed',
+        message: `Client ${(_f = (_e = documentUpdated === null || documentUpdated === void 0 ? void 0 : documentUpdated.client) === null || _e === void 0 ? void 0 : _e.user) === null || _f === void 0 ? void 0 : _f.fullName} signed the document.`,
+        type: 'DOCUMENT_SIGNED',
+        recipientId: providerUserId
     });
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, {
         message: "Your response has been recorded successfully.",

@@ -27,6 +27,7 @@ const auth_middleware_1 = require("./middlewares/auth.middleware");
 const document_route_1 = __importDefault(require("./route/document/document.route"));
 const morgan_middleware_1 = __importDefault(require("./middlewares/morgan.middleware"));
 const path_1 = __importDefault(require("path"));
+const notification_route_1 = __importDefault(require("./route/notification/notification.route"));
 // Declaration of Express App
 const app = (0, express_1.default)();
 app.set('trust proxy', 1);
@@ -56,8 +57,7 @@ app.options("*", (req, res) => {
     res.sendStatus(204);
 });
 // Serve uploaded documents statically
-app.use("/uploads", express_1.default.static(path_1.default.join(__dirname, "..", "uploads")));
-// app.use('/uploads/docs', express.static(path.join(__dirname, '..', 'uploads/docs')));
+app.use('/uploads/docs', express_1.default.static(path_1.default.join(__dirname, '..', 'uploads/docs')));
 app.use('/uploads', express_1.default.static(path_1.default.join(__dirname, '..', 'uploads'), {
     setHeaders: (res, filePath) => {
         console.log("Serving file:", filePath); // <== ADD THIS
@@ -84,4 +84,5 @@ app.use("/api/v1/chat-channel", auth_middleware_1.authJWT, chatChannel_route_1.d
 app.use("/api/v1/chat-channel", auth_middleware_1.authJWT, chatChannel_route_1.default);
 app.use("/api/v1/chat-group", auth_middleware_1.authJWT, chatGroup_route_1.default);
 app.use("/api/v1/document", auth_middleware_1.authJWT, document_route_1.default);
+app.use("/api/v1/notification", auth_middleware_1.authJWT, notification_route_1.default);
 exports.default = app;

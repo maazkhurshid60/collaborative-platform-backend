@@ -9,7 +9,15 @@ authRouter.post("/login", logInApi)
 authRouter.post("/block-user", blockUserApi)
 authRouter.post("/unblock-user", authJWT, unblockUserApi)
 authRouter.post("/logout", authJWT, logoutApi)
-authRouter.patch("/update-me", authJWT, upload.single('eSignature'), updateMeApi)
+authRouter.patch(
+    "/update-me",
+    authJWT,
+    upload.fields([
+        { name: 'profileImage', maxCount: 1 },
+        { name: 'eSignature', maxCount: 1 },
+    ]),
+    updateMeApi
+);
 authRouter.delete("/delete-me-account", authJWT, deleteMeAccountApi)
 authRouter.post("/get-me", authJWT, getMeApi)
 authRouter.get("/get-all-users", authJWT, getAllUsersApi)

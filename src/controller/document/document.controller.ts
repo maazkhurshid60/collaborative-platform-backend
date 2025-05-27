@@ -3,10 +3,14 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
+import { io } from "../../socket/socket";
 
 const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
+
     const file = req?.file;
+    const { type } = req.body
     const name = file?.originalname || req?.body?.name;  // Use filename or name from body
+    console.log("type", type);
 
     if (!file) {
         return res.status(400).json({ error: 'No file uploaded' });
@@ -28,6 +32,7 @@ const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
         data: {
             name,
             url: `/uploads/${file.filename}`,
+            type
         },
     });
 
@@ -130,6 +135,42 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
         )
     );
 
+
+    // Notify client
+    for (const doc of sharedDocuments) {
+        const clientUser = await prisma.user.findUnique({
+            where: { id: doc.client.userId },
+            select: { id: true, fullName: true }
+        });
+
+        const providerUser = await prisma.user.findUnique({
+            where: { id: doc.provider.userId },
+            select: { fullName: true }
+        });
+
+        if (!clientUser) {
+            console.warn(`⚠️ User not found for clientId: ${doc.client.userId}`);
+            continue; // Skip if client user doesn't exist
+        }
+
+        await prisma.notification.create({
+            data: {
+                recipientId: clientUser.id,
+                title: 'New Document Shared',
+                message: `Provider ${providerUser?.fullName || "Provider"} shared a document with you.`,
+                type: 'DOCUMENT_SHARED'
+            }
+        });
+
+        io.to(clientUser.id).emit('new_notification', {
+            title: 'New Document Shared',
+            message: `Provider ${providerUser?.fullName || "Provider"} shared a document with you.`,
+            type: 'DOCUMENT_SHARED',
+            recipientId: clientUser.id
+        });
+    }
+
+
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, {
             message: "Documents shared with client successfully.",
@@ -141,51 +182,6 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
 })
 
 
-// const documentSignByClientApi = asyncHandler(async (req: Request, res: Response) => {
-//     const { clientId, sharedDocumentId, eSignature, isAgree } = req.body;
-
-//     // Validate required fields
-//     if (!clientId || !sharedDocumentId || !eSignature || typeof isAgree !== "boolean") {
-//         return res.status(StatusCodes.BAD_REQUEST).json(
-//             new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Missing or invalid input fields." }, "Bad Request")
-//         );
-//     }
-
-//     // Check if shared document exists & belongs to client
-//     const isShareDocumentExist = await prisma.documentShareWith.findFirst({
-//         where: {
-//             id: sharedDocumentId,
-//             clientId: clientId, // validate ownership
-//         }
-//     });
-
-//     if (!isShareDocumentExist) {
-//         return res.status(StatusCodes.NOT_FOUND).json(
-//             new ApiResponse(StatusCodes.NOT_FOUND, { error: "Document not found or not assigned to this client." }, "Not Found")
-//         );
-//     }
-
-//     // Update response
-//     const documentUpdated = await prisma.documentShareWith.update({
-//         where: { id: sharedDocumentId },
-//         data: {
-//             eSignature,
-//             isAgree,
-//             updatedAt: new Date()
-//         }, include: {
-//             document: true,
-//             client: true,
-//             provider: true
-//         }
-//     });
-
-//     return res.status(StatusCodes.OK).json(
-//         new ApiResponse(StatusCodes.OK, {
-//             message: "Your response has been recorded successfully.",
-//             data: documentUpdated
-//         }, "Success")
-//     );
-// });
 
 const documentSignByClientApi = asyncHandler(async (req: Request, res: Response) => {
     const { clientId, sharedDocumentId, isAgree } = req.body;
@@ -213,16 +209,42 @@ const documentSignByClientApi = asyncHandler(async (req: Request, res: Response)
     const documentUpdated = await prisma.documentShareWith.update({
         where: { id: sharedDocumentId },
         data: {
-            eSignature: eSignatureFile.filename, // Save just the filename or full path
-            isAgree: isAgree === "true", // since it's coming from formData, it's a string
+            eSignature: eSignatureFile.filename,
+            isAgree: isAgree === "true",
             updatedAt: new Date()
         },
         include: {
             document: true,
-            client: true,
-            provider: true
+            client: { include: { user: true } },
+            provider: { include: { user: true } }
         }
     });
+
+    // Notify provider (get their user.id)
+    const providerUserId = documentUpdated?.provider?.user?.id!;
+    console.log("providerid", providerUserId);
+
+    await prisma.notification.create({
+        data: {
+            recipientId: providerUserId,
+            title: 'Document Signed',
+            message: `Client ${documentUpdated?.client?.user?.fullName} signed the document.`,
+            type: 'DOCUMENT_SIGNED'
+        }
+    });
+
+    if (!providerUserId) {
+        return res.status(404).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, { error: "Provider user ID not found" }, "Not Found")
+        );
+    }
+    io.to(providerUserId).emit('new_notification', {
+        title: 'Document Signed',
+        message: `Client ${documentUpdated?.client?.user?.fullName} signed the document.`,
+        type: 'DOCUMENT_SIGNED',
+        recipientId: providerUserId
+    });
+
 
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, {

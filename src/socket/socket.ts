@@ -1,50 +1,164 @@
 
 
 
+// import { Server } from 'socket.io';
+// import prisma from '../db/db.config';
+// let io: Server;
+// export function setupSocket(server: any) {
+//     const io = new Server(server, { cors: { origin: ['http://localhost:5173', 'http://localhost:4173', "https://collaborative-platform-frontend.vercel.app"] } });
+//     console.log("⚡️ Socket.IO initialized");
+
+//     io.on('connection', (socket: any) => {
+//         const providerId = socket.handshake.query.providerId;
+//         const userId = socket.handshake.query.userId;
+
+//         console.log(`✅ Socket connected | userId: ${userId || '-'} | providerId: ${providerId || '-'}`);
+
+//         // ✅ Join personal room for real-time notifications
+//         if (userId) {
+//             socket.join(userId);
+//         }
+//         if (providerId) {
+//             // Join the provider's personal room
+//             socket.join(providerId);
+
+//             // Join all group chats the provider is a member of
+//             prisma.groupMembers.findMany({ where: { providerId } }).then(groups => {
+//                 groups.forEach(group => socket.join(group.groupChatId));
+//             });
+
+//             // Handle sending a direct message
+
+//             socket.on('send_direct', ({ toProviderId, message }: { toProviderId: string, message: any }
+
+//             ) => {
+//                 try {
+//                     // ✅ Just emit the already saved message — don't save again
+//                     io.to(message.chatChannelId).emit('receive_direct', message);
+//                 } catch (err) {
+//                     console.error('Error sending direct message:', err);
+//                 }
+//             });
+
+
+//             // Allow clients to join a direct-chat room by channel ID
+//             socket.on('join_channel', ({ chatChannelId }: { chatChannelId: string }) => {
+//                 console.log(`✅ [BACKEND] Socket ${socket.id} joining ROOM: ${chatChannelId}`);
+//                 socket.join(chatChannelId);
+//             });
+
+//             // Handle sending a group message
+
+//             socket.on('send_group', ({ message }: { message: any }) => {
+//                 try {
+//                     // ✅ Don't create message again — emit only
+//                     io.to(message.groupId).emit('receive_group', message);
+//                     console.log('✅ Group message emitted:', message);
+//                 } catch (err) {
+//                     console.error('❌ Error in send_group:', err);
+//                 }
+//             });
+
+
+//             // Handle typing indicator
+//             socket.on('typing', (channelId: string) => {
+//                 socket.to(channelId).emit('user_typing', { providerId });
+//             });
+
+//             socket.on('stop_typing', (channelId: string) => {
+//                 socket.to(channelId).emit('user_stop_typing', { providerId });
+//             });
+
+//             // Handle message deletion
+//             socket.on('delete_message', async (messageId: string) => {
+//                 try {
+//                     await prisma.chatMessage.delete({
+//                         where: { id: messageId }
+//                     });
+
+//                     io.emit('message_deleted', { messageId });  // Notify all users about the deletion
+
+//                 } catch (err) {
+//                     console.error('Error deleting message:', err);
+//                     socket.emit('error', { message: 'Error deleting message' });
+//                 }
+//             });
+
+//             // Handle user disconnection
+//             socket.on('disconnect', () => {
+//                 console.log(`Provider ${providerId} disconnected`);
+//                 socket.leave(providerId);
+//             });
+//         }
+//     });
+
+// }
+
+
+// export { io }; 
+
+
 import { Server } from 'socket.io';
 import prisma from '../db/db.config';
+
 let io: Server;
+
 export function setupSocket(server: any) {
-    const io = new Server(server, { cors: { origin: ['http://localhost:5173', 'http://localhost:4173', "https://collaborative-platform-frontend.vercel.app"] } });
+    io = new Server(server, {
+        cors: {
+            origin: [
+                'http://localhost:5173',
+                'http://localhost:4173',
+                'https://collaborative-platform-frontend.vercel.app',
+            ],
+        },
+    });
+
     console.log("⚡️ Socket.IO initialized");
 
-    io.on('connection', (socket: any) => {
+    io.on('connection', async (socket: any) => {
         const providerId = socket.handshake.query.providerId;
-        console.log(`Provider ${providerId} connected`);
+        const userId = socket.handshake.query.userId;
 
-        // Join the provider's personal room
-        socket.join(providerId);
+        console.log(`✅ Socket connected | userId: ${userId || '-'} | providerId: ${providerId || '-'}`);
 
-        // Join all group chats the provider is a member of
-        prisma.groupMembers.findMany({ where: { providerId } }).then(groups => {
-            groups.forEach(group => socket.join(group.groupChatId));
-        });
+        // ✅ Join notification room
+        if (userId) {
+            socket.join(userId);
+        }
 
-        // Handle sending a direct message
+        // ✅ Join provider personal room and their group chats
+        if (providerId) {
+            socket.join(providerId);
 
-        socket.on('send_direct', ({ toProviderId, message }: { toProviderId: string, message: any }
-
-        ) => {
             try {
-                // ✅ Just emit the already saved message — don't save again
+                const groups = await prisma.groupMembers.findMany({
+                    where: { providerId: providerId.toString() },
+                });
+                groups.forEach(group => socket.join(group.groupChatId));
+            } catch (err) {
+                console.error('❌ Error joining group chats:', err);
+            }
+        }
+
+        // ✅ Direct message
+        socket.on('send_direct', ({ toProviderId, message }: { toProviderId: string, message: any }) => {
+            try {
                 io.to(message.chatChannelId).emit('receive_direct', message);
             } catch (err) {
                 console.error('Error sending direct message:', err);
             }
         });
 
-
-        // Allow clients to join a direct-chat room by channel ID
+        // ✅ Join direct chat room
         socket.on('join_channel', ({ chatChannelId }: { chatChannelId: string }) => {
-            console.log(`✅ [BACKEND] Socket ${socket.id} joining ROOM: ${chatChannelId}`);
+            console.log(`✅ Socket ${socket.id} joining ROOM: ${chatChannelId}`);
             socket.join(chatChannelId);
         });
 
-        // Handle sending a group message
-
+        // ✅ Group message
         socket.on('send_group', ({ message }: { message: any }) => {
             try {
-                // ✅ Don't create message again — emit only
                 io.to(message.groupId).emit('receive_group', message);
                 console.log('✅ Group message emitted:', message);
             } catch (err) {
@@ -52,8 +166,7 @@ export function setupSocket(server: any) {
             }
         });
 
-
-        // Handle typing indicator
+        // ✅ Typing indicator
         socket.on('typing', (channelId: string) => {
             socket.to(channelId).emit('user_typing', { providerId });
         });
@@ -62,29 +175,26 @@ export function setupSocket(server: any) {
             socket.to(channelId).emit('user_stop_typing', { providerId });
         });
 
-        // Handle message deletion
+        // ✅ Delete message
         socket.on('delete_message', async (messageId: string) => {
             try {
                 await prisma.chatMessage.delete({
-                    where: { id: messageId }
+                    where: { id: messageId },
                 });
-
-                io.emit('message_deleted', { messageId });  // Notify all users about the deletion
-
+                io.emit('message_deleted', { messageId });
             } catch (err) {
                 console.error('Error deleting message:', err);
                 socket.emit('error', { message: 'Error deleting message' });
             }
         });
 
-        // Handle user disconnection
+        // ✅ Disconnect handling
         socket.on('disconnect', () => {
-            console.log(`Provider ${providerId} disconnected`);
-            socket.leave(providerId);
+            console.log(`❌ Disconnected | userId: ${userId || '-'} | providerId: ${providerId || '-'}`);
+            if (providerId) socket.leave(providerId);
+            if (userId) socket.leave(userId);
         });
     });
-
 }
 
-
-export { io }; 
+export { io };

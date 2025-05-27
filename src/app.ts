@@ -25,6 +25,7 @@ import { authJWT } from "./middlewares/auth.middleware";
 import documentRouter from "./route/document/document.route";
 import morganMiddleware from "./middlewares/morgan.middleware";
 import path from "path";
+import notificationRouter from "./route/notification/notification.route";
 
 
 // Declaration of Express App
@@ -65,11 +66,7 @@ app.options("*", (req, res) => {
     res.sendStatus(204);
 });
 // Serve uploaded documents statically
-app.use(
-    "/uploads",
-    express.static(path.join(__dirname, "..", "uploads"))
-);
-// app.use('/uploads/docs', express.static(path.join(__dirname, '..', 'uploads/docs')));
+app.use('/uploads/docs', express.static(path.join(__dirname, '..', 'uploads/docs')));
 app.use(
     '/uploads',
     express.static(path.join(__dirname, '..', 'uploads'), {
@@ -103,6 +100,7 @@ app.use("/api/v1/chat-channel", authJWT, chatChannelRouter);
 app.use("/api/v1/chat-channel", authJWT, chatChannelRouter);
 app.use("/api/v1/chat-group", authJWT, chatGroupRouter);
 app.use("/api/v1/document", authJWT, documentRouter);
+app.use("/api/v1/notification", authJWT, notificationRouter);
 
 export default app;
 

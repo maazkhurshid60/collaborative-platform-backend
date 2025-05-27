@@ -2,6 +2,7 @@ model Document {
   id            String              @id @default(uuid())
   url           String
   name          String
+  type          String?             @default("Questionnaire")
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @default(now())
   sharedRecords DocumentShareWith[]

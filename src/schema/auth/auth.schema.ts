@@ -4,7 +4,7 @@ export const userSchema = z.object({
     fullName: z.string().nonempty().min(3, { message: "Full Name not less then 3letters." }),
     profileImage: z.string().optional(),
     gender: z.enum(["male", "female", "other"], { message: "Gender must be either male or female or other" }).optional(),
-    age: z.number()
+    age: z.coerce.number()
         .min(10, { message: "Age must be at least 10" })  // Min 2-digit number (10)
         .max(99, { message: "Age must be at most 99" }).optional(), // Max 2-digit number (99)    
     contactNo: z.string().nonempty().min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }).optional(),
@@ -25,7 +25,7 @@ export const clientSchema = userSchema.extend({
             { message: "Password is required and should not be less than 10 characters" }
         ),
 
-    isAccountCreatedByOwnClient: z.boolean().default(false)
+    isAccountCreatedByOwnClient: z.coerce.boolean(),
 })
 
 // Provider Schema (Extends User)

@@ -103,20 +103,167 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
 
 });
 
+
+
+// const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
+//     // Validate User Schema
+//     const userParsedData = userSchema.safeParse(req.body);
+//     if (!userParsedData.success) {
+//         return res.status(StatusCodes.BAD_REQUEST).json(
+//             new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
+//         );
+//     }
+
+//     console.log(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.file);
+
+//     const { loginUserId } = req.body;
+
+//     const isUserExist = await prisma.user.findFirst({ where: { id: loginUserId } });
+
+//     //Check user exist 
+//     if (!isUserExist) {
+//         return res.status(StatusCodes.NOT_FOUND).json(
+//             new ApiResponse(StatusCodes.NOT_FOUND, { error: "User is not exist." }, "Not Found Error.")
+//         );
+//     }
+
+//     const { fullName, gender, age, contactNo, address, status, cnic, role } = userParsedData.data;
+
+//     // Update User
+//     const updatedUser = await prisma.user.update({
+//         where: { id: loginUserId },
+//         data: { fullName, gender, age, contactNo, address, status, cnic, role }
+//     });
+
+//     // Handle Client Update
+//     if (role === Role.client) {
+//         const clientParsed = clientSchema.safeParse(req.body);
+//         if (!clientParsed.success) {
+//             return res.status(StatusCodes.BAD_REQUEST).json(
+//                 new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
+//             );
+//         }
+
+//         const { email, password } = clientParsed.data;
+
+
+//         const existingClient = await prisma.client.findFirst({ where: { email, NOT: { userId: loginUserId } } });
+//         if (existingClient) {
+//             return res.status(StatusCodes.CONFLICT).json(
+//                 new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
+//             );
+//         }
+
+//         // Build update data
+//         const updateData: any = {
+//             email,
+
+//         };
+
+//         if (password) {
+//             console.log("client uploaded<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", password);
+
+//             updateData.password = await bcrypt.hash(password, 10);
+//         }
+
+
+//         if (req.file) {
+//             console.log("<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.file);
+
+//             updateData.eSignature = req.file?.path;
+//         }
+
+//         const clientUpdate = await prisma.client.update({
+//             where: { userId: loginUserId },
+//             data: updateData,
+//             include: { user: true }
+//         });
+
+//         return res.status(StatusCodes.OK).json(
+//             new ApiResponse(StatusCodes.OK, clientUpdate, "User updated successfully")
+//         );
+//     }
+
+//     // Handle Provider Update
+//     else if (role === Role.provider) {
+//         const providerParsed = providerSchema.safeParse(req.body);
+//         if (!providerParsed.success) {
+//             return res.status(StatusCodes.BAD_REQUEST).json(
+//                 new ApiResponse(StatusCodes.BAD_REQUEST, { error: providerParsed.error.errors }, "Validation failed")
+//             );
+//         }
+
+//         const { email, password, department } = providerParsed.data;
+
+//         const existingProvider = await prisma.provider.findFirst({ where: { email, NOT: { userId: loginUserId } } });
+//         if (existingProvider) {
+//             return res.status(StatusCodes.CONFLICT).json(
+//                 new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
+//             );
+//         }
+
+//         const updateData: any = {
+//             email,
+//             department
+//         };
+
+//         if (password) {
+//             updateData.password = await bcrypt.hash(password, 10);
+//         }
+
+//         const providerUpdate = await prisma.provider.update({
+//             where: { userId: loginUserId },
+//             data: updateData,
+//             include: { user: true }
+//         });
+
+//         return res.status(StatusCodes.OK).json(
+//             new ApiResponse(StatusCodes.OK, providerUpdate, "User updated successfully")
+//         );
+//     }
+// });
+
 const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
-    // Validate User Schema
-    const userParsedData = userSchema.safeParse(req.body);
+    // Convert values from form-data strings to appropriate types
+    if (req.body.age) {
+        req.body.age = Number(req.body.age);
+    }
+
+    if (req.body.isAccountCreatedByOwnClient) {
+        req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
+    }
+
+    // Extract uploaded files
+    const files = req.files as {
+        profileImage?: Express.Multer.File[];
+        eSignature?: Express.Multer.File[];
+    };
+
+
+
+    const profileImage = files?.profileImage?.[0];
+    const eSignature = files?.eSignature?.[0];
+
+
+    const profileImageUrl = profileImage ? `/uploads/${profileImage.filename}` : "null";
+    const eSignatureUrl = eSignature ? `/uploads/${eSignature.filename}` : null;
+
+    // Validate User Schema with injected profileImage
+    const userParsedData = userSchema.safeParse({
+        ...req.body,
+        profileImage: profileImageUrl,
+    });
+
     if (!userParsedData.success) {
         return res.status(StatusCodes.BAD_REQUEST).json(
             new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
         );
     }
-    console.log(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.file);
-
 
     const { loginUserId } = req.body;
-    const isUserExist = await prisma.user.findFirst({ where: { id: loginUserId } })
-    //Check user exist 
+
+    const isUserExist = await prisma.user.findFirst({ where: { id: loginUserId } });
+
     if (!isUserExist) {
         return res.status(StatusCodes.NOT_FOUND).json(
             new ApiResponse(StatusCodes.NOT_FOUND, { error: "User is not exist." }, "Not Found Error.")
@@ -124,12 +271,24 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const { fullName, gender, age, contactNo, address, status, cnic, role } = userParsedData.data;
+
     // Update User
     const updatedUser = await prisma.user.update({
         where: { id: loginUserId },
-        data: { fullName, gender, age, contactNo, address, status, cnic, role }
+        data: {
+            fullName,
+            gender,
+            age,
+            contactNo,
+            address,
+            status,
+            cnic,
+            role,
+            profileImage: profileImageUrl,
+        }
     });
-    // Handle Client Signup
+
+    // Handle Client Update
     if (role === Role.client) {
         const clientParsed = clientSchema.safeParse(req.body);
         if (!clientParsed.success) {
@@ -140,19 +299,40 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
 
         const { email, password } = clientParsed.data;
 
-        const existingClient = await prisma.client.findFirst({ where: { email, NOT: { userId: loginUserId } } });
+        const existingClient = await prisma.client.findFirst({
+            where: { email, NOT: { userId: loginUserId } }
+        });
+
         if (existingClient) {
             return res.status(StatusCodes.CONFLICT).json(
                 new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
             );
         }
 
-        const hashedPassword = await bcrypt.hash(password ?? "", 10);
-        const clientUpdate = await prisma.client.update({ where: { userId: loginUserId }, data: { email, password: hashedPassword, eSignature: req.file?.path }, include: { user: true } });
+        const updateData: any = {
+            email,
+        };
+
+        if (password) {
+            updateData.password = await bcrypt.hash(password, 10);
+        }
+
+        if (eSignatureUrl) {
+            updateData.eSignature = eSignatureUrl;
+        }
+
+        const clientUpdate = await prisma.client.update({
+            where: { userId: loginUserId },
+            data: updateData,
+            include: { user: true }
+        });
+
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, clientUpdate, "User updated successfully")
         );
-    }// Handle Provider Signup
+    }
+
+    // Handle Provider Update
     else if (role === Role.provider) {
         const providerParsed = providerSchema.safeParse(req.body);
         if (!providerParsed.success) {
@@ -163,21 +343,38 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
 
         const { email, password, department } = providerParsed.data;
 
-        const existingProvider = await prisma.provider.findFirst({ where: { email, NOT: { userId: loginUserId } } });
+        const existingProvider = await prisma.provider.findFirst({
+            where: { email, NOT: { userId: loginUserId } }
+        });
+
         if (existingProvider) {
             return res.status(StatusCodes.CONFLICT).json(
                 new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
             );
         }
-        let hashedPassword
+
+        const updateData: any = {
+            email,
+            department,
+        };
+
         if (password) {
-            hashedPassword = await bcrypt.hash(password, 10);
-        } const providerUpdate = await prisma.provider.update({ where: { userId: loginUserId }, data: { email, password: hashedPassword, department }, include: { user: true } });
+            updateData.password = await bcrypt.hash(password, 10);
+        }
+
+        const providerUpdate = await prisma.provider.update({
+            where: { userId: loginUserId },
+            data: updateData,
+            include: { user: true }
+        });
+
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, providerUpdate, "User updated successfully")
         );
     }
-})
+});
+
+
 
 const logInApi = asyncHandler(async (req: Request, res: Response) => {
     // Validate request body with Zod

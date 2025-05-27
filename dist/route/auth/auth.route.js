@@ -11,7 +11,10 @@ authRouter.post("/login", auth_controller_1.logInApi);
 authRouter.post("/block-user", auth_controller_1.blockUserApi);
 authRouter.post("/unblock-user", auth_middleware_1.authJWT, auth_controller_1.unblockUserApi);
 authRouter.post("/logout", auth_middleware_1.authJWT, auth_controller_1.logoutApi);
-authRouter.patch("/update-me", auth_middleware_1.authJWT, multerImgConfig_1.upload.single('eSignature'), auth_controller_1.updateMeApi);
+authRouter.patch("/update-me", auth_middleware_1.authJWT, multerImgConfig_1.upload.fields([
+    { name: 'profileImage', maxCount: 1 },
+    { name: 'eSignature', maxCount: 1 },
+]), auth_controller_1.updateMeApi);
 authRouter.delete("/delete-me-account", auth_middleware_1.authJWT, auth_controller_1.deleteMeAccountApi);
 authRouter.post("/get-me", auth_middleware_1.authJWT, auth_controller_1.getMeApi);
 authRouter.get("/get-all-users", auth_middleware_1.authJWT, auth_controller_1.getAllUsersApi);
