@@ -17,7 +17,6 @@ authRouter.patch(
         { name: 'eSignature', maxCount: 1 },
     ]),
     updateMeApi
-
 );
 authRouter.delete("/delete-me-account", authJWT, deleteMeAccountApi)
 authRouter.post("/get-me", authJWT, getMeApi)
