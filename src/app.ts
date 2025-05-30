@@ -26,6 +26,7 @@ import documentRouter from "./route/document/document.route";
 import morganMiddleware from "./middlewares/morgan.middleware";
 import path from "path";
 import notificationRouter from "./route/notification/notification.route";
+import invitationEmailRouter from "./route/invitationEmail/invitationEmail.route";
 
 
 // Declaration of Express App
@@ -101,6 +102,7 @@ app.use("/api/v1/chat-channel", authJWT, chatChannelRouter);
 app.use("/api/v1/chat-group", authJWT, chatGroupRouter);
 app.use("/api/v1/document", authJWT, documentRouter);
 app.use("/api/v1/notification", authJWT, notificationRouter);
+app.use("/api/v1/invite", authJWT, invitationEmailRouter);
 
 export default app;
 

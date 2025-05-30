@@ -18,6 +18,7 @@ const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
 const apiResponse_1 = require("../../utils/apiResponse");
 const socket_1 = require("../../socket/socket");
+const SendDocumentEmail_1 = require("../../utils/nodeMailer/SendDocumentEmail");
 const addDocumentApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const file = req === null || req === void 0 ? void 0 : req.file;
@@ -95,13 +96,13 @@ const getAllDocumentApi = (0, asyncHandler_1.asyncHandler)((req, res) => __await
 }));
 exports.getAllDocumentApi = getAllDocumentApi;
 const documentSharedWithClientApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { providerId, clientId, documentId } = req.body;
+    const { providerId, clientId, documentId, senderId, clientEmail } = req.body;
     const existing = yield db_config_1.default.documentShareWith.findFirst({
         where: {
             providerId,
             clientId,
             documentId: {
-                in: documentId // ✅ Now using `in` for array check
+                in: documentId
             }
         }
     });
@@ -117,10 +118,9 @@ const documentSharedWithClientApi = (0, asyncHandler_1.asyncHandler)((req, res) 
         include: {
             document: true,
             client: true,
-            provider: true,
+            provider: true
         }
     })));
-    // Notify client
     for (const doc of sharedDocuments) {
         const clientUser = yield db_config_1.default.user.findUnique({
             where: { id: doc.client.userId },
@@ -128,36 +128,47 @@ const documentSharedWithClientApi = (0, asyncHandler_1.asyncHandler)((req, res) 
         });
         const providerUser = yield db_config_1.default.user.findUnique({
             where: { id: doc.provider.userId },
-            select: { fullName: true }
+            select: { id: true, fullName: true }
         });
-        if (!clientUser) {
-            console.warn(`⚠️ User not found for clientId: ${doc.client.userId}`);
-            continue; // Skip if client user doesn't exist
+        if (!clientUser || !providerUser) {
+            console.warn(`⚠️ User not found for client or provider.`);
+            continue;
         }
-        yield db_config_1.default.notification.create({
+        const messageForClient = `Provider ${providerUser.fullName} shared a document with you.`;
+        const messageForProvider = `You shared a document with ${clientUser.fullName}.`;
+        // ✅ Create notification for CLIENT
+        const clientNotification = yield db_config_1.default.notification.create({
             data: {
                 recipientId: clientUser.id,
                 title: 'New Document Shared',
-                message: `Provider ${(providerUser === null || providerUser === void 0 ? void 0 : providerUser.fullName) || "Provider"} shared a document with you.`,
-                type: 'DOCUMENT_SHARED'
+                message: messageForClient,
+                type: 'DOCUMENT_SHARED',
+                senderId: senderId
             }
         });
-        socket_1.io.to(clientUser.id).emit('new_notification', {
-            title: 'New Document Shared',
-            message: `Provider ${(providerUser === null || providerUser === void 0 ? void 0 : providerUser.fullName) || "Provider"} shared a document with you.`,
-            type: 'DOCUMENT_SHARED',
-            recipientId: clientUser.id
+        yield (0, SendDocumentEmail_1.sendDocumentEmail)(clientEmail, clientUser.fullName, providerUser.fullName);
+        socket_1.io.to(clientUser.id).emit('new_notification', clientNotification);
+        // Create notification for PROVIDER
+        const providerNotification = yield db_config_1.default.notification.create({
+            data: {
+                recipientId: providerUser.id,
+                title: 'New Document Shared',
+                message: messageForProvider,
+                type: 'DOCUMENT_SHARED',
+                senderId: senderId
+            }
         });
+        socket_1.io.to(providerUser.id).emit('new_notification', providerNotification);
     }
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, {
         message: "Documents shared with client successfully.",
-        data: sharedDocuments,
+        data: sharedDocuments
     }, "Fetched."));
 }));
 exports.documentSharedWithClientApi = documentSharedWithClientApi;
 const documentSignByClientApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d, _e, _f;
-    const { clientId, sharedDocumentId, isAgree } = req.body;
+    var _a, _b, _c, _d;
+    const { clientId, sharedDocumentId, isAgree, senderId } = req.body;
     const eSignatureFile = req.file;
     if (!clientId || !sharedDocumentId || !eSignatureFile || isAgree === undefined) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: "Missing or invalid input fields." }, "Bad Request"));
@@ -184,26 +195,35 @@ const documentSignByClientApi = (0, asyncHandler_1.asyncHandler)((req, res) => _
             provider: { include: { user: true } }
         }
     });
-    // Notify provider (get their user.id)
     const providerUserId = (_b = (_a = documentUpdated === null || documentUpdated === void 0 ? void 0 : documentUpdated.provider) === null || _a === void 0 ? void 0 : _a.user) === null || _b === void 0 ? void 0 : _b.id;
-    console.log("providerid", providerUserId);
-    yield db_config_1.default.notification.create({
+    const clientUserId = senderId; // Client who signed
+    const clientName = (_d = (_c = documentUpdated === null || documentUpdated === void 0 ? void 0 : documentUpdated.client) === null || _c === void 0 ? void 0 : _c.user) === null || _d === void 0 ? void 0 : _d.fullName;
+    if (!providerUserId || !clientUserId) {
+        return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, {}, "User IDs missing."));
+    }
+    const messageForProvider = `Client ${clientName} signed the document.`;
+    // 🔔 Create notification for Provider
+    const providerNotification = yield db_config_1.default.notification.create({
         data: {
             recipientId: providerUserId,
+            senderId: clientUserId,
             title: 'Document Signed',
-            message: `Client ${(_d = (_c = documentUpdated === null || documentUpdated === void 0 ? void 0 : documentUpdated.client) === null || _c === void 0 ? void 0 : _c.user) === null || _d === void 0 ? void 0 : _d.fullName} signed the document.`,
+            message: messageForProvider,
             type: 'DOCUMENT_SIGNED'
         }
     });
-    if (!providerUserId) {
-        return res.status(404).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "Provider user ID not found" }, "Not Found"));
-    }
-    socket_1.io.to(providerUserId).emit('new_notification', {
-        title: 'Document Signed',
-        message: `Client ${(_f = (_e = documentUpdated === null || documentUpdated === void 0 ? void 0 : documentUpdated.client) === null || _e === void 0 ? void 0 : _e.user) === null || _f === void 0 ? void 0 : _f.fullName} signed the document.`,
-        type: 'DOCUMENT_SIGNED',
-        recipientId: providerUserId
+    socket_1.io.to(providerUserId).emit('new_notification', providerNotification);
+    // 🔔 Create notification for Client
+    const clientNotification = yield db_config_1.default.notification.create({
+        data: {
+            recipientId: clientUserId,
+            senderId: clientUserId,
+            title: 'Document Signed',
+            message: 'You signed the document successfully.',
+            type: 'DOCUMENT_SIGNED'
+        }
     });
+    socket_1.io.to(clientUserId).emit('new_notification', clientNotification);
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, {
         message: "Your response has been recorded successfully.",
         data: documentUpdated

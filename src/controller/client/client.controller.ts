@@ -68,56 +68,56 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
 
 
 const deletClient = asyncHandler(async (req: Request, res: Response) => {
-    const { clientId } = req.body;
-    console.log("client111111111111111111111", clientId);
+    const { clientId, providerId } = req.body;
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>", clientId, providerId);
 
-    const user = await prisma.user.findUnique({ where: { id: clientId } });
-    console.log("user2222222222222222222", user);
-
-    if (!user) {
-        return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { error: "Client does not exist." }, ""));
+    // 1. Check if client exists
+    const client = await prisma.client.findUnique({ where: { id: clientId } });
+    if (!client) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, { error: "Client not found." }, "")
+        );
     }
-    console.log("user3333333333333333333", user);
 
-    // Manually delete related Client or Provider first
-    if (user.role === 'client') {
-        const client = await prisma.client.findUnique({ where: { userId: clientId } });
-
-        if (client) {
-            // Delete related ProviderOnClient
-            await prisma.providerOnClient.deleteMany({ where: { clientId: client.id } });
-
-            // Delete related DocumentShareWith entries
-            await prisma.documentShareWith.deleteMany({ where: { clientId: client.id } });
-
-            // Then delete the client record
-            await prisma.client.delete({ where: { userId: clientId } });
+    // 2. Check if the provider-client relation exists
+    const link = await prisma.providerOnClient.findFirst({
+        where: {
+            clientId,
+            providerId
         }
+    });
+
+    if (!link) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, { error: "Client is not linked to this provider." }, "")
+        );
     }
-    else if (user.role === 'provider') {
-        await prisma.provider.delete({ where: { userId: clientId } });
-    }
 
-    console.log("user6666666666666666666666666666");
+    // 3. Delete the link only (not the actual client/user)
+    await prisma.providerOnClient.delete({
+        where: {
+            id: link.id
+        }
+    });
 
-
-    const deletedUser = await prisma.user.delete({ where: { id: clientId } });
-    console.log("user4666666666666666666666666");
-
-    return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { deletedUser }, `${deletedUser.fullName} deleted successfully`));
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, null, "Client removed from your list successfully")
+    );
 });
 
 
 const updateClient = asyncHandler(async (req: Request, res: Response) => {
+    // Convert age to number if provided
     if (req.body.age) {
         req.body.age = Number(req.body.age);
     }
 
+    // Convert boolean string to actual boolean
     if (req.body.isAccountCreatedByOwnClient) {
         req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
     }
 
-    // Validate data
+    // Validate data using Zod schema
     const clientData = clientSchema.safeParse(req.body);
     if (!clientData.success) {
         return res.status(StatusCodes.BAD_REQUEST).json(
@@ -125,6 +125,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
+    // Destructure validated data
     const {
         fullName,
         gender,
@@ -144,13 +145,19 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         hashedPassword = await bcrypt.hash(password, 10);
     }
 
-    const isClientExist = await prisma.client.findFirst({ where: { id: clientId } });
+    // Check if client exists
+    const isClientExist = await prisma.client.findFirst({
+        where: { id: clientId },
+        include: { user: true }
+    });
+
     if (!isClientExist) {
         return res.status(StatusCodes.NOT_FOUND).json(
             new ApiResponse(StatusCodes.NOT_FOUND, { error: "Client not found" }, "Not found")
         );
     }
 
+    // Check for duplicate email (excluding current client)
     const isEmailExist = await prisma.client.findFirst({
         where: {
             email,
@@ -163,6 +170,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
+    // Check for duplicate CNIC (excluding current user)
     const isCnicExists = await prisma.user.findFirst({
         where: {
             cnic,
@@ -175,6 +183,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
+    // Check for duplicate full name (excluding current user)
     const isFullNameExist = await prisma.user.findFirst({
         where: {
             fullName,
@@ -187,18 +196,14 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    let profileImageUrl: string | null = null;
-    if (req.file) {
-        profileImageUrl = `/uploads/${req.file.filename}`;
-    }
-
-    // Conditionally build update object
+    // Prepare client update data
     const updatedClientData: any = { email };
     if (hashedPassword) {
         updatedClientData.password = hashedPassword;
     }
 
-    const updatedUserData = {
+    // Prepare user update data
+    const updatedUserData: any = {
         fullName,
         gender,
         age,
@@ -206,22 +211,32 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         address,
         status,
         cnic,
-        role: Role.client,
-        profileImage: profileImageUrl
+        role: Role.client
     };
-    console.log("profile image", updatedUserData);
 
+    // Handle profile image updates
+    if (req.file) {
+        // New file uploaded - update with new image path
+        updatedUserData.profileImage = `/uploads/${req.file.filename}`;
+    } else if (req.body.profileImage === "null") {
+        // Explicit removal requested - set to null
+        updatedUserData.profileImage = null;
+    }
+    // If neither case, profileImage won't be included in update (keeps existing)
 
+    // Update user record
     const isUserUpdated = await prisma.user.update({
         where: { id: isClientExist.userId },
         data: updatedUserData,
     });
 
+    // Update client record
     const isClientUpdated = await prisma.client.update({
         where: { id: clientId },
         data: updatedClientData,
     });
 
+    // Combine updated data for response
     const updatedData = { ...isUserUpdated, ...isClientUpdated };
 
     return res.status(StatusCodes.OK).json(
@@ -234,24 +249,28 @@ const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
 
 
     const allClient = await prisma.client.findMany({
-        include: { user: true, recievedDocument: { include: { provider: { include: { user: true } }, document: true } } }, // Assuming 'user' is related to 'client'
+        include: {
+            user: true, recievedDocument: { include: { provider: { include: { user: true } }, document: true } }, providerList: {
+                include: {
+                    provider: {
+                        include: { user: true }
+                    }
+                }
+            }
+        }, // Assuming 'user' is related to 'client'
     });
 
-    res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { totalDocument: allClient.length, providers: allClient }, "All Providers fetched successfully"))
+    res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { totalDocument: allClient.length, clients: allClient }, "All Clients fetched successfully"))
 
 })
 
 
 
 const addClient = asyncHandler(async (req: Request, res: Response) => {
-    // Convert age and boolean from strings to correct types
-    if (req.body.age) {
-        req.body.age = Number(req.body.age);
-    }
-
-    if (req.body.isAccountCreatedByOwnClient) {
+    if (req.body.age) req.body.age = Number(req.body.age);
+    if (req.body.isAccountCreatedByOwnClient)
         req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
-    }
+
     // 1. Validate user schema
     const userParsedData = userSchema.safeParse(req.body);
     if (!userParsedData.success) {
@@ -261,23 +280,78 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const { fullName, gender = "male", age, contactNo, address, status = "active", cnic, role } = userParsedData.data;
+    const { email, password, isAccountCreatedByOwnClient, providerId } = req.body;
 
-    // 2. Check for duplicate CNIC
-    const existingUser = await prisma.user.findFirst({ where: { cnic } });
-    if (existingUser) {
-        return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `CNIC ${cnic} is already registered.` }, "Validation failed")
-        );
-    }
     let profileImageUrl: string | null = null;
     if (req.file) {
-        profileImageUrl = `/uploads/${req.file.filename}`; // Or full URL if needed
+        profileImageUrl = `/uploads/${req.file.filename}`;
     }
-    // 3. Create User
-    const userData: any = { fullName, gender, age, contactNo, address, status, cnic, role, profileImage: profileImageUrl };
-    const userCreated = await prisma.user.create({ data: userData });
 
-    // 4. Handle Client Signup
+    // 2. Check if user with CNIC already exists
+    const existingUser = await prisma.user.findFirst({ where: { cnic } });
+
+    if (existingUser) {
+        // Ensure the role is 'client'
+        if (existingUser.role !== Role.client) {
+            return res.status(StatusCodes.BAD_REQUEST).json(
+                new ApiResponse(StatusCodes.BAD_REQUEST, null, "This CNIC is registered but not as a client")
+            );
+        }
+
+        // Fetch existing client by userId
+        const existingClient = await prisma.client.findUnique({
+            where: { userId: existingUser.id }
+        });
+
+        if (!existingClient) {
+            return res.status(StatusCodes.NOT_FOUND).json(
+                new ApiResponse(StatusCodes.NOT_FOUND, null, "Client record not found for existing CNIC")
+            );
+        }
+
+        // Check if already linked to the same provider
+        const alreadyLinked = await prisma.providerOnClient.findFirst({
+            where: {
+                clientId: existingClient.id,
+                providerId
+            }
+        });
+
+        if (alreadyLinked) {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, null, "This provider has already added the client")
+            );
+        }
+
+        // Link existing client to current provider
+        await prisma.providerOnClient.create({
+            data: {
+                providerId,
+                clientId: existingClient.id
+            }
+        });
+
+        return res.status(StatusCodes.CREATED).json(
+            new ApiResponse(StatusCodes.CREATED, existingClient, "Existing client linked to provider successfully")
+        );
+    }
+
+    // 3. Proceed to create new user
+    const userCreated = await prisma.user.create({
+        data: {
+            fullName,
+            gender,
+            age,
+            contactNo,
+            address,
+            status,
+            cnic,
+            role,
+            profileImage: profileImageUrl
+        }
+    });
+
+    // 4. If role is client, create client and link provider
     if (role === Role.client) {
         const clientParsed = clientSchema.safeParse(req.body);
         if (!clientParsed.success) {
@@ -286,20 +360,16 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
             );
         }
 
-        const { isAccountCreatedByOwnClient, email, password, providerId } = clientParsed.data;
-
         // Check for duplicate client email
-        const existingClient = await prisma.client.findFirst({ where: { email } });
-        if (existingClient) {
+        const existingClientEmail = await prisma.client.findFirst({ where: { email } });
+        if (existingClientEmail) {
             return res.status(StatusCodes.CONFLICT).json(
                 new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
             );
         }
 
-        // Hash password if provided
         const hashedPassword = await bcrypt.hash(password ?? "", 10);
 
-        // 5. Create Client
         const clientCreated = await prisma.client.create({
             data: {
                 userId: userCreated.id,
@@ -312,12 +382,11 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
             }
         });
 
-        // 6. Link provider to client
         if (providerId) {
             await prisma.providerOnClient.create({
                 data: {
                     providerId,
-                    clientId: clientCreated?.id
+                    clientId: clientCreated.id
                 }
             });
         }
@@ -327,11 +396,12 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    // 7. If not client role (e.g. provider role), return success
+    // 5. If role is not client
     return res.status(StatusCodes.CREATED).json(
         new ApiResponse(StatusCodes.CREATED, userCreated, "User created successfully")
     );
 });
+
 
 
 

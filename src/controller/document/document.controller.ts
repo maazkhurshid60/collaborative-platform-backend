@@ -4,6 +4,7 @@ import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { io } from "../../socket/socket";
+import { sendDocumentEmail } from "../../utils/nodeMailer/SendDocumentEmail";
 
 const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
@@ -103,20 +104,22 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
 
 const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Response) => {
-    const { providerId, clientId, documentId } = req.body
+    const { providerId, clientId, documentId, senderId, clientEmail } = req.body;
+
     const existing = await prisma.documentShareWith.findFirst({
         where: {
             providerId,
             clientId,
             documentId: {
-                in: documentId  // ✅ Now using `in` for array check
+                in: documentId
             }
         }
     });
-    if (existing) {
 
+    if (existing) {
         return res.status(409).json({ error: 'Document already shared' });
     }
+
     const sharedDocuments = await Promise.all(
         documentId.map((documentId: string) =>
             prisma.documentShareWith.create({
@@ -128,15 +131,12 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
                 include: {
                     document: true,
                     client: true,
-                    provider: true,
-
+                    provider: true
                 }
             })
         )
     );
 
-
-    // Notify client
     for (const doc of sharedDocuments) {
         const clientUser = await prisma.user.findUnique({
             where: { id: doc.client.userId },
@@ -145,46 +145,63 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
 
         const providerUser = await prisma.user.findUnique({
             where: { id: doc.provider.userId },
-            select: { fullName: true }
+            select: { id: true, fullName: true }
         });
 
-        if (!clientUser) {
-            console.warn(`⚠️ User not found for clientId: ${doc.client.userId}`);
-            continue; // Skip if client user doesn't exist
+        if (!clientUser || !providerUser) {
+            console.warn(`⚠️ User not found for client or provider.`);
+            continue;
         }
 
-        await prisma.notification.create({
+        const messageForClient = `Provider ${providerUser.fullName} shared a document with you.`;
+        const messageForProvider = `You shared a document with ${clientUser.fullName}.`;
+
+        // ✅ Create notification for CLIENT
+        const clientNotification = await prisma.notification.create({
             data: {
                 recipientId: clientUser.id,
                 title: 'New Document Shared',
-                message: `Provider ${providerUser?.fullName || "Provider"} shared a document with you.`,
-                type: 'DOCUMENT_SHARED'
+                message: messageForClient,
+                type: 'DOCUMENT_SHARED',
+                senderId: senderId
             }
         });
 
-        io.to(clientUser.id).emit('new_notification', {
-            title: 'New Document Shared',
-            message: `Provider ${providerUser?.fullName || "Provider"} shared a document with you.`,
-            type: 'DOCUMENT_SHARED',
-            recipientId: clientUser.id
-        });
-    }
 
+        await sendDocumentEmail(
+            clientEmail,
+            clientUser.fullName,
+            providerUser.fullName
+        );
+        io.to(clientUser.id).emit('new_notification', clientNotification);
+
+        // Create notification for PROVIDER
+        const providerNotification = await prisma.notification.create({
+            data: {
+                recipientId: providerUser.id,
+                title: 'New Document Shared',
+                message: messageForProvider,
+                type: 'DOCUMENT_SHARED',
+                senderId: senderId
+            }
+        });
+
+        io.to(providerUser.id).emit('new_notification', providerNotification);
+    }
 
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, {
             message: "Documents shared with client successfully.",
-
-            data: sharedDocuments,
-
+            data: sharedDocuments
         }, "Fetched.")
     );
-})
+});
+
 
 
 
 const documentSignByClientApi = asyncHandler(async (req: Request, res: Response) => {
-    const { clientId, sharedDocumentId, isAgree } = req.body;
+    const { clientId, sharedDocumentId, isAgree, senderId } = req.body;
     const eSignatureFile = req.file;
 
     if (!clientId || !sharedDocumentId || !eSignatureFile || isAgree === undefined) {
@@ -220,31 +237,43 @@ const documentSignByClientApi = asyncHandler(async (req: Request, res: Response)
         }
     });
 
-    // Notify provider (get their user.id)
-    const providerUserId = documentUpdated?.provider?.user?.id!;
-    console.log("providerid", providerUserId);
+    const providerUserId = documentUpdated?.provider?.user?.id;
+    const clientUserId = senderId; // Client who signed
+    const clientName = documentUpdated?.client?.user?.fullName;
 
-    await prisma.notification.create({
+    if (!providerUserId || !clientUserId) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, {}, "User IDs missing.")
+        );
+    }
+
+    const messageForProvider = `Client ${clientName} signed the document.`;
+
+    // 🔔 Create notification for Provider
+    const providerNotification = await prisma.notification.create({
         data: {
             recipientId: providerUserId,
+            senderId: clientUserId,
             title: 'Document Signed',
-            message: `Client ${documentUpdated?.client?.user?.fullName} signed the document.`,
+            message: messageForProvider,
             type: 'DOCUMENT_SIGNED'
         }
     });
 
-    if (!providerUserId) {
-        return res.status(404).json(
-            new ApiResponse(StatusCodes.NOT_FOUND, { error: "Provider user ID not found" }, "Not Found")
-        );
-    }
-    io.to(providerUserId).emit('new_notification', {
-        title: 'Document Signed',
-        message: `Client ${documentUpdated?.client?.user?.fullName} signed the document.`,
-        type: 'DOCUMENT_SIGNED',
-        recipientId: providerUserId
+    io.to(providerUserId).emit('new_notification', providerNotification);
+
+    // 🔔 Create notification for Client
+    const clientNotification = await prisma.notification.create({
+        data: {
+            recipientId: clientUserId,
+            senderId: clientUserId,
+            title: 'Document Signed',
+            message: 'You signed the document successfully.',
+            type: 'DOCUMENT_SIGNED'
+        }
     });
 
+    io.to(clientUserId).emit('new_notification', clientNotification);
 
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, {

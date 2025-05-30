@@ -66,41 +66,62 @@ const getAllClients = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(v
 }));
 exports.getAllClients = getAllClients;
 const deletClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { clientId } = req.body;
-    const isClientExist = yield db_config_1.default.user.findFirst({ where: { id: clientId } });
-    console.log("clientid", isClientExist);
-    if (!isClientExist) {
-        return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "Client does not exist." }, ""));
+    const { clientId, providerId } = req.body;
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>", clientId, providerId);
+    // 1. Check if client exists
+    const client = yield db_config_1.default.client.findUnique({ where: { id: clientId } });
+    if (!client) {
+        return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "Client not found." }, ""));
     }
-    const isClientDeleted = yield db_config_1.default.user.delete({ where: { id: clientId } });
-    if (!isClientDeleted) {
-        return res.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, { error: "Internal Server Error." }, ""));
+    // 2. Check if the provider-client relation exists
+    const link = yield db_config_1.default.providerOnClient.findFirst({
+        where: {
+            clientId,
+            providerId
+        }
+    });
+    if (!link) {
+        return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "Client is not linked to this provider." }, ""));
     }
-    return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { isClientDeleted }, `${isClientDeleted.fullName} deleted successfully`));
+    // 3. Delete the link only (not the actual client/user)
+    yield db_config_1.default.providerOnClient.delete({
+        where: {
+            id: link.id
+        }
+    });
+    return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, null, "Client removed from your list successfully"));
 }));
 exports.deletClient = deletClient;
 const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // Convert age to number if provided
     if (req.body.age) {
         req.body.age = Number(req.body.age);
     }
+    // Convert boolean string to actual boolean
     if (req.body.isAccountCreatedByOwnClient) {
         req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
     }
-    // Validate data
+    // Validate data using Zod schema
     const clientData = client_schema_1.clientSchema.safeParse(req.body);
     if (!clientData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientData.error.errors }, "Validation Failed"));
     }
+    // Destructure validated data
     const { fullName, gender, age, contactNo, address, status, cnic, email, password, clientId } = clientData.data;
     // Hash password only if provided
     let hashedPassword;
     if (password && password.trim() !== "") {
         hashedPassword = yield bcrypt_1.default.hash(password, 10);
     }
-    const isClientExist = yield db_config_1.default.client.findFirst({ where: { id: clientId } });
+    // Check if client exists
+    const isClientExist = yield db_config_1.default.client.findFirst({
+        where: { id: clientId },
+        include: { user: true }
+    });
     if (!isClientExist) {
         return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "Client not found" }, "Not found"));
     }
+    // Check for duplicate email (excluding current client)
     const isEmailExist = yield db_config_1.default.client.findFirst({
         where: {
             email,
@@ -110,6 +131,7 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
     if (isEmailExist) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email ${email} already taken` }, "Duplicate Error"));
     }
+    // Check for duplicate CNIC (excluding current user)
     const isCnicExists = yield db_config_1.default.user.findFirst({
         where: {
             cnic,
@@ -119,6 +141,7 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
     if (isCnicExists) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `CNIC ${cnic} already taken` }, "Duplicate Error"));
     }
+    // Check for duplicate full name (excluding current user)
     const isFullNameExist = yield db_config_1.default.user.findFirst({
         where: {
             fullName,
@@ -128,15 +151,12 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
     if (isFullNameExist) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Full Name ${fullName} already taken` }, "Duplicate Error"));
     }
-    let profileImageUrl = null;
-    if (req.file) {
-        profileImageUrl = `/uploads/${req.file.filename}`;
-    }
-    // Conditionally build update object
+    // Prepare client update data
     const updatedClientData = { email };
     if (hashedPassword) {
         updatedClientData.password = hashedPassword;
     }
+    // Prepare user update data
     const updatedUserData = {
         fullName,
         gender,
@@ -145,70 +165,123 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
         address,
         status,
         cnic,
-        role: client_1.Role.client,
-        profileImage: profileImageUrl
+        role: client_1.Role.client
     };
-    console.log("profile image", updatedUserData);
+    // Handle profile image updates
+    if (req.file) {
+        // New file uploaded - update with new image path
+        updatedUserData.profileImage = `/uploads/${req.file.filename}`;
+    }
+    else if (req.body.profileImage === "null") {
+        // Explicit removal requested - set to null
+        updatedUserData.profileImage = null;
+    }
+    // If neither case, profileImage won't be included in update (keeps existing)
+    // Update user record
     const isUserUpdated = yield db_config_1.default.user.update({
         where: { id: isClientExist.userId },
         data: updatedUserData,
     });
+    // Update client record
     const isClientUpdated = yield db_config_1.default.client.update({
         where: { id: clientId },
         data: updatedClientData,
     });
+    // Combine updated data for response
     const updatedData = Object.assign(Object.assign({}, isUserUpdated), isClientUpdated);
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { updatedData }, "Client updated successfully"));
 }));
 exports.updateClient = updateClient;
 const getTotalClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const allClient = yield db_config_1.default.client.findMany({
-        include: { user: true, recievedDocument: { include: { provider: { include: { user: true } }, document: true } } }, // Assuming 'user' is related to 'client'
+        include: {
+            user: true, recievedDocument: { include: { provider: { include: { user: true } }, document: true } }, providerList: {
+                include: {
+                    provider: {
+                        include: { user: true }
+                    }
+                }
+            }
+        }, // Assuming 'user' is related to 'client'
     });
-    res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { totalDocument: allClient.length, providers: allClient }, "All Providers fetched successfully"));
+    res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { totalDocument: allClient.length, clients: allClient }, "All Clients fetched successfully"));
 }));
 exports.getTotalClient = getTotalClient;
 const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // Convert age and boolean from strings to correct types
-    if (req.body.age) {
+    if (req.body.age)
         req.body.age = Number(req.body.age);
-    }
-    if (req.body.isAccountCreatedByOwnClient) {
+    if (req.body.isAccountCreatedByOwnClient)
         req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
-    }
     // 1. Validate user schema
     const userParsedData = auth_schema_1.userSchema.safeParse(req.body);
     if (!userParsedData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
     }
     const { fullName, gender = "male", age, contactNo, address, status = "active", cnic, role } = userParsedData.data;
-    // 2. Check for duplicate CNIC
-    const existingUser = yield db_config_1.default.user.findFirst({ where: { cnic } });
-    if (existingUser) {
-        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `CNIC ${cnic} is already registered.` }, "Validation failed"));
-    }
+    const { email, password, isAccountCreatedByOwnClient, providerId } = req.body;
     let profileImageUrl = null;
     if (req.file) {
-        profileImageUrl = `/uploads/${req.file.filename}`; // Or full URL if needed
+        profileImageUrl = `/uploads/${req.file.filename}`;
     }
-    // 3. Create User
-    const userData = { fullName, gender, age, contactNo, address, status, cnic, role, profileImage: profileImageUrl };
-    const userCreated = yield db_config_1.default.user.create({ data: userData });
-    // 4. Handle Client Signup
+    // 2. Check if user with CNIC already exists
+    const existingUser = yield db_config_1.default.user.findFirst({ where: { cnic } });
+    if (existingUser) {
+        // Ensure the role is 'client'
+        if (existingUser.role !== client_1.Role.client) {
+            return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, "This CNIC is registered but not as a client"));
+        }
+        // Fetch existing client by userId
+        const existingClient = yield db_config_1.default.client.findUnique({
+            where: { userId: existingUser.id }
+        });
+        if (!existingClient) {
+            return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, null, "Client record not found for existing CNIC"));
+        }
+        // Check if already linked to the same provider
+        const alreadyLinked = yield db_config_1.default.providerOnClient.findFirst({
+            where: {
+                clientId: existingClient.id,
+                providerId
+            }
+        });
+        if (alreadyLinked) {
+            return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, null, "This provider has already added the client"));
+        }
+        // Link existing client to current provider
+        yield db_config_1.default.providerOnClient.create({
+            data: {
+                providerId,
+                clientId: existingClient.id
+            }
+        });
+        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, existingClient, "Existing client linked to provider successfully"));
+    }
+    // 3. Proceed to create new user
+    const userCreated = yield db_config_1.default.user.create({
+        data: {
+            fullName,
+            gender,
+            age,
+            contactNo,
+            address,
+            status,
+            cnic,
+            role,
+            profileImage: profileImageUrl
+        }
+    });
+    // 4. If role is client, create client and link provider
     if (role === client_1.Role.client) {
         const clientParsed = client_schema_1.clientSchema.safeParse(req.body);
         if (!clientParsed.success) {
             return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed"));
         }
-        const { isAccountCreatedByOwnClient, email, password, providerId } = clientParsed.data;
         // Check for duplicate client email
-        const existingClient = yield db_config_1.default.client.findFirst({ where: { email } });
-        if (existingClient) {
+        const existingClientEmail = yield db_config_1.default.client.findFirst({ where: { email } });
+        if (existingClientEmail) {
             return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed"));
         }
-        // Hash password if provided
         const hashedPassword = yield bcrypt_1.default.hash(password !== null && password !== void 0 ? password : "", 10);
-        // 5. Create Client
         const clientCreated = yield db_config_1.default.client.create({
             data: {
                 userId: userCreated.id,
@@ -220,18 +293,17 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
                 user: true
             }
         });
-        // 6. Link provider to client
         if (providerId) {
             yield db_config_1.default.providerOnClient.create({
                 data: {
                     providerId,
-                    clientId: clientCreated === null || clientCreated === void 0 ? void 0 : clientCreated.id
+                    clientId: clientCreated.id
                 }
             });
         }
         return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, clientCreated, "Client created and linked to provider successfully"));
     }
-    // 7. If not client role (e.g. provider role), return success
+    // 5. If role is not client
     return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, userCreated, "User created successfully"));
 }));
 exports.addClient = addClient;

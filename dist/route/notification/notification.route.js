@@ -5,4 +5,5 @@ const notification_controller_1 = require("../../controller/notification/notific
 const notificationRouter = (0, express_1.Router)();
 notificationRouter.post("/send-notification", notification_controller_1.sendNotification);
 notificationRouter.post("/get-notification", notification_controller_1.getNotification);
+notificationRouter.delete("/delete-notification", notification_controller_1.deleteNotification);
 exports.default = notificationRouter;

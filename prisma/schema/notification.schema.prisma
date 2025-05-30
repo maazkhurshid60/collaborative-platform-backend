@@ -1,12 +1,19 @@
 model Notification {
-  id          String           @id @default(uuid())
+  id          String  @id @default(uuid())
   title       String
   message     String
   recipientId String
-  seen        Boolean          @default(false)
-  type        NotificationType
-  createdAt   DateTime         @default(now())
-  user        User             @relation(fields: [recipientId], references: [id])
+  senderId    String? // make optional
+
+  seen               Boolean          @default(false)
+  type               NotificationType
+  createdAt          DateTime         @default(now())
+  // NEW FIELDS
+  deletedBySender    Boolean          @default(false)
+  deletedByRecipient Boolean          @default(false)
+  // Relations
+  recipient          User             @relation("RecipientRelation", fields: [recipientId], references: [id], onDelete: Cascade)
+  sender             User?            @relation("SenderRelation", fields: [senderId], references: [id], onDelete: Cascade)
 }
 
 enum NotificationType {

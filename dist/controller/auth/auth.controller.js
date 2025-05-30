@@ -194,33 +194,42 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
     const files = req.files;
     const profileImage = (_a = files === null || files === void 0 ? void 0 : files.profileImage) === null || _a === void 0 ? void 0 : _a[0];
     const eSignature = (_b = files === null || files === void 0 ? void 0 : files.eSignature) === null || _b === void 0 ? void 0 : _b[0];
-    const profileImageUrl = profileImage ? `/uploads/${profileImage.filename}` : "null";
-    const eSignatureUrl = eSignature ? `/uploads/${eSignature.filename}` : null;
-    // Validate User Schema with injected profileImage
-    const userParsedData = auth_schema_1.userSchema.safeParse(Object.assign(Object.assign({}, req.body), { profileImage: profileImageUrl }));
+    // Get existing user data
+    const { loginUserId } = req.body;
+    const existingUser = yield db_config_1.default.user.findFirst({
+        where: { id: loginUserId },
+        select: { profileImage: true, role: true }
+    });
+    if (!existingUser) {
+        return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "User does not exist." }, "Not Found Error."));
+    }
+    // Handle profile image updates
+    let profileImageUpdate = undefined;
+    if (profileImage) {
+        // New image uploaded
+        profileImageUpdate = `/uploads/${profileImage.filename}`;
+    }
+    else if (req.body.profileImage === "null") {
+        // Explicit removal requested - set to null
+        profileImageUpdate = null;
+    }
+    // Validate User Schema
+    const userParsedData = auth_schema_1.userSchema.safeParse(Object.assign(Object.assign({}, req.body), { profileImage: profileImageUpdate !== undefined ? profileImageUpdate : existingUser.profileImage }));
     if (!userParsedData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
-    }
-    const { loginUserId } = req.body;
-    const isUserExist = yield db_config_1.default.user.findFirst({ where: { id: loginUserId } });
-    if (!isUserExist) {
-        return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "User is not exist." }, "Not Found Error."));
     }
     const { fullName, gender, age, contactNo, address, status, cnic, role } = userParsedData.data;
     // Update User
     const updatedUser = yield db_config_1.default.user.update({
         where: { id: loginUserId },
-        data: {
-            fullName,
+        data: Object.assign({ fullName,
             gender,
             age,
             contactNo,
             address,
             status,
             cnic,
-            role,
-            profileImage: profileImageUrl,
-        }
+            role }, (profileImageUpdate !== undefined && { profileImage: profileImageUpdate }))
     });
     // Handle Client Update
     if (role === client_1.Role.client) {
@@ -241,11 +250,16 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
         if (password) {
             updateData.password = yield bcrypt_1.default.hash(password, 10);
         }
-        if (eSignatureUrl) {
-            updateData.eSignature = eSignatureUrl;
+        // Handle eSignature updates
+        if (eSignature) {
+            updateData.eSignature = `/uploads/${eSignature.filename}`;
         }
+        else if (req.body.eSignature === "null") {
+            updateData.eSignature = null;
+        }
+        const userId = String(loginUserId);
         const clientUpdate = yield db_config_1.default.client.update({
-            where: { userId: loginUserId },
+            where: { userId },
             data: updateData,
             include: { user: true }
         });
@@ -441,7 +455,7 @@ const findByCNIC = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { message: " CNIC isrequired" }, "Validation failed"));
     }
     const cnicFound = yield db_config_1.default.user.findFirst({
-        where: { cnic }, include: { client: true }
+        where: { cnic }, include: { clients: true }
     });
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { data: cnicFound }, "Record found."));
 }));

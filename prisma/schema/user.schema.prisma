@@ -1,5 +1,5 @@
 model User {
-  id             String         @id @default(uuid())
+  id             String   @id @default(uuid())
   fullName       String
   profileImage   String?
   gender         String?
@@ -7,14 +7,18 @@ model User {
   contactNo      String?
   address        String?
   status         String?
-  cnic           String         @unique
+  cnic           String   @unique
   blockedMembers String[]
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now())
   role           Role
-  client         Client?
-  notification   Notification[]
-  provider       Provider?
+
+  client   Client?
+  provider Provider?
+
+  // Relations
+  sentNotifications     Notification[] @relation("SenderRelation")
+  receivedNotifications Notification[] @relation("RecipientRelation")
 }
 
 enum Role {

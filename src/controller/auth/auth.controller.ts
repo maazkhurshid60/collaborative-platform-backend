@@ -239,19 +239,36 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         eSignature?: Express.Multer.File[];
     };
 
-
-
     const profileImage = files?.profileImage?.[0];
     const eSignature = files?.eSignature?.[0];
 
+    // Get existing user data
+    const { loginUserId } = req.body;
+    const existingUser = await prisma.user.findFirst({
+        where: { id: loginUserId },
+        select: { profileImage: true, role: true }
+    });
 
-    const profileImageUrl = profileImage ? `/uploads/${profileImage.filename}` : "null";
-    const eSignatureUrl = eSignature ? `/uploads/${eSignature.filename}` : null;
+    if (!existingUser) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, { error: "User does not exist." }, "Not Found Error.")
+        );
+    }
 
-    // Validate User Schema with injected profileImage
+    // Handle profile image updates
+    let profileImageUpdate = undefined;
+    if (profileImage) {
+        // New image uploaded
+        profileImageUpdate = `/uploads/${profileImage.filename}`;
+    } else if (req.body.profileImage === "null") {
+        // Explicit removal requested - set to null
+        profileImageUpdate = null;
+    }
+
+    // Validate User Schema
     const userParsedData = userSchema.safeParse({
         ...req.body,
-        profileImage: profileImageUrl,
+        profileImage: profileImageUpdate !== undefined ? profileImageUpdate : existingUser.profileImage
     });
 
     if (!userParsedData.success) {
@@ -260,17 +277,8 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const { loginUserId } = req.body;
-
-    const isUserExist = await prisma.user.findFirst({ where: { id: loginUserId } });
-
-    if (!isUserExist) {
-        return res.status(StatusCodes.NOT_FOUND).json(
-            new ApiResponse(StatusCodes.NOT_FOUND, { error: "User is not exist." }, "Not Found Error.")
-        );
-    }
-
     const { fullName, gender, age, contactNo, address, status, cnic, role } = userParsedData.data;
+
     // Update User
     const updatedUser = await prisma.user.update({
         where: { id: loginUserId },
@@ -283,7 +291,8 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
             status,
             cnic,
             role,
-            profileImage: profileImageUrl,
+            // Only update profileImage if it was explicitly changed
+            ...(profileImageUpdate !== undefined && { profileImage: profileImageUpdate })
         }
     });
 
@@ -316,15 +325,20 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
             updateData.password = await bcrypt.hash(password, 10);
         }
 
-        if (eSignatureUrl) {
-            updateData.eSignature = eSignatureUrl;
+        // Handle eSignature updates
+        if (eSignature) {
+            updateData.eSignature = `/uploads/${eSignature.filename}`;
+        } else if (req.body.eSignature === "null") {
+            updateData.eSignature = null;
         }
+        const userId = String(loginUserId);
 
         const clientUpdate = await prisma.client.update({
-            where: { userId: loginUserId },
+            where: { userId },
             data: updateData,
             include: { user: true }
         });
+
 
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, clientUpdate, "User updated successfully")
@@ -605,7 +619,7 @@ const findByCNIC = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const cnicFound = await prisma.user.findFirst({
-        where: { cnic }, include: { client: true }
+        where: { cnic }, include: { clients: true }
     })
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, { data: cnicFound }, "Record found.")

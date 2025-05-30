@@ -7,79 +7,189 @@ import { ApiResponse } from "../../utils/apiResponse";
 import { StatusCodes } from "http-status-codes";
 
 const sendNotification = asyncHandler(async (req: Request, res: Response) => {
-    const { recipientId, title, type } = req.body;
-    console.log("📦 Notification recipientId:", recipientId);
-    const user = await prisma.user.findUnique({ where: { id: recipientId } });
-    console.log("🔍 Does user exist?", user);
+    const { recipientId, title, type, senderId, message = "" } = req.body;
+
     try {
-        const notification = await prisma.notification.create({
+        // ✅ Always create notification for recipient
+        const recipientNotification = await prisma.notification.create({
             data: {
-                recipientId,
+                recipientId, // jisko notification dikhegi
+                senderId,    // jisne action kiya
                 title,
-                message: "",
+                message,
                 type,
             },
         });
-        console.log("<<<<<<<<<<<<<<message notificaiton data", "recipientId", recipientId, "title", title, "message", "type", type);
 
-        // Emit real-time notification to recipient
-        io.to(recipientId).emit('new_notification', notification);
+        io.to(recipientId).emit("new_notification", recipientNotification);
+
+        let senderNotification = null;
+
+        // ✅ Create separate notification for sender ONLY if they are different
+        if (senderId && senderId !== recipientId) {
+            senderNotification = await prisma.notification.create({
+                data: {
+                    recipientId: senderId,
+                    senderId: senderId,
+                    title,
+                    message: "", // or customized for sender
+                    type,
+                },
+            });
+
+            io.to(senderId).emit("new_notification", senderNotification);
+        }
 
         return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, { notification }, "Notificaion sent successfully")
+            new ApiResponse(StatusCodes.OK, { recipientNotification, senderNotification }, "Notifications sent successfully")
         );
-    } catch (err) {
-        console.error('Error creating notification:', err);
-        // return res.status(500).json({ error: 'Internal server error' });
 
+    } catch (err) {
+        console.error("❌ Error sending notifications:", err);
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: err }, "Internal server error")
+            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: err }, "Failed to send notification")
         );
     }
-})
+});
+
+
+
+
+// const getNotification = asyncHandler(async (req: Request, res: Response) => {
+//     const { userId } = req.body;
+
+//     try {
+//         const notifications = await prisma.notification.findMany({
+//             where: { recipientId: userId, deletedByRecipient: false, },
+//             include: {
+//                 recipient: true,
+//                 sender: true
+//             },
+//             orderBy: { createdAt: 'desc' },
+//         });
+
+//         return res.status(StatusCodes.OK).json(
+//             new ApiResponse(StatusCodes.OK, { notifications }, "Notifications fetched successfully")
+//         );
+//     } catch (err) {
+//         console.error('Error fetching notifications:', err);
+//         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+//             new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: err }, "Internal server error")
+//         );
+//     }
+// });
+
+
 
 
 
 const getNotification = asyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.body;
+
     try {
         const notifications = await prisma.notification.findMany({
-            where: { recipientId: userId },
-            orderBy: { createdAt: 'desc' },
+            where: {
+                recipientId: userId,
+            },
+            include: {
+                sender: true, // optional: agar sender ka naam dikhaana ho
+                recipient: true, // optional: agar sender ka naam dikhaana ho
+            },
+            orderBy: {
+                createdAt: 'desc',
+            }
         });
 
-        res.json(notifications);
-
         return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, { notifications }, "Notificaion fetched successfully")
+            new ApiResponse(StatusCodes.OK, { notifications }, "Notifications fetched successfully")
         );
     } catch (err) {
-        console.error('Error fetching notifications:', err);
+        console.error("❌ Error fetching notifications:", err);
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
             new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: err }, "Internal server error")
         );
     }
-})
+});
+
+
+
+// const deleteNotification = asyncHandler(async (req: Request, res: Response) => {
+//     const { notificationId, userId } = req.body;
+//     console.log("   const { notificationId, userId } = req.body;");
+
+//     try {
+//         const notification = await prisma.notification.findUnique({
+//             where: { id: notificationId },
+//         });
+
+//         if (!notification) {
+//             return res.status(StatusCodes.NOT_FOUND).json(
+//                 new ApiResponse(StatusCodes.NOT_FOUND, {}, "Notification not found")
+//             );
+//         }
+
+//         // Check if user is sender or recipient
+//         let updateData = {};
+
+//         if (notification.senderId === userId) {
+//             updateData = { deletedBySender: true };
+//         } else if (notification.recipientId === userId) {
+//             updateData = { deletedByRecipient: true };
+//         } else {
+//             return res.status(StatusCodes.FORBIDDEN).json(
+//                 new ApiResponse(StatusCodes.FORBIDDEN, {}, "You don't have permission to delete this notification")
+//             );
+//         }
+
+//         // Update delete status
+//         const updated = await prisma.notification.update({
+//             where: { id: notificationId },
+//             data: updateData,
+//         });
+
+//         return res.status(StatusCodes.OK).json(
+//             new ApiResponse(StatusCodes.OK, updated, "Notification marked as deleted")
+//         );
+
+//     } catch (err) {
+//         console.error('Error deleting notification:', err);
+//         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+//             new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: err }, "Internal server error")
+//         );
+//     }
+// });
+
 
 
 const deleteNotification = asyncHandler(async (req: Request, res: Response) => {
-    const { notificationId } = req.body;
-    try {
-        const notifications = await prisma.notification.delete({
-            where: { id: notificationId },
-        });
+    const { notificationId, userId } = req.body;
 
-        // res.json(notifications);
+    const notification = await prisma.notification.findUnique({
+        where: { id: notificationId },
+    });
 
-        return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, { notifications }, "Notificaion delete successfully")
-        );
-    } catch (err) {
-        console.error('Error fetching notifications:', err);
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: err }, "Internal server error")
+    if (!notification) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, {}, "Notification not found")
         );
     }
-})
+
+    if (notification.recipientId !== userId) {
+        return res.status(StatusCodes.FORBIDDEN).json(
+            new ApiResponse(StatusCodes.FORBIDDEN, {}, "You don't have permission to delete this notification")
+        );
+    }
+
+    await prisma.notification.delete({
+        where: { id: notificationId },
+    });
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, {}, "Notification deleted successfully")
+    );
+});
+;
+
+
 
 export { sendNotification, getNotification, deleteNotification }
