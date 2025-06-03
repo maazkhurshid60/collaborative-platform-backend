@@ -7,20 +7,18 @@ import { io } from "../../socket/socket";
 import { sendDocumentEmail } from "../../utils/nodeMailer/SendDocumentEmail";
 
 const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
-
-    const file = req?.file;
-    const { type } = req.body
-    const name = file?.originalname || req?.body?.name;  // Use filename or name from body
-    console.log("type", type);
+    const file = req.file as Express.Multer.File & { location: string };;
+    const { type } = req.body;
+    const name = file?.originalname || req?.body?.name;
 
     if (!file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Check if document already exists
+    // Check if document already exists by name or S3 URL
     const existing = await prisma.document.findFirst({
         where: {
-            OR: [{ name }, { url: `/uploads/${file.filename}` }],
+            OR: [{ name }, { url: file.location }],
         },
     });
 
@@ -28,17 +26,18 @@ const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
         return res.status(409).json({ error: 'Document already exists' });
     }
 
-    // Save document info in DB
+    // ✅ Save document info with S3 URL
     const document = await prisma.document.create({
         data: {
             name,
-            url: `/uploads/${file.filename}`,
-            type
+            url: file.location, // ✅ S3 URL here
+            type,
         },
     });
 
     res.status(201).json({ message: 'Uploaded successfully', document });
-})
+});
+
 
 const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
     const { clientId } = req.body;
@@ -308,3 +307,14 @@ const getAllSharedDocumentWithClientApi = asyncHandler(async (req: Request, res:
 })
 
 export { addDocumentApi, getAllDocumentApi, documentSharedWithClientApi, documentSignByClientApi, getAllSharedDocumentWithClientApi }
+
+
+
+//-- iam user bnanana hoga
+//-- rds for db , lightsail and SES
+//-- search IAM user in aws search field and click on IAM user
+//-- click on policies..
+//--create oikuxy
+//--
+//--
+//-- 

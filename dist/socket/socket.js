@@ -97,7 +97,7 @@ function setupSocket(server) {
             origin: [
                 'http://localhost:5173',
                 'http://localhost:4173',
-                'https://collaborative-platform-frontend.vercel.app',
+                'https://collaborative-platform-frontend.vercel.app'
             ],
         },
     });

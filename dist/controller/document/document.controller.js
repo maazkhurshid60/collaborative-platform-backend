@@ -21,28 +21,28 @@ const socket_1 = require("../../socket/socket");
 const SendDocumentEmail_1 = require("../../utils/nodeMailer/SendDocumentEmail");
 const addDocumentApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const file = req === null || req === void 0 ? void 0 : req.file;
+    const file = req.file;
+    ;
     const { type } = req.body;
-    const name = (file === null || file === void 0 ? void 0 : file.originalname) || ((_a = req === null || req === void 0 ? void 0 : req.body) === null || _a === void 0 ? void 0 : _a.name); // Use filename or name from body
-    console.log("type", type);
+    const name = (file === null || file === void 0 ? void 0 : file.originalname) || ((_a = req === null || req === void 0 ? void 0 : req.body) === null || _a === void 0 ? void 0 : _a.name);
     if (!file) {
         return res.status(400).json({ error: 'No file uploaded' });
     }
-    // Check if document already exists
+    // Check if document already exists by name or S3 URL
     const existing = yield db_config_1.default.document.findFirst({
         where: {
-            OR: [{ name }, { url: `/uploads/${file.filename}` }],
+            OR: [{ name }, { url: file.location }],
         },
     });
     if (existing) {
         return res.status(409).json({ error: 'Document already exists' });
     }
-    // Save document info in DB
+    // ✅ Save document info with S3 URL
     const document = yield db_config_1.default.document.create({
         data: {
             name,
-            url: `/uploads/${file.filename}`,
-            type
+            url: file.location, // ✅ S3 URL here
+            type,
         },
     });
     res.status(201).json({ message: 'Uploaded successfully', document });
@@ -244,3 +244,11 @@ const getAllSharedDocumentWithClientApi = (0, asyncHandler_1.asyncHandler)((req,
     }, "Success"));
 }));
 exports.getAllSharedDocumentWithClientApi = getAllSharedDocumentWithClientApi;
+//-- iam user bnanana hoga
+//-- rds for db , lightsail and SES
+//-- search IAM user in aws search field and click on IAM user
+//-- click on policies..
+//--create oikuxy
+//--
+//--
+//-- 
