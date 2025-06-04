@@ -2,6 +2,7 @@ import { Router } from "express";
 import { blockUserApi, changePasswordApi, deleteMeAccountApi, findByCNIC, getAllUsersApi, getMeApi, logInApi, logoutApi, signupApi, unblockUserApi, updateMeApi } from "../../controller/auth/auth.controller";
 import { authJWT } from "../../middlewares/auth.middleware";
 import { upload } from "../../utils/multer/multerImgConfig";
+import { uploadImg } from "../../utils/multer/s3ImgUploader";
 const authRouter = Router()
 authRouter.post("/signup", signupApi)
 authRouter.post("/cnic-found", findByCNIC)
@@ -12,7 +13,7 @@ authRouter.post("/logout", authJWT, logoutApi)
 authRouter.patch(
     "/update-me",
     authJWT,
-    upload.fields([
+    uploadImg.fields([
         { name: 'profileImage', maxCount: 1 },
         { name: 'eSignature', maxCount: 1 },
     ]),

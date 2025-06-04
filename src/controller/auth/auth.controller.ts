@@ -239,8 +239,8 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         eSignature?: Express.Multer.File[];
     };
 
-    const profileImage = files?.profileImage?.[0];
-    const eSignature = files?.eSignature?.[0];
+    const profileImage = files?.profileImage?.[0] as any;;
+    const eSignature = files?.eSignature?.[0] as any;
 
     // Get existing user data
     const { loginUserId } = req.body;
@@ -258,10 +258,8 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
     // Handle profile image updates
     let profileImageUpdate = undefined;
     if (profileImage) {
-        // New image uploaded
-        profileImageUpdate = `/uploads/${profileImage.filename}`;
+        profileImageUpdate = profileImage.location; // ✅ S3 file URL
     } else if (req.body.profileImage === "null") {
-        // Explicit removal requested - set to null
         profileImageUpdate = null;
     }
 
@@ -327,7 +325,7 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
 
         // Handle eSignature updates
         if (eSignature) {
-            updateData.eSignature = `/uploads/${eSignature.filename}`;
+            updateData.eSignature = eSignature.location; // ✅ S3 file URL
         } else if (req.body.eSignature === "null") {
             updateData.eSignature = null;
         }

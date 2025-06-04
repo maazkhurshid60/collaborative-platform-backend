@@ -182,6 +182,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
             new ApiResponse(StatusCodes.CONFLICT, { error: `CNIC ${cnic} already taken` }, "Duplicate Error")
         );
     }
+    console.log("client id", clientId, "isClientExist", isClientExist);
 
     // Check for duplicate full name (excluding current user)
     const isFullNameExist = await prisma.user.findFirst({
@@ -190,11 +191,22 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
             id: { not: isClientExist.userId }
         }
     });
-    if (isFullNameExist) {
-        return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `Full Name ${fullName} already taken` }, "Duplicate Error")
-        );
+    // Only check for duplicate full name if it was changed
+    if (fullName !== isClientExist.user.fullName) {
+        const isFullNameExist = await prisma.user.findFirst({
+            where: {
+                fullName,
+                id: { not: isClientExist.userId }
+            }
+        });
+
+        if (isFullNameExist) {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, { error: `Full Name ${fullName} already taken` }, "Duplicate Error")
+            );
+        }
     }
+
 
     // Prepare client update data
     const updatedClientData: any = { email };
@@ -217,7 +229,8 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
     // Handle profile image updates
     if (req.file) {
         // New file uploaded - update with new image path
-        updatedUserData.profileImage = `/uploads/${req.file.filename}`;
+        const file = req.file as Express.Multer.File & { location?: string };
+        updatedUserData.profileImage = file?.location;
     } else if (req.body.profileImage === "null") {
         // Explicit removal requested - set to null
         updatedUserData.profileImage = null;
@@ -226,7 +239,8 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
 
     // Update user record
     const isUserUpdated = await prisma.user.update({
-        where: { id: isClientExist.userId },
+        where: { id: isClientExist.userId, },
+
         data: updatedUserData,
     });
 
@@ -284,8 +298,22 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
 
     let profileImageUrl: string | null = null;
     if (req.file) {
-        profileImageUrl = `/uploads/${req.file.filename}`;
+        const file = req.file as Express.Multer.File & { location?: string };
+        profileImageUrl = file.location ?? null;
     }
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", profileImageUrl);
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
     // 2. Check if user with CNIC already exists
     const existingUser = await prisma.user.findFirst({ where: { cnic } });
@@ -406,7 +434,6 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
 
 
 const updateExistingClientOnCNIC = asyncHandler(async (req: Request, res: Response) => {
-
     // Validate data
     const clientData = clientSchema.safeParse(req.body);
     if (!clientData.success) {
@@ -415,9 +442,15 @@ const updateExistingClientOnCNIC = asyncHandler(async (req: Request, res: Respon
         );
     }
 
-    const { fullName, gender, age, contactNo, address, status, cnic, email, password, clientId } = clientData.data;
+    let { fullName, gender, age, contactNo, address, status, cnic, email, password, clientId } = clientData.data;
+
+    // Normalize email
+    email = email.trim().toLowerCase();
+
     // Hash password if provided
     const hashedPassword = await bcrypt.hash(password ?? "", 10);
+
+    // Check if client exists
     const isClientExist = await prisma.client.findFirst({ where: { id: clientId } });
     if (!isClientExist) {
         return res.status(StatusCodes.NOT_FOUND).json(
@@ -425,20 +458,27 @@ const updateExistingClientOnCNIC = asyncHandler(async (req: Request, res: Respon
         );
     }
 
-    const isEmailExist = await prisma.client.findFirst({
-        where: {
-            email,
-            id: {
-                not: clientId
-            }
+    // Check for duplicate email only if it's being changed
+    if (email !== isClientExist.email.trim().toLowerCase()) {
+        const isEmailExist = await prisma.client.findFirst({
+            where: {
+                email: email, // the new email
+                id: {
+                    not: clientId, // ensure it doesn’t belong to the same client
+                },
+            },
+        });
+
+
+        if (isEmailExist) {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, { error: `Email ${email} already taken by another client` }, "Duplicate Email")
+            );
         }
-    });
-    if (isEmailExist) {
-        return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `Email ${email} already taken` }, "Duplicate Error")
-        );
     }
 
+
+    // Check for duplicate CNIC
     const isCnicExists = await prisma.user.findFirst({
         where: {
             cnic,
@@ -453,36 +493,68 @@ const updateExistingClientOnCNIC = asyncHandler(async (req: Request, res: Respon
         );
     }
 
-    const isFullNameExist = await prisma.user.findFirst({ where: { fullName, id: { not: isClientExist.userId } } });
+    // Check for duplicate Full Name
+    const isFullNameExist = await prisma.user.findFirst({
+        where: {
+            fullName,
+            id: {
+                not: isClientExist.userId
+            }
+        }
+    });
+
+    console.log("isFullNameExistisFullNameExist", isFullNameExist, "isclientexist", isClientExist)
+
     if (isFullNameExist) {
         return res.status(StatusCodes.CONFLICT).json(
             new ApiResponse(StatusCodes.CONFLICT, { error: `Full Name ${fullName} already taken` }, "Duplicate Error")
         );
     }
 
-    const updatedClientData = { email, password: hashedPassword };
-    const updatedUserData = { fullName, gender, age, contactNo, address, status, cnic, role: Role.client };
+    // Prepare update data
+    const updatedClientData = {
+        email,
+        password: hashedPassword,
+    };
 
+    const updatedUserData = {
+        fullName,
+        gender,
+        age,
+        contactNo,
+        address,
+        status,
+        cnic,
+        role: Role.client,
+    };
 
+    // Update user and client
     const isUserUpdated = await prisma.user.update({
         where: { id: isClientExist.userId },
         data: updatedUserData,
     });
+
     const isClientUpdated = await prisma.client.update({
         where: { id: clientId },
         data: updatedClientData,
     });
-    const updatedData = { ...isUserUpdated, ...isClientUpdated }
+
     if (!isClientUpdated) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
             new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Something went wrong. Try later" }, "")
         );
     }
 
+    const updatedData = {
+        ...isUserUpdated,
+        ...isClientUpdated,
+    };
+
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, { updatedData }, "Client updated successfully")
     );
 });
+
 
 
 

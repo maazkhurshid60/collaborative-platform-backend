@@ -221,11 +221,11 @@ const documentSignByClientApi = asyncHandler(async (req: Request, res: Response)
             new ApiResponse(StatusCodes.NOT_FOUND, { error: "Document not found or not assigned to this client." }, "Not Found")
         );
     }
-
+    const eSignatureS3File = eSignatureFile as Express.Multer.File & { location: string };
     const documentUpdated = await prisma.documentShareWith.update({
         where: { id: sharedDocumentId },
         data: {
-            eSignature: eSignatureFile.filename,
+            eSignature: eSignatureS3File.location, // ✅ Save full S3 URL
             isAgree: isAgree === "true",
             updatedAt: new Date()
         },
@@ -307,14 +307,3 @@ const getAllSharedDocumentWithClientApi = asyncHandler(async (req: Request, res:
 })
 
 export { addDocumentApi, getAllDocumentApi, documentSharedWithClientApi, documentSignByClientApi, getAllSharedDocumentWithClientApi }
-
-
-
-//-- iam user bnanana hoga
-//-- rds for db , lightsail and SES
-//-- search IAM user in aws search field and click on IAM user
-//-- click on policies..
-//--create oikuxy
-//--
-//--
-//-- 

@@ -141,6 +141,7 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
     if (isCnicExists) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `CNIC ${cnic} already taken` }, "Duplicate Error"));
     }
+    console.log("client id", clientId, "isClientExist", isClientExist);
     // Check for duplicate full name (excluding current user)
     const isFullNameExist = yield db_config_1.default.user.findFirst({
         where: {
@@ -148,8 +149,17 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
             id: { not: isClientExist.userId }
         }
     });
-    if (isFullNameExist) {
-        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Full Name ${fullName} already taken` }, "Duplicate Error"));
+    // Only check for duplicate full name if it was changed
+    if (fullName !== isClientExist.user.fullName) {
+        const isFullNameExist = yield db_config_1.default.user.findFirst({
+            where: {
+                fullName,
+                id: { not: isClientExist.userId }
+            }
+        });
+        if (isFullNameExist) {
+            return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Full Name ${fullName} already taken` }, "Duplicate Error"));
+        }
     }
     // Prepare client update data
     const updatedClientData = { email };
@@ -170,7 +180,8 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
     // Handle profile image updates
     if (req.file) {
         // New file uploaded - update with new image path
-        updatedUserData.profileImage = `/uploads/${req.file.filename}`;
+        const file = req.file;
+        updatedUserData.profileImage = file === null || file === void 0 ? void 0 : file.location;
     }
     else if (req.body.profileImage === "null") {
         // Explicit removal requested - set to null
@@ -179,7 +190,7 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
     // If neither case, profileImage won't be included in update (keeps existing)
     // Update user record
     const isUserUpdated = yield db_config_1.default.user.update({
-        where: { id: isClientExist.userId },
+        where: { id: isClientExist.userId, },
         data: updatedUserData,
     });
     // Update client record
@@ -208,6 +219,7 @@ const getTotalClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(
 }));
 exports.getTotalClient = getTotalClient;
 const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     if (req.body.age)
         req.body.age = Number(req.body.age);
     if (req.body.isAccountCreatedByOwnClient)
@@ -221,8 +233,21 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     const { email, password, isAccountCreatedByOwnClient, providerId } = req.body;
     let profileImageUrl = null;
     if (req.file) {
-        profileImageUrl = `/uploads/${req.file.filename}`;
+        const file = req.file;
+        profileImageUrl = (_a = file.location) !== null && _a !== void 0 ? _a : null;
     }
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", profileImageUrl);
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     // 2. Check if user with CNIC already exists
     const existingUser = yield db_config_1.default.user.findFirst({ where: { cnic } });
     if (existingUser) {
@@ -313,24 +338,31 @@ const updateExistingClientOnCNIC = (0, asyncHandler_1.asyncHandler)((req, res) =
     if (!clientData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientData.error.errors }, "Validation Failed"));
     }
-    const { fullName, gender, age, contactNo, address, status, cnic, email, password, clientId } = clientData.data;
+    let { fullName, gender, age, contactNo, address, status, cnic, email, password, clientId } = clientData.data;
+    // Normalize email
+    email = email.trim().toLowerCase();
     // Hash password if provided
     const hashedPassword = yield bcrypt_1.default.hash(password !== null && password !== void 0 ? password : "", 10);
+    // Check if client exists
     const isClientExist = yield db_config_1.default.client.findFirst({ where: { id: clientId } });
     if (!isClientExist) {
         return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "Client not found" }, "Not found"));
     }
-    const isEmailExist = yield db_config_1.default.client.findFirst({
-        where: {
-            email,
-            id: {
-                not: clientId
-            }
+    // Check for duplicate email only if it's being changed
+    if (email !== isClientExist.email.trim().toLowerCase()) {
+        const isEmailExist = yield db_config_1.default.client.findFirst({
+            where: {
+                email: email, // the new email
+                id: {
+                    not: clientId, // ensure it doesn’t belong to the same client
+                },
+            },
+        });
+        if (isEmailExist) {
+            return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email ${email} already taken by another client` }, "Duplicate Email"));
         }
-    });
-    if (isEmailExist) {
-        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email ${email} already taken` }, "Duplicate Error"));
     }
+    // Check for duplicate CNIC
     const isCnicExists = yield db_config_1.default.user.findFirst({
         where: {
             cnic,
@@ -342,12 +374,35 @@ const updateExistingClientOnCNIC = (0, asyncHandler_1.asyncHandler)((req, res) =
     if (isCnicExists) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `CNIC ${cnic} already taken` }, "Duplicate Error"));
     }
-    const isFullNameExist = yield db_config_1.default.user.findFirst({ where: { fullName, id: { not: isClientExist.userId } } });
+    // Check for duplicate Full Name
+    const isFullNameExist = yield db_config_1.default.user.findFirst({
+        where: {
+            fullName,
+            id: {
+                not: isClientExist.userId
+            }
+        }
+    });
+    console.log("isFullNameExistisFullNameExist", isFullNameExist, "isclientexist", isClientExist);
     if (isFullNameExist) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Full Name ${fullName} already taken` }, "Duplicate Error"));
     }
-    const updatedClientData = { email, password: hashedPassword };
-    const updatedUserData = { fullName, gender, age, contactNo, address, status, cnic, role: client_1.Role.client };
+    // Prepare update data
+    const updatedClientData = {
+        email,
+        password: hashedPassword,
+    };
+    const updatedUserData = {
+        fullName,
+        gender,
+        age,
+        contactNo,
+        address,
+        status,
+        cnic,
+        role: client_1.Role.client,
+    };
+    // Update user and client
     const isUserUpdated = yield db_config_1.default.user.update({
         where: { id: isClientExist.userId },
         data: updatedUserData,
@@ -356,10 +411,10 @@ const updateExistingClientOnCNIC = (0, asyncHandler_1.asyncHandler)((req, res) =
         where: { id: clientId },
         data: updatedClientData,
     });
-    const updatedData = Object.assign(Object.assign({}, isUserUpdated), isClientUpdated);
     if (!isClientUpdated) {
         return res.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, { error: "Something went wrong. Try later" }, ""));
     }
+    const updatedData = Object.assign(Object.assign({}, isUserUpdated), isClientUpdated);
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { updatedData }, "Client updated successfully"));
 }));
 exports.updateExistingClientOnCNIC = updateExistingClientOnCNIC;

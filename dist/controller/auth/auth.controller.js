@@ -193,6 +193,7 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
     // Extract uploaded files
     const files = req.files;
     const profileImage = (_a = files === null || files === void 0 ? void 0 : files.profileImage) === null || _a === void 0 ? void 0 : _a[0];
+    ;
     const eSignature = (_b = files === null || files === void 0 ? void 0 : files.eSignature) === null || _b === void 0 ? void 0 : _b[0];
     // Get existing user data
     const { loginUserId } = req.body;
@@ -206,11 +207,9 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
     // Handle profile image updates
     let profileImageUpdate = undefined;
     if (profileImage) {
-        // New image uploaded
-        profileImageUpdate = `/uploads/${profileImage.filename}`;
+        profileImageUpdate = profileImage.location; // ✅ S3 file URL
     }
     else if (req.body.profileImage === "null") {
-        // Explicit removal requested - set to null
         profileImageUpdate = null;
     }
     // Validate User Schema
@@ -252,7 +251,7 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
         }
         // Handle eSignature updates
         if (eSignature) {
-            updateData.eSignature = `/uploads/${eSignature.filename}`;
+            updateData.eSignature = eSignature.location; // ✅ S3 file URL
         }
         else if (req.body.eSignature === "null") {
             updateData.eSignature = null;

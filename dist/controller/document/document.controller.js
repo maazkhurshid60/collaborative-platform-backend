@@ -182,10 +182,11 @@ const documentSignByClientApi = (0, asyncHandler_1.asyncHandler)((req, res) => _
     if (!isShareDocumentExist) {
         return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "Document not found or not assigned to this client." }, "Not Found"));
     }
+    const eSignatureS3File = eSignatureFile;
     const documentUpdated = yield db_config_1.default.documentShareWith.update({
         where: { id: sharedDocumentId },
         data: {
-            eSignature: eSignatureFile.filename,
+            eSignature: eSignatureS3File.location, // ✅ Save full S3 URL
             isAgree: isAgree === "true",
             updatedAt: new Date()
         },
@@ -244,11 +245,3 @@ const getAllSharedDocumentWithClientApi = (0, asyncHandler_1.asyncHandler)((req,
     }, "Success"));
 }));
 exports.getAllSharedDocumentWithClientApi = getAllSharedDocumentWithClientApi;
-//-- iam user bnanana hoga
-//-- rds for db , lightsail and SES
-//-- search IAM user in aws search field and click on IAM user
-//-- click on policies..
-//--create oikuxy
-//--
-//--
-//-- 
