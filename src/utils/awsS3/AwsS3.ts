@@ -9,3 +9,4 @@ AWS.config.update({
 
 const s3: AWS.S3 = new AWS.S3();
 export default s3;
+
