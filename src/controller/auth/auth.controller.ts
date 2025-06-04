@@ -256,12 +256,11 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
     }
 
     // Handle profile image updates
-    let profileImageUpdate = undefined;
+    let profileImageUpdate: string | null = null;
     if (profileImage) {
-        profileImageUpdate = profileImage.location; // ✅ S3 file URL
-    } else if (req.body.profileImage === "null") {
-        profileImageUpdate = null;
+        profileImageUpdate = profileImage.location;
     }
+
 
     // Validate User Schema
     const userParsedData = userSchema.safeParse({
@@ -325,8 +324,8 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
 
         // Handle eSignature updates
         if (eSignature) {
-            updateData.eSignature = eSignature.location; // ✅ S3 file URL
-        } else if (req.body.eSignature === "null") {
+            updateData.eSignature = eSignature.location;
+        } else {
             updateData.eSignature = null;
         }
         const userId = String(loginUserId);

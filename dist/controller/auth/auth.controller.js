@@ -205,12 +205,9 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
         return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "User does not exist." }, "Not Found Error."));
     }
     // Handle profile image updates
-    let profileImageUpdate = undefined;
+    let profileImageUpdate = null;
     if (profileImage) {
-        profileImageUpdate = profileImage.location; // ✅ S3 file URL
-    }
-    else if (req.body.profileImage === "null") {
-        profileImageUpdate = null;
+        profileImageUpdate = profileImage.location;
     }
     // Validate User Schema
     const userParsedData = auth_schema_1.userSchema.safeParse(Object.assign(Object.assign({}, req.body), { profileImage: profileImageUpdate !== undefined ? profileImageUpdate : existingUser.profileImage }));
@@ -251,9 +248,9 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
         }
         // Handle eSignature updates
         if (eSignature) {
-            updateData.eSignature = eSignature.location; // ✅ S3 file URL
+            updateData.eSignature = eSignature.location;
         }
-        else if (req.body.eSignature === "null") {
+        else {
             updateData.eSignature = null;
         }
         const userId = String(loginUserId);
