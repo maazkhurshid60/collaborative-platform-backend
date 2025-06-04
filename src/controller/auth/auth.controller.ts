@@ -617,7 +617,7 @@ const findByCNIC = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const cnicFound = await prisma.user.findFirst({
-        where: { cnic }, include: { clients: true }
+        where: { cnic }, include: { client: true }
     })
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, { data: cnicFound }, "Record found.")

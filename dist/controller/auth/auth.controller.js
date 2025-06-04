@@ -454,7 +454,7 @@ const findByCNIC = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { message: " CNIC isrequired" }, "Validation failed"));
     }
     const cnicFound = yield db_config_1.default.user.findFirst({
-        where: { cnic }, include: { clients: true }
+        where: { cnic }, include: { client: true }
     });
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { data: cnicFound }, "Record found."));
 }));
