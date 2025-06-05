@@ -383,7 +383,6 @@ const updateExistingClientOnCNIC = (0, asyncHandler_1.asyncHandler)((req, res) =
             }
         }
     });
-    console.log("isFullNameExistisFullNameExist", isFullNameExist, "isclientexist", isClientExist);
     if (isFullNameExist) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Full Name ${fullName} already taken` }, "Duplicate Error"));
     }
