@@ -258,7 +258,6 @@ const documentSignByClientApi = asyncHandler(async (req: Request, res: Response)
             type: 'DOCUMENT_SIGNED'
         }
     });
-
     io.to(providerUserId).emit('new_notification', providerNotification);
 
     // 🔔 Create notification for Client
