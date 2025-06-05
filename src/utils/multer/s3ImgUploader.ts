@@ -10,6 +10,8 @@ AWS.config.update({
     region: process.env.AWS_REGION!,
 });
 
+
+
 const s3 = new AWS.S3(); // ✅ 100% v2 compatible
 
 const uploadImg = multer({
