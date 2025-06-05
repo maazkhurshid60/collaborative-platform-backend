@@ -321,7 +321,6 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         if (password) {
             updateData.password = await bcrypt.hash(password, 10);
         }
-
         // Handle eSignature updates
         if (eSignature) {
             updateData.eSignature = eSignature.location;
