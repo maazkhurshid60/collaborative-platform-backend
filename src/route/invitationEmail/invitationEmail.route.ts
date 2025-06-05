@@ -3,6 +3,5 @@ import { sendInvitationEmailApi } from "../../controller/invitationEmail/invitat
 
 
 const invitationEmailRouter = Router()
-
 invitationEmailRouter.post("/invite-someone", sendInvitationEmailApi)
 export default invitationEmailRouter
