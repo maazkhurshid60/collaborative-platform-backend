@@ -503,7 +503,6 @@ const updateExistingClientOnCNIC = asyncHandler(async (req: Request, res: Respon
         }
     });
 
-    console.log("isFullNameExistisFullNameExist", isFullNameExist, "isclientexist", isClientExist)
 
     if (isFullNameExist) {
         return res.status(StatusCodes.CONFLICT).json(
