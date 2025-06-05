@@ -21,7 +21,6 @@ const uploadDoc = multer({
     storage: multerS3({
         s3,
         bucket: process.env.S3_BUCKET_NAME!,
-
         key: (req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, key?: string) => void) => {
             const ext = path.extname(file.originalname);
             cb(null, `documents/${Date.now()}-${file.originalname}`);
