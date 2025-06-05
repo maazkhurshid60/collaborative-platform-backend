@@ -205,7 +205,7 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
         return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "User does not exist." }, "Not Found Error."));
     }
     // Handle profile image updates
-    let profileImageUpdate = null;
+    let profileImageUpdate = "null";
     if (profileImage) {
         profileImageUpdate = profileImage.location;
     }
@@ -251,7 +251,7 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
             updateData.eSignature = eSignature.location;
         }
         else {
-            updateData.eSignature = null;
+            updateData.eSignature = "null";
         }
         const userId = String(loginUserId);
         const clientUpdate = yield db_config_1.default.client.update({

@@ -256,7 +256,7 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
     }
 
     // Handle profile image updates
-    let profileImageUpdate: string | null = null;
+    let profileImageUpdate: string = "null";
     if (profileImage) {
         profileImageUpdate = profileImage.location;
     }
@@ -326,7 +326,7 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         if (eSignature) {
             updateData.eSignature = eSignature.location;
         } else {
-            updateData.eSignature = null;
+            updateData.eSignature = "null";
         }
         const userId = String(loginUserId);
 
