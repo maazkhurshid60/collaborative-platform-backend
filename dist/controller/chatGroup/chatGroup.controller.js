@@ -146,7 +146,6 @@ exports.getGroupMessageApi = getGroupMessageApi;
 const getAllGroupsApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { loginUserId } = req.body;
     const allgroups = yield db_config_1.default.groupChat.findMany({ where: { members: { some: { providerId: loginUserId } } }, include: { members: { include: { Provider: { include: { user: true } } } } } });
-    console.log("allgroups", allgroups);
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { allgroups }, 'Fetched all groups.'));
 }));
 exports.getAllGroupsApi = getAllGroupsApi;

@@ -172,7 +172,6 @@ const getGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
 const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
     const { loginUserId } = req.body
     const allgroups = await prisma.groupChat.findMany({ where: { members: { some: { providerId: loginUserId } } }, include: { members: { include: { Provider: { include: { user: true } } } } } })
-    console.log("allgroups", allgroups);
 
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, { allgroups }, 'Fetched all groups.')

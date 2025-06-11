@@ -34,7 +34,6 @@ const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) 
             }
         }
     })
-    console.log("all providers", allProviders);
     //Only those providers will be shown which are not blocked by the login user
     const filteredProviders = allProviders.filter(provider => !loginUser.blockedMembers.includes(provider.user.id))
     const totalDocument = filteredProviders.length
