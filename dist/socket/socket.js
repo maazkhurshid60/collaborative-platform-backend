@@ -52,7 +52,7 @@ function setupSocket(server) {
         // ✅ Direct message
         socket.on('send_direct', ({ toProviderId, message }) => {
             try {
-                io.to(message.chatChannelId).emit('receive_direct', message);
+                io.to(message === null || message === void 0 ? void 0 : message.chatChannelId).emit('receive_direct', message);
                 io.to(toProviderId).emit('receive_direct', message); // this ensures the other user gets it
             }
             catch (err) {

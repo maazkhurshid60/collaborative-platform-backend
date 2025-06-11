@@ -10,6 +10,7 @@ const allowedTypes = [
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
 
+
 const fileFilter = (req: any, file: any, cb: any) => {
     if (!allowedTypes.includes(file.mimetype)) {
         return cb(new Error('Only PDF and Word documents are allowed'), false);
