@@ -21,8 +21,6 @@ function setupSocket(server) {
     exports.io = io = new socket_io_1.Server(server, {
         cors: {
             origin: [
-                'http://localhost:5173',
-                'http://localhost:4173',
                 'https://collaborative-platform-frontend.vercel.app'
             ],
         },
