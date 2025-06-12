@@ -9,6 +9,7 @@ export function setupSocket(server: any) {
     io = new Server(server, {
         cors: {
             origin: [
+                'http://localhost:5173',
                 'https://collaborative-platform-frontend.vercel.app'
             ],
         },
@@ -69,27 +70,7 @@ export function setupSocket(server: any) {
             }
         });
 
-        // ✅ Typing indicator
-        socket.on('typing', (channelId: string) => {
-            socket.to(channelId).emit('user_typing', { providerId });
-        });
 
-        socket.on('stop_typing', (channelId: string) => {
-            socket.to(channelId).emit('user_stop_typing', { providerId });
-        });
-
-        // ✅ Delete message
-        socket.on('delete_message', async (messageId: string) => {
-            try {
-                await prisma.chatMessage.delete({
-                    where: { id: messageId },
-                });
-                io.emit('message_deleted', { messageId });
-            } catch (err) {
-                console.error('Error deleting message:', err);
-                socket.emit('error', { message: 'Error deleting message' });
-            }
-        });
 
         // ✅ Disconnect handling
         socket.on('disconnect', () => {

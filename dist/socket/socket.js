@@ -21,6 +21,7 @@ function setupSocket(server) {
     exports.io = io = new socket_io_1.Server(server, {
         cors: {
             origin: [
+                'http://localhost:5173',
                 'https://collaborative-platform-frontend.vercel.app'
             ],
         },
@@ -72,26 +73,6 @@ function setupSocket(server) {
                 console.error('❌ Error in send_group:', err);
             }
         });
-        // ✅ Typing indicator
-        socket.on('typing', (channelId) => {
-            socket.to(channelId).emit('user_typing', { providerId });
-        });
-        socket.on('stop_typing', (channelId) => {
-            socket.to(channelId).emit('user_stop_typing', { providerId });
-        });
-        // ✅ Delete message
-        socket.on('delete_message', (messageId) => __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield db_config_1.default.chatMessage.delete({
-                    where: { id: messageId },
-                });
-                io.emit('message_deleted', { messageId });
-            }
-            catch (err) {
-                console.error('Error deleting message:', err);
-                socket.emit('error', { message: 'Error deleting message' });
-            }
-        }));
         // ✅ Disconnect handling
         socket.on('disconnect', () => {
             console.log(`❌ Disconnected | userId: ${userId || '-'} | providerId: ${providerId || '-'}`);

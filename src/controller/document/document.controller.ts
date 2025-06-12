@@ -69,17 +69,22 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
     const agreedDocs = sharedWithClient
         .filter((item) => item.isAgree)
         .map((item) => item.documentId);
+    const onlySharedDocs = sharedWithClient
+        .filter((item) => !item.isAgree)
+        .map((item) => item.documentId);
 
     const unAgreedDocs = sharedWithClient
-        .filter((item) => !item.isAgree)
+        .filter((item) => item.isAgree)
         .map((item) => item.documentId);
 
     // Step 4: Separate documents
     const completedDocuments = allDocuments.filter(doc => agreedDocs.includes(doc.id));
+
+
     const uncompletedDocuments = allDocuments.filter(doc =>
-        unAgreedDocs.includes(doc.id) ||
-        !sharedWithClient.find(d => d.documentId === doc.id) // Not shared yet = uncompleted
+        !agreedDocs.includes(doc.id) && !onlySharedDocs.includes(doc.id)
     );
+    const sharedDocuments = allDocuments.filter(doc => onlySharedDocs.includes(doc.id));
 
     const totalDocuments = await prisma.document.count();
 
@@ -95,6 +100,7 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
             data: {
                 completedDocuments,
                 uncompletedDocuments,
+                sharedDocuments
             }
         }, "Fetched.")
     );
@@ -105,20 +111,28 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Response) => {
     const { providerId, clientId, documentId, senderId, clientEmail } = req.body;
 
-    const existing = await prisma.documentShareWith.findFirst({
+    const alreadySharedDocs = await prisma.documentShareWith.findMany({
         where: {
             providerId,
             clientId,
             documentId: {
                 in: documentId
             }
+        },
+        include: {
+            document: true
         }
     });
 
-    if (existing) {
-        return res.status(409).json({ error: 'Document already shared' });
-    }
+    if (alreadySharedDocs.length > 0) {
+        const alreadySharedDocNames = alreadySharedDocs.map(doc => doc.document.name);
+        const docList = alreadySharedDocNames.join(', ');
 
+        return res.status(409).json({
+            error: `The following documents have already been shared: ${docList}`,
+            alreadyShared: alreadySharedDocNames
+        });
+    }
     const sharedDocuments = await Promise.all(
         documentId.map((documentId: string) =>
             prisma.documentShareWith.create({
@@ -162,7 +176,7 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
                 title: 'New Document Shared',
                 message: messageForClient,
                 type: 'DOCUMENT_SHARED',
-                senderId: senderId
+                senderId: senderId,
             }
         });
 

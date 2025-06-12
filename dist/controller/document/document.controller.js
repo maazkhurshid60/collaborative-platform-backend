@@ -71,14 +71,16 @@ const getAllDocumentApi = (0, asyncHandler_1.asyncHandler)((req, res) => __await
     const agreedDocs = sharedWithClient
         .filter((item) => item.isAgree)
         .map((item) => item.documentId);
-    const unAgreedDocs = sharedWithClient
+    const onlySharedDocs = sharedWithClient
         .filter((item) => !item.isAgree)
+        .map((item) => item.documentId);
+    const unAgreedDocs = sharedWithClient
+        .filter((item) => item.isAgree)
         .map((item) => item.documentId);
     // Step 4: Separate documents
     const completedDocuments = allDocuments.filter(doc => agreedDocs.includes(doc.id));
-    const uncompletedDocuments = allDocuments.filter(doc => unAgreedDocs.includes(doc.id) ||
-        !sharedWithClient.find(d => d.documentId === doc.id) // Not shared yet = uncompleted
-    );
+    const uncompletedDocuments = allDocuments.filter(doc => !agreedDocs.includes(doc.id) && !onlySharedDocs.includes(doc.id));
+    const sharedDocuments = allDocuments.filter(doc => onlySharedDocs.includes(doc.id));
     const totalDocuments = yield db_config_1.default.document.count();
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, {
         message: "Documents fetched successfully.",
@@ -91,23 +93,32 @@ const getAllDocumentApi = (0, asyncHandler_1.asyncHandler)((req, res) => __await
         data: {
             completedDocuments,
             uncompletedDocuments,
+            sharedDocuments
         }
     }, "Fetched."));
 }));
 exports.getAllDocumentApi = getAllDocumentApi;
 const documentSharedWithClientApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { providerId, clientId, documentId, senderId, clientEmail } = req.body;
-    const existing = yield db_config_1.default.documentShareWith.findFirst({
+    const alreadySharedDocs = yield db_config_1.default.documentShareWith.findMany({
         where: {
             providerId,
             clientId,
             documentId: {
                 in: documentId
             }
+        },
+        include: {
+            document: true
         }
     });
-    if (existing) {
-        return res.status(409).json({ error: 'Document already shared' });
+    if (alreadySharedDocs.length > 0) {
+        const alreadySharedDocNames = alreadySharedDocs.map(doc => doc.document.name);
+        const docList = alreadySharedDocNames.join(', ');
+        return res.status(409).json({
+            error: `The following documents have already been shared: ${docList}`,
+            alreadyShared: alreadySharedDocNames
+        });
     }
     const sharedDocuments = yield Promise.all(documentId.map((documentId) => db_config_1.default.documentShareWith.create({
         data: {
@@ -143,7 +154,7 @@ const documentSharedWithClientApi = (0, asyncHandler_1.asyncHandler)((req, res) 
                 title: 'New Document Shared',
                 message: messageForClient,
                 type: 'DOCUMENT_SHARED',
-                senderId: senderId
+                senderId: senderId,
             }
         });
         yield (0, SendDocumentEmail_1.sendDocumentEmail)(clientEmail, clientUser.fullName, providerUser.fullName);
