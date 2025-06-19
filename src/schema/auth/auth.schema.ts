@@ -10,7 +10,7 @@ export const userSchema = z.object({
     contactNo: z.string().nonempty().min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }).optional(),
     address: z.string().nonempty().min(10, { message: "Not less then 10letters" }).optional(),
     status: z.enum(["active", "disable"], { message: "Status must be either active or disable" }).optional(),
-    cnic: z.string().nonempty().min(12, { message: "CNIC could not less then 12 character" }).max(20, { message: "CNIC could not more then 20 character" }),
+    licenseNo: z.string().nonempty().min(12, { message: "license number could not less then 12 character" }).max(20, { message: "license number could not more then 20 character" }),
     role: z.enum(["client", "provider"], { message: "Role must be either client or provider" })
 })
 // Client Schema (Extends User)

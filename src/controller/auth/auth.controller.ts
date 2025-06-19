@@ -19,20 +19,20 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
         );
     }
     //get data for user
-    const { fullName, gender = "male", age, contactNo, address, status = "active", cnic, role } = userParsedData.data;
+    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
 
     // Check if User Exists
-    const existingUser = await prisma.user.findFirst({ where: { cnic } });
+    const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
     if (existingUser) {
 
         return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `CNIC ${cnic} is already registered.` }, "Validation failed")
+            new ApiResponse(StatusCodes.CONFLICT, { error: `License Number ${licenseNo} is already registered.` }, "Validation failed")
         );
     }
 
 
     const userData: any = {
-        fullName, gender, age, contactNo, address, status, cnic, role
+        fullName, gender, age, contactNo, address, status, licenseNo, role
     };
     if (gender !== undefined) userData.gender = gender;
     if (age !== undefined) userData.age = age;
@@ -105,123 +105,6 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
 
 
 
-// const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
-//     // Validate User Schema
-//     const userParsedData = userSchema.safeParse(req.body);
-//     if (!userParsedData.success) {
-//         return res.status(StatusCodes.BAD_REQUEST).json(
-//             new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
-//         );
-//     }
-
-//     console.log(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.file);
-
-//     const { loginUserId } = req.body;
-
-//     const isUserExist = await prisma.user.findFirst({ where: { id: loginUserId } });
-
-//     //Check user exist 
-//     if (!isUserExist) {
-//         return res.status(StatusCodes.NOT_FOUND).json(
-//             new ApiResponse(StatusCodes.NOT_FOUND, { error: "User is not exist." }, "Not Found Error.")
-//         );
-//     }
-
-//     const { fullName, gender, age, contactNo, address, status, cnic, role } = userParsedData.data;
-
-//     // Update User
-//     const updatedUser = await prisma.user.update({
-//         where: { id: loginUserId },
-//         data: { fullName, gender, age, contactNo, address, status, cnic, role }
-//     });
-
-//     // Handle Client Update
-//     if (role === Role.client) {
-//         const clientParsed = clientSchema.safeParse(req.body);
-//         if (!clientParsed.success) {
-//             return res.status(StatusCodes.BAD_REQUEST).json(
-//                 new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
-//             );
-//         }
-
-//         const { email, password } = clientParsed.data;
-
-
-//         const existingClient = await prisma.client.findFirst({ where: { email, NOT: { userId: loginUserId } } });
-//         if (existingClient) {
-//             return res.status(StatusCodes.CONFLICT).json(
-//                 new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-//             );
-//         }
-
-//         // Build update data
-//         const updateData: any = {
-//             email,
-
-//         };
-
-//         if (password) {
-//             console.log("client uploaded<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", password);
-
-//             updateData.password = await bcrypt.hash(password, 10);
-//         }
-
-
-//         if (req.file) {
-//             console.log("<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.file);
-
-//             updateData.eSignature = req.file?.path;
-//         }
-
-//         const clientUpdate = await prisma.client.update({
-//             where: { userId: loginUserId },
-//             data: updateData,
-//             include: { user: true }
-//         });
-
-//         return res.status(StatusCodes.OK).json(
-//             new ApiResponse(StatusCodes.OK, clientUpdate, "User updated successfully")
-//         );
-//     }
-
-//     // Handle Provider Update
-//     else if (role === Role.provider) {
-//         const providerParsed = providerSchema.safeParse(req.body);
-//         if (!providerParsed.success) {
-//             return res.status(StatusCodes.BAD_REQUEST).json(
-//                 new ApiResponse(StatusCodes.BAD_REQUEST, { error: providerParsed.error.errors }, "Validation failed")
-//             );
-//         }
-
-//         const { email, password, department } = providerParsed.data;
-
-//         const existingProvider = await prisma.provider.findFirst({ where: { email, NOT: { userId: loginUserId } } });
-//         if (existingProvider) {
-//             return res.status(StatusCodes.CONFLICT).json(
-//                 new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-//             );
-//         }
-
-//         const updateData: any = {
-//             email,
-//             department
-//         };
-
-//         if (password) {
-//             updateData.password = await bcrypt.hash(password, 10);
-//         }
-
-//         const providerUpdate = await prisma.provider.update({
-//             where: { userId: loginUserId },
-//             data: updateData,
-//             include: { user: true }
-//         });
-
-//         return res.status(StatusCodes.OK).json(
-//             new ApiResponse(StatusCodes.OK, providerUpdate, "User updated successfully")
-//         );
-//     }
-// });
 
 const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
     // Convert values from form-data strings to appropriate types
@@ -274,7 +157,7 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const { fullName, gender, age, contactNo, address, status, cnic, role } = userParsedData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, role } = userParsedData.data;
 
     // Update User
     const updatedUser = await prisma.user.update({
@@ -286,7 +169,7 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
             contactNo,
             address,
             status,
-            cnic,
+            licenseNo,
             role,
             // Only update profileImage if it was explicitly changed
             ...(profileImageUpdate !== undefined && { profileImage: profileImageUpdate })
@@ -606,19 +489,19 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
-const findByCNIC = asyncHandler(async (req: Request, res: Response) => {
-    const { cnic } = req.body
-    if (cnic === "") {
+const findByLicenseNo = asyncHandler(async (req: Request, res: Response) => {
+    const { licenseNo } = req.body
+    if (licenseNo === "") {
         return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { message: " CNIC isrequired" }, "Validation failed")
+            new ApiResponse(StatusCodes.BAD_REQUEST, { message: " licenseNo isrequired" }, "Validation failed")
         );
     }
 
-    const cnicFound = await prisma.user.findFirst({
-        where: { cnic }, include: { client: true }
+    const licenseNoFound = await prisma.user.findFirst({
+        where: { licenseNo }, include: { client: true }
     })
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { data: cnicFound }, "Record found.")
+        new ApiResponse(StatusCodes.OK, { data: licenseNoFound }, "Record found.")
     );
 
 
@@ -731,4 +614,4 @@ const changePasswordApi = asyncHandler(async (req: Request, res: Response) => {
 
 })
 
-export { signupApi, logInApi, blockUserApi, unblockUserApi, logoutApi, updateMeApi, deleteMeAccountApi, getMeApi, getAllUsersApi, findByCNIC, changePasswordApi };
+export { signupApi, logInApi, blockUserApi, unblockUserApi, logoutApi, updateMeApi, deleteMeAccountApi, getMeApi, getAllUsersApi, findByLicenseNo, changePasswordApi };

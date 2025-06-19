@@ -17,6 +17,7 @@ const asyncHandler_1 = require("../../utils/asyncHandler");
 const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
 const apiResponse_1 = require("../../utils/apiResponse");
+const chatMediaConfig_1 = require("../../utils/multer/chatMediaConfig");
 const getAllSingleConservationMessage = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { chatChannelId, loginUserId } = req.body;
     try {
@@ -54,45 +55,86 @@ const getAllSingleConservationMessage = (0, asyncHandler_1.asyncHandler)((req, r
     }
 }));
 exports.getAllSingleConservationMessage = getAllSingleConservationMessage;
+// const sendMessageToSingleConservation = asyncHandler(async (req: Request, res: Response) => {
+//     const { chatChannelId, message, mediaUrl, type, senderId } = req.body;
+//     try {
+//         const channel = await prisma.chatChannel.findUnique({
+//             where: { id: chatChannelId }
+//         });
+//         if (!channel) {
+//             return res.status(400).json({ message: 'Chat channel does not exist' });
+//         }
+//         // Create the message in the database
+//         const chatMessage = await prisma.chatMessage.create({
+//             data: {
+//                 senderId,
+//                 message,
+//                 chatChannelId,
+//                 mediaUrl: mediaUrl || '',
+//                 type: type || 'text',
+//                 readReceipts: {
+//                     create: {
+//                         providerId: senderId, //  Only sender gets read receipt
+//                     }
+//                 }
+//             },
+//         });
+//         //  No need to add readReceipts manually for receiver
+//         // Update updatedAt of chatChannel
+//         await prisma.chatChannel.update({
+//             where: { id: chatChannelId },
+//             data: {
+//                 updatedAt: new Date().toISOString(),
+//             },
+//         });
+//         return res.status(StatusCodes.OK).json(
+//             new ApiResponse(StatusCodes.OK, { chatMessage }, "Message sent successfully")
+//         );
+//     } catch (err) {
+//         res.status(500).json({ message: 'Error sending message', error: err });
+//     }
+// });
 const sendMessageToSingleConservation = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { chatChannelId, message, mediaUrl, type, senderId } = req.body;
+    const { chatChannelId, message, type, senderId } = req.body;
+    const files = req.files; // files from multer
     try {
         const channel = yield db_config_1.default.chatChannel.findUnique({
-            where: { id: chatChannelId }
+            where: { id: chatChannelId },
         });
         if (!channel) {
             return res.status(400).json({ message: 'Chat channel does not exist' });
         }
-        // Create the message in the database
+        // Upload media files to S3
+        let uploadedMediaUrls = [];
+        if (files && files.length > 0) {
+            const uploadPromises = files.map(file => (0, chatMediaConfig_1.uploadToS3)(file));
+            uploadedMediaUrls = yield Promise.all(uploadPromises);
+        }
         const chatMessage = yield db_config_1.default.chatMessage.create({
             data: {
                 senderId,
-                message,
+                message: message || '', // fallback if empty
                 chatChannelId,
-                mediaUrl: mediaUrl || '',
+                mediaUrl: uploadedMediaUrls.join(','), // store as CSV or use separate Media table
                 type: type || 'text',
+                readReceipts: {
+                    create: {
+                        providerId: senderId,
+                    },
+                },
             },
         });
-        // Add a read receipt for the recipient(s)
-        const recipientIds = [channel.providerAId, channel.providerBId].filter(id => id !== senderId);
-        const readReceipts = recipientIds.map(providerId => ({
-            messageId: chatMessage.id,
-            providerId,
-        }));
-        yield db_config_1.default.readReceipt.createMany({
-            data: readReceipts,
-        });
-        // Update the updatedAt field of the chat channel to current time
         yield db_config_1.default.chatChannel.update({
             where: { id: chatChannelId },
             data: {
-                updatedAt: new Date().toISOString(), // Set the current time as updatedAt
+                updatedAt: new Date().toISOString(),
             },
         });
-        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { chatMessage }, "Message sent successfully"));
+        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { chatMessage }, 'Message sent successfully'));
     }
     catch (err) {
-        res.status(500).json({ message: 'Error sending message', error: err });
+        console.error(err);
+        return res.status(500).json({ message: 'Error sending message', error: err });
     }
 }));
 exports.sendMessageToSingleConservation = sendMessageToSingleConservation;
@@ -170,24 +212,36 @@ const getAllConversations = (0, asyncHandler_1.asyncHandler)((req, res) => __awa
 exports.getAllConversations = getAllConversations;
 // POST /chat/read-messages
 const markMessagesAsRead = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { loginUserId, chatChannelId } = req.body;
+    const { loginUserId, chatChannelId, groupId } = req.body;
     try {
-        // Get all unread messages for this user in the chat
-        const unreadMessages = yield db_config_1.default.chatMessage.findMany({
-            where: {
-                chatChannelId,
-                readReceipts: {
-                    none: {
-                        providerId: loginUserId
-                    }
-                },
-                NOT: {
-                    senderId: loginUserId
+        // Determine the filter based on chat type
+        const messageFilter = {
+            readReceipts: {
+                none: {
+                    providerId: loginUserId
                 }
             },
+            NOT: {
+                senderId: loginUserId
+            }
+        };
+        if (chatChannelId) {
+            messageFilter.chatChannelId = chatChannelId;
+        }
+        else if (groupId) {
+            messageFilter.groupId = groupId;
+        }
+        else {
+            return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json({
+                message: 'Either chatChannelId or groupId must be provided.'
+            });
+        }
+        // Get all unread messages
+        const unreadMessages = yield db_config_1.default.chatMessage.findMany({
+            where: messageFilter,
             select: { id: true }
         });
-        // Create read receipts for each unread message
+        // Mark them as read
         yield db_config_1.default.readReceipt.createMany({
             data: unreadMessages.map(msg => ({
                 messageId: msg.id,

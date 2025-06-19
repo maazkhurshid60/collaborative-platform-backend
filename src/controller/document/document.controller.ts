@@ -150,7 +150,6 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
             })
         )
     );
-
     for (const doc of sharedDocuments) {
         const clientUser = await prisma.user.findUnique({
             where: { id: doc.client.userId },
@@ -180,7 +179,6 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
                 senderId: senderId,
             }
         });
-
 
         await sendDocumentEmail(
             clientEmail,

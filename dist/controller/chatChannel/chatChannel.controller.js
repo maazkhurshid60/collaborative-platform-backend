@@ -91,10 +91,6 @@ const getAllChatChannel = (0, asyncHandler_1.asyncHandler)((req, res) => __await
         });
         return Object.assign(Object.assign({}, channel), { totalUnread: unreadCount, lastMessage: lastMessage || null // <-- include this
          });
-        // return {
-        //     ...channel,
-        //     totalUnread: unreadCount
-        // };
     })));
     return res
         .status(http_status_codes_1.StatusCodes.OK)

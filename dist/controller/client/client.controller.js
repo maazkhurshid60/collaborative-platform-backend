@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateExistingClientOnCNIC = exports.addClient = exports.getTotalClient = exports.updateClient = exports.deletClient = exports.getAllClients = void 0;
+exports.updateExistingClientOnLicenseNo = exports.addClient = exports.getTotalClient = exports.updateClient = exports.deletClient = exports.getAllClients = void 0;
 const asyncHandler_1 = require("../../utils/asyncHandler");
 const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
@@ -107,7 +107,7 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientData.error.errors }, "Validation Failed"));
     }
     // Destructure validated data
-    const { fullName, gender, age, contactNo, address, status, cnic, email, password, clientId } = clientData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, email, password, clientId } = clientData.data;
     // Hash password only if provided
     let hashedPassword;
     if (password && password.trim() !== "") {
@@ -131,15 +131,15 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
     if (isEmailExist) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email ${email} already taken` }, "Duplicate Error"));
     }
-    // Check for duplicate CNIC (excluding current user)
-    const isCnicExists = yield db_config_1.default.user.findFirst({
+    // Check for duplicate licenseNo (excluding current user)
+    const isLicenseNoExists = yield db_config_1.default.user.findFirst({
         where: {
-            cnic,
+            licenseNo,
             id: { not: isClientExist.userId }
         }
     });
-    if (isCnicExists) {
-        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `CNIC ${cnic} already taken` }, "Duplicate Error"));
+    if (isLicenseNoExists) {
+        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `License Number ${licenseNo} already taken` }, "Duplicate Error"));
     }
     console.log("client id", clientId, "isClientExist", isClientExist);
     // Check for duplicate full name (excluding current user)
@@ -174,7 +174,7 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
         contactNo,
         address,
         status,
-        cnic,
+        licenseNo,
         role: client_1.Role.client
     };
     // Handle profile image updates
@@ -229,38 +229,26 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     if (!userParsedData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
     }
-    const { fullName, gender = "male", age, contactNo, address, status = "active", cnic, role } = userParsedData.data;
+    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
     const { email, password, isAccountCreatedByOwnClient, providerId } = req.body;
     let profileImageUrl = null;
     if (req.file) {
         const file = req.file;
         profileImageUrl = (_a = file.location) !== null && _a !== void 0 ? _a : null;
     }
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", profileImageUrl);
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    // 2. Check if user with CNIC already exists
-    const existingUser = yield db_config_1.default.user.findFirst({ where: { cnic } });
+    // 2. Check if user with licenseNo already exists
+    const existingUser = yield db_config_1.default.user.findFirst({ where: { licenseNo } });
     if (existingUser) {
         // Ensure the role is 'client'
         if (existingUser.role !== client_1.Role.client) {
-            return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, "This CNIC is registered but not as a client"));
+            return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, "This license number is registered but not as a client"));
         }
         // Fetch existing client by userId
         const existingClient = yield db_config_1.default.client.findUnique({
             where: { userId: existingUser.id }
         });
         if (!existingClient) {
-            return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, null, "Client record not found for existing CNIC"));
+            return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, null, "Client record not found for existing license number"));
         }
         // Check if already linked to the same provider
         const alreadyLinked = yield db_config_1.default.providerOnClient.findFirst({
@@ -290,7 +278,7 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
             contactNo,
             address,
             status,
-            cnic,
+            licenseNo,
             role,
             profileImage: profileImageUrl
         }
@@ -332,13 +320,13 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, userCreated, "User created successfully"));
 }));
 exports.addClient = addClient;
-const updateExistingClientOnCNIC = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const updateExistingClientOnLicenseNo = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // Validate data
     const clientData = client_schema_1.clientSchema.safeParse(req.body);
     if (!clientData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientData.error.errors }, "Validation Failed"));
     }
-    let { fullName, gender, age, contactNo, address, status, cnic, email, password, clientId } = clientData.data;
+    let { fullName, gender, age, contactNo, address, status, licenseNo, email, password, clientId } = clientData.data;
     // Normalize email
     email = email.trim().toLowerCase();
     // Hash password if provided
@@ -362,17 +350,17 @@ const updateExistingClientOnCNIC = (0, asyncHandler_1.asyncHandler)((req, res) =
             return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email ${email} already taken by another client` }, "Duplicate Email"));
         }
     }
-    // Check for duplicate CNIC
-    const isCnicExists = yield db_config_1.default.user.findFirst({
+    // Check for duplicate licenseNo
+    const isLicenseNoExists = yield db_config_1.default.user.findFirst({
         where: {
-            cnic,
+            licenseNo,
             id: {
                 not: isClientExist.userId
             }
         }
     });
-    if (isCnicExists) {
-        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `CNIC ${cnic} already taken` }, "Duplicate Error"));
+    if (isLicenseNoExists) {
+        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `license number ${licenseNo} already taken` }, "Duplicate Error"));
     }
     // Check for duplicate Full Name
     const isFullNameExist = yield db_config_1.default.user.findFirst({
@@ -398,7 +386,7 @@ const updateExistingClientOnCNIC = (0, asyncHandler_1.asyncHandler)((req, res) =
         contactNo,
         address,
         status,
-        cnic,
+        licenseNo,
         role: client_1.Role.client,
     };
     // Update user and client
@@ -416,4 +404,4 @@ const updateExistingClientOnCNIC = (0, asyncHandler_1.asyncHandler)((req, res) =
     const updatedData = Object.assign(Object.assign({}, isUserUpdated), isClientUpdated);
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { updatedData }, "Client updated successfully"));
 }));
-exports.updateExistingClientOnCNIC = updateExistingClientOnCNIC;
+exports.updateExistingClientOnLicenseNo = updateExistingClientOnLicenseNo;

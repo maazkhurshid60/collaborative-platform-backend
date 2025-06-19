@@ -6,7 +6,7 @@ const auth_middleware_1 = require("../../middlewares/auth.middleware");
 const s3ImgUploader_1 = require("../../utils/multer/s3ImgUploader");
 const authRouter = (0, express_1.Router)();
 authRouter.post("/signup", auth_controller_1.signupApi);
-authRouter.post("/cnic-found", auth_controller_1.findByCNIC);
+authRouter.post("/license-found", auth_controller_1.findByLicenseNo);
 authRouter.post("/login", auth_controller_1.logInApi);
 authRouter.post("/block-user", auth_controller_1.blockUserApi);
 authRouter.post("/unblock-user", auth_middleware_1.authJWT, auth_controller_1.unblockUserApi);

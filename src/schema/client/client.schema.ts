@@ -21,7 +21,7 @@ export const clientSchema = z.object({
     contactNo: z.string().nonempty().min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }),
     address: z.string().nonempty().min(10, { message: "Not less then 10letters" }),
     status: z.enum(["active", "disable"], { message: "Status must be either active or disable" }),
-    cnic: z.string().nonempty().min(12, { message: "Not" }),
+    licenseNo: z.string().nonempty().min(12, { message: "Not" }),
     isAccountCreatedByOwnClient: z.boolean().default(false),
     role: z.string().optional(),
     providerId: z.string().optional()

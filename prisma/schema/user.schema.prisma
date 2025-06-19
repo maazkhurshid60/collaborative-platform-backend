@@ -7,7 +7,7 @@ model User {
   contactNo      String?
   address        String?
   status         String?
-  cnic           String   @unique
+  licenseNo      String   @unique
   blockedMembers String[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @default(now())

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.changePasswordApi = exports.findByCNIC = exports.getAllUsersApi = exports.getMeApi = exports.deleteMeAccountApi = exports.updateMeApi = exports.logoutApi = exports.unblockUserApi = exports.blockUserApi = exports.logInApi = exports.signupApi = void 0;
+exports.changePasswordApi = exports.findByLicenseNo = exports.getAllUsersApi = exports.getMeApi = exports.deleteMeAccountApi = exports.updateMeApi = exports.logoutApi = exports.unblockUserApi = exports.blockUserApi = exports.logInApi = exports.signupApi = void 0;
 const asyncHandler_1 = require("../../utils/asyncHandler");
 const auth_schema_1 = require("../../schema/auth/auth.schema");
 const apiResponse_1 = require("../../utils/apiResponse");
@@ -29,14 +29,14 @@ const signupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
     }
     //get data for user
-    const { fullName, gender = "male", age, contactNo, address, status = "active", cnic, role } = userParsedData.data;
+    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
     // Check if User Exists
-    const existingUser = yield db_config_1.default.user.findFirst({ where: { cnic } });
+    const existingUser = yield db_config_1.default.user.findFirst({ where: { licenseNo } });
     if (existingUser) {
-        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `CNIC ${cnic} is already registered.` }, "Validation failed"));
+        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `License Number ${licenseNo} is already registered.` }, "Validation failed"));
     }
     const userData = {
-        fullName, gender, age, contactNo, address, status, cnic, role
+        fullName, gender, age, contactNo, address, status, licenseNo, role
     };
     if (gender !== undefined)
         userData.gender = gender;
@@ -90,97 +90,6 @@ const signupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     }
 }));
 exports.signupApi = signupApi;
-// const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
-//     // Validate User Schema
-//     const userParsedData = userSchema.safeParse(req.body);
-//     if (!userParsedData.success) {
-//         return res.status(StatusCodes.BAD_REQUEST).json(
-//             new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
-//         );
-//     }
-//     console.log(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.file);
-//     const { loginUserId } = req.body;
-//     const isUserExist = await prisma.user.findFirst({ where: { id: loginUserId } });
-//     //Check user exist 
-//     if (!isUserExist) {
-//         return res.status(StatusCodes.NOT_FOUND).json(
-//             new ApiResponse(StatusCodes.NOT_FOUND, { error: "User is not exist." }, "Not Found Error.")
-//         );
-//     }
-//     const { fullName, gender, age, contactNo, address, status, cnic, role } = userParsedData.data;
-//     // Update User
-//     const updatedUser = await prisma.user.update({
-//         where: { id: loginUserId },
-//         data: { fullName, gender, age, contactNo, address, status, cnic, role }
-//     });
-//     // Handle Client Update
-//     if (role === Role.client) {
-//         const clientParsed = clientSchema.safeParse(req.body);
-//         if (!clientParsed.success) {
-//             return res.status(StatusCodes.BAD_REQUEST).json(
-//                 new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
-//             );
-//         }
-//         const { email, password } = clientParsed.data;
-//         const existingClient = await prisma.client.findFirst({ where: { email, NOT: { userId: loginUserId } } });
-//         if (existingClient) {
-//             return res.status(StatusCodes.CONFLICT).json(
-//                 new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-//             );
-//         }
-//         // Build update data
-//         const updateData: any = {
-//             email,
-//         };
-//         if (password) {
-//             console.log("client uploaded<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", password);
-//             updateData.password = await bcrypt.hash(password, 10);
-//         }
-//         if (req.file) {
-//             console.log("<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,", req.file);
-//             updateData.eSignature = req.file?.path;
-//         }
-//         const clientUpdate = await prisma.client.update({
-//             where: { userId: loginUserId },
-//             data: updateData,
-//             include: { user: true }
-//         });
-//         return res.status(StatusCodes.OK).json(
-//             new ApiResponse(StatusCodes.OK, clientUpdate, "User updated successfully")
-//         );
-//     }
-//     // Handle Provider Update
-//     else if (role === Role.provider) {
-//         const providerParsed = providerSchema.safeParse(req.body);
-//         if (!providerParsed.success) {
-//             return res.status(StatusCodes.BAD_REQUEST).json(
-//                 new ApiResponse(StatusCodes.BAD_REQUEST, { error: providerParsed.error.errors }, "Validation failed")
-//             );
-//         }
-//         const { email, password, department } = providerParsed.data;
-//         const existingProvider = await prisma.provider.findFirst({ where: { email, NOT: { userId: loginUserId } } });
-//         if (existingProvider) {
-//             return res.status(StatusCodes.CONFLICT).json(
-//                 new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-//             );
-//         }
-//         const updateData: any = {
-//             email,
-//             department
-//         };
-//         if (password) {
-//             updateData.password = await bcrypt.hash(password, 10);
-//         }
-//         const providerUpdate = await prisma.provider.update({
-//             where: { userId: loginUserId },
-//             data: updateData,
-//             include: { user: true }
-//         });
-//         return res.status(StatusCodes.OK).json(
-//             new ApiResponse(StatusCodes.OK, providerUpdate, "User updated successfully")
-//         );
-//     }
-// });
 const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     // Convert values from form-data strings to appropriate types
@@ -214,7 +123,7 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
     if (!userParsedData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
     }
-    const { fullName, gender, age, contactNo, address, status, cnic, role } = userParsedData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, role } = userParsedData.data;
     // Update User
     const updatedUser = yield db_config_1.default.user.update({
         where: { id: loginUserId },
@@ -224,7 +133,7 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
             contactNo,
             address,
             status,
-            cnic,
+            licenseNo,
             role }, (profileImageUpdate !== undefined && { profileImage: profileImageUpdate }))
     });
     // Handle Client Update
@@ -445,17 +354,17 @@ const getMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0
     }
 }));
 exports.getMeApi = getMeApi;
-const findByCNIC = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { cnic } = req.body;
-    if (cnic === "") {
-        return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { message: " CNIC isrequired" }, "Validation failed"));
+const findByLicenseNo = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { licenseNo } = req.body;
+    if (licenseNo === "") {
+        return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { message: " licenseNo isrequired" }, "Validation failed"));
     }
-    const cnicFound = yield db_config_1.default.user.findFirst({
-        where: { cnic }, include: { client: true }
+    const licenseNoFound = yield db_config_1.default.user.findFirst({
+        where: { licenseNo }, include: { client: true }
     });
-    return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { data: cnicFound }, "Record found."));
+    return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { data: licenseNoFound }, "Record found."));
 }));
-exports.findByCNIC = findByCNIC;
+exports.findByLicenseNo = findByLicenseNo;
 const changePasswordApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const { oldPassword, newPassword, loginUserId, confirmPassword, role } = req.body;

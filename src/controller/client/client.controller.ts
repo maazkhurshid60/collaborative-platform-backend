@@ -133,7 +133,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         contactNo,
         address,
         status,
-        cnic,
+        licenseNo,
         email,
         password,
         clientId
@@ -170,16 +170,16 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    // Check for duplicate CNIC (excluding current user)
-    const isCnicExists = await prisma.user.findFirst({
+    // Check for duplicate licenseNo (excluding current user)
+    const isLicenseNoExists = await prisma.user.findFirst({
         where: {
-            cnic,
+            licenseNo,
             id: { not: isClientExist.userId }
         }
     });
-    if (isCnicExists) {
+    if (isLicenseNoExists) {
         return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `CNIC ${cnic} already taken` }, "Duplicate Error")
+            new ApiResponse(StatusCodes.CONFLICT, { error: `License Number ${licenseNo} already taken` }, "Duplicate Error")
         );
     }
     console.log("client id", clientId, "isClientExist", isClientExist);
@@ -222,7 +222,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         contactNo,
         address,
         status,
-        cnic,
+        licenseNo,
         role: Role.client
     };
 
@@ -293,7 +293,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const { fullName, gender = "male", age, contactNo, address, status = "active", cnic, role } = userParsedData.data;
+    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
     const { email, password, isAccountCreatedByOwnClient, providerId } = req.body;
 
     let profileImageUrl: string | null = null;
@@ -301,28 +301,16 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
         const file = req.file as Express.Multer.File & { location?: string };
         profileImageUrl = file.location ?? null;
     }
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", profileImageUrl);
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<profileimgurl>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 
-    // 2. Check if user with CNIC already exists
-    const existingUser = await prisma.user.findFirst({ where: { cnic } });
+    // 2. Check if user with licenseNo already exists
+    const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
 
     if (existingUser) {
         // Ensure the role is 'client'
         if (existingUser.role !== Role.client) {
             return res.status(StatusCodes.BAD_REQUEST).json(
-                new ApiResponse(StatusCodes.BAD_REQUEST, null, "This CNIC is registered but not as a client")
+                new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is registered but not as a client")
             );
         }
 
@@ -333,7 +321,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
 
         if (!existingClient) {
             return res.status(StatusCodes.NOT_FOUND).json(
-                new ApiResponse(StatusCodes.NOT_FOUND, null, "Client record not found for existing CNIC")
+                new ApiResponse(StatusCodes.NOT_FOUND, null, "Client record not found for existing license number")
             );
         }
 
@@ -373,7 +361,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
             contactNo,
             address,
             status,
-            cnic,
+            licenseNo,
             role,
             profileImage: profileImageUrl
         }
@@ -433,7 +421,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
 
 
 
-const updateExistingClientOnCNIC = asyncHandler(async (req: Request, res: Response) => {
+const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: Response) => {
     // Validate data
     const clientData = clientSchema.safeParse(req.body);
     if (!clientData.success) {
@@ -442,7 +430,7 @@ const updateExistingClientOnCNIC = asyncHandler(async (req: Request, res: Respon
         );
     }
 
-    let { fullName, gender, age, contactNo, address, status, cnic, email, password, clientId } = clientData.data;
+    let { fullName, gender, age, contactNo, address, status, licenseNo, email, password, clientId } = clientData.data;
 
     // Normalize email
     email = email.trim().toLowerCase();
@@ -478,18 +466,18 @@ const updateExistingClientOnCNIC = asyncHandler(async (req: Request, res: Respon
     }
 
 
-    // Check for duplicate CNIC
-    const isCnicExists = await prisma.user.findFirst({
+    // Check for duplicate licenseNo
+    const isLicenseNoExists = await prisma.user.findFirst({
         where: {
-            cnic,
+            licenseNo,
             id: {
                 not: isClientExist.userId
             }
         }
     });
-    if (isCnicExists) {
+    if (isLicenseNoExists) {
         return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `CNIC ${cnic} already taken` }, "Duplicate Error")
+            new ApiResponse(StatusCodes.CONFLICT, { error: `license number ${licenseNo} already taken` }, "Duplicate Error")
         );
     }
 
@@ -523,7 +511,7 @@ const updateExistingClientOnCNIC = asyncHandler(async (req: Request, res: Respon
         contactNo,
         address,
         status,
-        cnic,
+        licenseNo,
         role: Role.client,
     };
 
@@ -557,4 +545,4 @@ const updateExistingClientOnCNIC = asyncHandler(async (req: Request, res: Respon
 
 
 
-export { getAllClients, deletClient, updateClient, getTotalClient, addClient, updateExistingClientOnCNIC }
+export { getAllClients, deletClient, updateClient, getTotalClient, addClient, updateExistingClientOnLicenseNo }

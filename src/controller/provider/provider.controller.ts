@@ -78,7 +78,7 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const { fullName, gender, age, contactNo, address, status, cnic, email, password, providerId, department } = providerData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, email, password, providerId, department } = providerData.data;
 
     const isProviderExist = await prisma.provider.findFirst({ where: { id: providerId } });
     if (!isProviderExist) {
@@ -101,17 +101,17 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const isCnicExists = await prisma.user.findFirst({
+    const isLicenseNoExists = await prisma.user.findFirst({
         where: {
-            cnic,
+            licenseNo,
             id: {
                 not: isProviderExist.userId
             }
         }
     });
-    if (isCnicExists) {
+    if (isLicenseNoExists) {
         return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `CNIC ${cnic} already taken` }, "Duplicate Error")
+            new ApiResponse(StatusCodes.CONFLICT, { error: `License Number ${licenseNo} already taken` }, "Duplicate Error")
         );
     }
 
@@ -123,7 +123,7 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const updatedproviderData = { email, department };
-    const updatedUserData = { fullName, gender, age, contactNo, address, status, cnic, role: Role.provider };
+    const updatedUserData = { fullName, gender, age, contactNo, address, status, licenseNo, role: Role.provider };
 
 
     const isUserUpdated = await prisma.user.update({

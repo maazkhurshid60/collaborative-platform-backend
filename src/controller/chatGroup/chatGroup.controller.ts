@@ -3,6 +3,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
+import { uploadToS3 } from "../../utils/multer/chatMediaConfig";
 
 const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
     const { groupName, membersId } = req.body
@@ -100,40 +101,59 @@ const updateGroupApi = asyncHandler(async (req: Request, res: Response) => {
 
 
 const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) => {
-    const { groupId, senderId, message, mediaUrl, type } = req.body;
+    const { groupId, senderId, message, type } = req.body;
+    const files = req.files as Express.Multer.File[];
 
-    const chatMessage = await prisma.chatMessage.create({
-        data: {
-            sender: { connect: { id: senderId } },
-            message,
-            mediaUrl: mediaUrl || '',
-            type: type || 'text',
-            group: { connect: { id: groupId } },
-        },
-    });
+    try {
+        // Upload media files to S3
+        let uploadedMediaUrls: string[] = [];
+        if (files && files.length > 0) {
+            const uploadPromises = files.map(file => uploadToS3(file));
+            uploadedMediaUrls = await Promise.all(uploadPromises);
+        }
 
-    // Create read receipts for all group members (excluding the sender)
-    const groupMembers = await prisma.groupChat.findUnique({
-        where: { id: groupId },
-        select: { members: { select: { id: true } } },
-    });
+        // Create the group chat message
+        const chatMessage = await prisma.chatMessage.create({
+            data: {
+                sender: { connect: { id: senderId } },
+                message: message || '',
+                mediaUrl: uploadedMediaUrls.join(','),
+                type: type || 'text',
+                group: { connect: { id: groupId } },
+            },
+        });
 
-    if (!groupMembers) {
-        return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, { message: `Group members not found.` }, "Group Members Not Found"));
+        // Create read receipts for all group members except the sender
+        const groupMembers = await prisma.groupChat.findUnique({
+            where: { id: groupId },
+            select: { members: { select: { id: true } } },
+        });
+
+        if (!groupMembers) {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, { message: 'Group members not found.' }, 'Group Members Not Found')
+            );
+        }
+
+        const readReceipts = groupMembers.members
+            .filter(member => member.id !== senderId)
+            .map(member => ({
+                messageId: chatMessage.id,
+                providerId: member.id,
+            }));
+
+        await prisma.groupReadReceipt.createMany({ data: readReceipts });
+
+        return res.status(StatusCodes.OK).json(
+            new ApiResponse(StatusCodes.OK, { chatMessage }, 'Message sent to the group.')
+        );
+    } catch (err) {
+        console.error(err);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+            message: 'Error sending group message',
+            error: err,
+        });
     }
-
-    const readReceipts = groupMembers.members
-        .filter(member => member.id !== senderId)
-        .map(member => ({
-            messageId: chatMessage.id,
-            providerId: member.id,
-        }));
-
-    await prisma.groupReadReceipt.createMany({
-        data: readReceipts,
-    });
-
-    return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { chatMessage }, 'Message sent to the group.'));
 });
 
 
@@ -168,15 +188,67 @@ const getGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
-
 const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
-    const { loginUserId } = req.body
-    const allgroups = await prisma.groupChat.findMany({ where: { members: { some: { providerId: loginUserId } } }, include: { members: { include: { Provider: { include: { user: true } } } } } })
+    const { loginUserId } = req.body;
+
+    const allgroups = await prisma.groupChat.findMany({
+        where: {
+            members: {
+                some: { providerId: loginUserId }
+            }
+        },
+        include: {
+            members: {
+                include: {
+                    Provider: {
+                        include: {
+                            user: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    const enrichedGroups = await Promise.all(
+        allgroups.map(async (group) => {
+            const lastMessage = await prisma.chatMessage.findFirst({
+                where: { groupId: group.id },
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true,
+                    message: true,
+                    createdAt: true,
+                    senderId: true
+                }
+            });
+
+            const unreadCount = await prisma.chatMessage.count({
+                where: {
+                    groupId: group.id,
+                    senderId: { not: loginUserId },
+                    readReceipts: {
+                        none: {
+                            providerId: loginUserId
+                        }
+                    }
+                }
+            });
+
+            return {
+                ...group,
+                lastMessage: lastMessage || null,
+                unreadCount: unreadCount || 0
+            };
+        })
+    );
 
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { allgroups }, 'Fetched all groups.')
+        new ApiResponse(StatusCodes.OK, { allgroups: enrichedGroups }, 'Fetched all groups.')
     );
-})
+});
+
+
 
 const deleteGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
     const { groupId, messageId, loginUserId } = req.body;

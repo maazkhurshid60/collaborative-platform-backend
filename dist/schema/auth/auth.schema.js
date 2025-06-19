@@ -12,7 +12,7 @@ exports.userSchema = zod_1.z.object({
     contactNo: zod_1.z.string().nonempty().min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }).optional(),
     address: zod_1.z.string().nonempty().min(10, { message: "Not less then 10letters" }).optional(),
     status: zod_1.z.enum(["active", "disable"], { message: "Status must be either active or disable" }).optional(),
-    cnic: zod_1.z.string().nonempty().min(12, { message: "CNIC could not less then 12 character" }).max(20, { message: "CNIC could not more then 20 character" }),
+    licenseNo: zod_1.z.string().nonempty().min(12, { message: "license number could not less then 12 character" }).max(20, { message: "license number could not more then 20 character" }),
     role: zod_1.z.enum(["client", "provider"], { message: "Role must be either client or provider" })
 });
 // Client Schema (Extends User)

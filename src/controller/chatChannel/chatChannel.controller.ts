@@ -77,6 +77,7 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
                 }
             }
         });
+
         const lastMessage = await prisma.chatMessage.findFirst({
             where: { chatChannelId: channel.id },
             orderBy: { createdAt: 'desc' },
@@ -92,11 +93,9 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
             totalUnread: unreadCount,
             lastMessage: lastMessage || null // <-- include this
         };
-        // return {
-        //     ...channel,
-        //     totalUnread: unreadCount
-        // };
+
     }));
+
 
     return res
         .status(StatusCodes.OK)

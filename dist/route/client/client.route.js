@@ -7,7 +7,7 @@ const s3ImgUploader_1 = require("../../utils/multer/s3ImgUploader");
 const clientRouter = (0, express_1.Router)();
 clientRouter.delete("/delete-client", auth_middleware_1.authJWT, client_controller_1.deletClient);
 clientRouter.patch("/update-client", auth_middleware_1.authJWT, s3ImgUploader_1.uploadImg.single('profileImage'), client_controller_1.updateClient);
-clientRouter.patch("/update-existing-client", client_controller_1.updateExistingClientOnCNIC);
+clientRouter.patch("/update-existing-client", client_controller_1.updateExistingClientOnLicenseNo);
 clientRouter.post("/add-client", auth_middleware_1.authJWT, s3ImgUploader_1.uploadImg.single('profileImage'), client_controller_1.addClient);
 clientRouter.post("/get-all-clients", auth_middleware_1.authJWT, client_controller_1.getAllClients);
 clientRouter.get("/get-total-clients", auth_middleware_1.authJWT, client_controller_1.getTotalClient);

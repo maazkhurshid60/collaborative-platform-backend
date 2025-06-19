@@ -1,11 +1,10 @@
 import { Router } from "express";
-import { blockUserApi, changePasswordApi, deleteMeAccountApi, findByCNIC, getAllUsersApi, getMeApi, logInApi, logoutApi, signupApi, unblockUserApi, updateMeApi } from "../../controller/auth/auth.controller";
+import { blockUserApi, changePasswordApi, deleteMeAccountApi, findByLicenseNo, getAllUsersApi, getMeApi, logInApi, logoutApi, signupApi, unblockUserApi, updateMeApi } from "../../controller/auth/auth.controller";
 import { authJWT } from "../../middlewares/auth.middleware";
-import { upload } from "../../utils/multer/multerImgConfig";
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
 const authRouter = Router()
 authRouter.post("/signup", signupApi)
-authRouter.post("/cnic-found", findByCNIC)
+authRouter.post("/license-found", findByLicenseNo)
 authRouter.post("/login", logInApi)
 authRouter.post("/block-user", blockUserApi)
 authRouter.post("/unblock-user", authJWT, unblockUserApi)

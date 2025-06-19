@@ -17,6 +17,7 @@ const asyncHandler_1 = require("../../utils/asyncHandler");
 const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
 const apiResponse_1 = require("../../utils/apiResponse");
+const chatMediaConfig_1 = require("../../utils/multer/chatMediaConfig");
 const createGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { groupName, membersId } = req.body;
     const isDuplicateGroupName = yield db_config_1.default.groupChat.findFirst({ where: { name: groupName } });
@@ -94,34 +95,49 @@ const updateGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(
 }));
 exports.updateGroupApi = updateGroupApi;
 const sendMessageToGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { groupId, senderId, message, mediaUrl, type } = req.body;
-    const chatMessage = yield db_config_1.default.chatMessage.create({
-        data: {
-            sender: { connect: { id: senderId } },
-            message,
-            mediaUrl: mediaUrl || '',
-            type: type || 'text',
-            group: { connect: { id: groupId } },
-        },
-    });
-    // Create read receipts for all group members (excluding the sender)
-    const groupMembers = yield db_config_1.default.groupChat.findUnique({
-        where: { id: groupId },
-        select: { members: { select: { id: true } } },
-    });
-    if (!groupMembers) {
-        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { message: `Group members not found.` }, "Group Members Not Found"));
+    const { groupId, senderId, message, type } = req.body;
+    const files = req.files;
+    try {
+        // Upload media files to S3
+        let uploadedMediaUrls = [];
+        if (files && files.length > 0) {
+            const uploadPromises = files.map(file => (0, chatMediaConfig_1.uploadToS3)(file));
+            uploadedMediaUrls = yield Promise.all(uploadPromises);
+        }
+        // Create the group chat message
+        const chatMessage = yield db_config_1.default.chatMessage.create({
+            data: {
+                sender: { connect: { id: senderId } },
+                message: message || '',
+                mediaUrl: uploadedMediaUrls.join(','),
+                type: type || 'text',
+                group: { connect: { id: groupId } },
+            },
+        });
+        // Create read receipts for all group members except the sender
+        const groupMembers = yield db_config_1.default.groupChat.findUnique({
+            where: { id: groupId },
+            select: { members: { select: { id: true } } },
+        });
+        if (!groupMembers) {
+            return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { message: 'Group members not found.' }, 'Group Members Not Found'));
+        }
+        const readReceipts = groupMembers.members
+            .filter(member => member.id !== senderId)
+            .map(member => ({
+            messageId: chatMessage.id,
+            providerId: member.id,
+        }));
+        yield db_config_1.default.groupReadReceipt.createMany({ data: readReceipts });
+        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { chatMessage }, 'Message sent to the group.'));
     }
-    const readReceipts = groupMembers.members
-        .filter(member => member.id !== senderId)
-        .map(member => ({
-        messageId: chatMessage.id,
-        providerId: member.id,
-    }));
-    yield db_config_1.default.groupReadReceipt.createMany({
-        data: readReceipts,
-    });
-    return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { chatMessage }, 'Message sent to the group.'));
+    catch (err) {
+        console.error(err);
+        return res.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).json({
+            message: 'Error sending group message',
+            error: err,
+        });
+    }
 }));
 exports.sendMessageToGroupApi = sendMessageToGroupApi;
 const getGroupMessageApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -145,8 +161,49 @@ const getGroupMessageApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awai
 exports.getGroupMessageApi = getGroupMessageApi;
 const getAllGroupsApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { loginUserId } = req.body;
-    const allgroups = yield db_config_1.default.groupChat.findMany({ where: { members: { some: { providerId: loginUserId } } }, include: { members: { include: { Provider: { include: { user: true } } } } } });
-    return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { allgroups }, 'Fetched all groups.'));
+    const allgroups = yield db_config_1.default.groupChat.findMany({
+        where: {
+            members: {
+                some: { providerId: loginUserId }
+            }
+        },
+        include: {
+            members: {
+                include: {
+                    Provider: {
+                        include: {
+                            user: true
+                        }
+                    }
+                }
+            }
+        }
+    });
+    const enrichedGroups = yield Promise.all(allgroups.map((group) => __awaiter(void 0, void 0, void 0, function* () {
+        const lastMessage = yield db_config_1.default.chatMessage.findFirst({
+            where: { groupId: group.id },
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                message: true,
+                createdAt: true,
+                senderId: true
+            }
+        });
+        const unreadCount = yield db_config_1.default.chatMessage.count({
+            where: {
+                groupId: group.id,
+                senderId: { not: loginUserId },
+                readReceipts: {
+                    none: {
+                        providerId: loginUserId
+                    }
+                }
+            }
+        });
+        return Object.assign(Object.assign({}, group), { lastMessage: lastMessage || null, unreadCount: unreadCount || 0 });
+    })));
+    return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { allgroups: enrichedGroups }, 'Fetched all groups.'));
 }));
 exports.getAllGroupsApi = getAllGroupsApi;
 const deleteGroupMessageApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {

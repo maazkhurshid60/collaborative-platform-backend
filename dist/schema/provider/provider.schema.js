@@ -23,7 +23,7 @@ exports.providerSchema = zod_1.z.object({
     contactNo: zod_1.z.string().nonempty().min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }),
     address: zod_1.z.string().nonempty().min(10, { message: "Not less then 10letters" }),
     status: zod_1.z.enum(["active", "disable"], { message: "Status must be either active or disable" }),
-    cnic: zod_1.z.string().nonempty().min(12, { message: "Not" }),
+    licenseNo: zod_1.z.string().nonempty().min(12, { message: "Not" }),
     isAccountCreatedByOwnprovider: zod_1.z.boolean().default(false),
     role: zod_1.z.string().optional()
 });

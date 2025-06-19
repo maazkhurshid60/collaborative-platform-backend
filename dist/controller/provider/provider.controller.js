@@ -75,7 +75,7 @@ const updateProvider = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(
     if (!providerData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: providerData.error.errors }, "Validation Failed"));
     }
-    const { fullName, gender, age, contactNo, address, status, cnic, email, password, providerId, department } = providerData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, email, password, providerId, department } = providerData.data;
     const isProviderExist = yield db_config_1.default.provider.findFirst({ where: { id: providerId } });
     if (!isProviderExist) {
         return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "Provider not found" }, "Not found"));
@@ -91,23 +91,23 @@ const updateProvider = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(
     if (isEmailExist) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email ${email} already taken` }, "Duplicate Error"));
     }
-    const isCnicExists = yield db_config_1.default.user.findFirst({
+    const isLicenseNoExists = yield db_config_1.default.user.findFirst({
         where: {
-            cnic,
+            licenseNo,
             id: {
                 not: isProviderExist.userId
             }
         }
     });
-    if (isCnicExists) {
-        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `CNIC ${cnic} already taken` }, "Duplicate Error"));
+    if (isLicenseNoExists) {
+        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `License Number ${licenseNo} already taken` }, "Duplicate Error"));
     }
     const isFullNameExist = yield db_config_1.default.user.findFirst({ where: { fullName, id: { not: isProviderExist.userId } } });
     if (isFullNameExist) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Full Name ${fullName} already taken` }, "Duplicate Error"));
     }
     const updatedproviderData = { email, department };
-    const updatedUserData = { fullName, gender, age, contactNo, address, status, cnic, role: client_1.Role.provider };
+    const updatedUserData = { fullName, gender, age, contactNo, address, status, licenseNo, role: client_1.Role.provider };
     const isUserUpdated = yield db_config_1.default.user.update({
         where: { id: isProviderExist.userId },
         data: updatedUserData,
