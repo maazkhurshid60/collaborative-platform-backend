@@ -22,7 +22,9 @@ function setupSocket(server) {
         cors: {
             origin: [
                 'http://localhost:5173',
-                'https://collaborative-platform-frontend.vercel.app'
+                'https://collaborative-platform-frontend.vercel.app',
+                "https://www.collaborateme.com/",
+                "https://www.collaborateme.com",
             ],
         },
     });

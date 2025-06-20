@@ -20,7 +20,7 @@ const sendInvitationEmail = (toEmail, providerName) => __awaiter(void 0, void 0,
       <h2>Hello ${toEmail.split("@")[0]},</h2>
       <p><strong>${providerName}</strong> has invited you to join our collaborative platform.</p>
       <p>Click the button below to signin:</p>
-      <a href="https://collaborative-platform-frontend.vercel.app/"
+      <a href="https://www.collaborateme.com/"
          style="display:inline-block; padding:10px 20px; background-color:#0F766E; color:white; border-radius:4px; text-decoration:none; font-weight:bold;">
          Join Now
       </a>
