@@ -514,7 +514,6 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
         licenseNo,
         role: Role.client,
     };
-
     // Update user and client
     const isUserUpdated = await prisma.user.update({
         where: { id: isClientExist.userId },
