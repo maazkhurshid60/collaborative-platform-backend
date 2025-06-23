@@ -11,6 +11,6 @@ model Provider {
   messagesSent   ChatMessage[]
   sharedDocument DocumentShareWith[]
   group          GroupMembers[]
-  user           User                @relation(fields: [userId], references: [id])
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   clientList     ProviderOnClient[]
 }
