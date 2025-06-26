@@ -9,7 +9,6 @@ import { setupSocket } from "./socket/socket";
 
 export let server: Server | null;
 
-
 if (cluster.isPrimary) {
     customLogger(`Master process ${process.pid} is running`, process.pid);
 
