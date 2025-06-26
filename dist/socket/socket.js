@@ -51,10 +51,23 @@ function setupSocket(server) {
             }
         }
         // Direct message
+        // socket.on('send_direct', ({ toProviderId, message }: { toProviderId: string, message: any }) => {
+        //     try {
+        //         io.to(message?.chatChannelId).emit('receive_direct', message);
+        //         io.to(toProviderId).emit('receive_direct', message); // this ensures the other user gets it
+        //         io.to(toProviderId).emit('refresh_unread', { chatChannelId: message.chatChannelId });
+        //     } catch (err) {
+        //         console.error('Error sending direct message:', err);
+        //     }
+        // });
+        // Direct message
         socket.on('send_direct', ({ toProviderId, message }) => {
             try {
+                // 🛠️ Ensure the sender (Basit) is also joined to the room
+                socket.join(message.chatChannelId); // ✅ This is key fix
+                // ✅ Broadcast message to everyone in the room (sender + receiver)
                 io.to(message === null || message === void 0 ? void 0 : message.chatChannelId).emit('receive_direct', message);
-                io.to(toProviderId).emit('receive_direct', message); // this ensures the other user gets it
+                // 🔄 Unread refresh still sent to receiver only
                 io.to(toProviderId).emit('refresh_unread', { chatChannelId: message.chatChannelId });
             }
             catch (err) {
