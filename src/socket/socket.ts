@@ -21,14 +21,14 @@ export function setupSocket(server: any) {
 
     io.on('connection', async (socket: any) => {
         const providerId = socket.handshake.query.providerId;
-        const userId = socket.handshake.query.userId;
+        // const userId = socket.handshake.query.userId;
 
-        console.log(`Socket connected | userId: ${userId || '-'} | providerId: ${providerId || '-'}`);
+        console.log(`Socket connected  providerId: ${providerId || '-'}`);
 
         // Join notification room
-        if (userId) {
-            socket.join(userId);
-        }
+        // if (userId) {
+        //     socket.join(userId);
+        // }
 
         // Join provider personal room and their group chats
         if (providerId) {
@@ -78,9 +78,9 @@ export function setupSocket(server: any) {
 
         // Disconnect handling
         socket.on('disconnect', () => {
-            console.log(`Disconnected | userId: ${userId || '-'} | providerId: ${providerId || '-'}`);
+            console.log(`Disconnected | providerId: ${providerId || '-'}`);
             if (providerId) socket.leave(providerId);
-            if (userId) socket.leave(userId);
+            // if (userId) socket.leave(userId);
         });
     });
 }
