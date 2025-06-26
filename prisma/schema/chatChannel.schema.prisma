@@ -4,8 +4,8 @@ model ChatChannel {
   providerBId String
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @default(now())
-  providerA   Provider      @relation("chatA", fields: [providerAId], references: [id])
-  providerB   Provider      @relation("chatB", fields: [providerBId], references: [id])
+  providerA   Provider      @relation("chatA", fields: [providerAId], references: [id], onDelete: Cascade)
+  providerB   Provider      @relation("chatB", fields: [providerBId], references: [id], onDelete: Cascade)
   messages    ChatMessage[]
 
   @@unique([providerAId, providerBId])
