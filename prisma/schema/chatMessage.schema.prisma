@@ -9,7 +9,7 @@ model ChatMessage {
   groupId           String?
   chatChannel       ChatChannel?       @relation(fields: [chatChannelId], references: [id])
   group             GroupChat?         @relation(fields: [groupId], references: [id])
-  sender            Provider           @relation(fields: [senderId], references: [id])
+  sender            Provider           @relation(fields: [senderId], references: [id], onDelete: Cascade)
   groupReadReceipts GroupReadReceipt[]
   readReceipts      ReadReceipt[]
 }

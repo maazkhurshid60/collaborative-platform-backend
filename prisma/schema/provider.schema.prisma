@@ -13,4 +13,5 @@ model Provider {
   group          GroupMembers[]
   user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   clientList     ProviderOnClient[]
+  readReceipts   ReadReceipt[]
 }

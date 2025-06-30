@@ -60,7 +60,7 @@ export function setupSocket(server: any) {
         // Direct message
         socket.on('send_direct', ({ toProviderId, message }: { toProviderId: string, message: any }) => {
             try {
-                // 🛠️ Ensure the sender (Basit) is also joined to the room
+                // 🛠️ Ensure the sender is also joined to the room
                 socket.join(message.chatChannelId); // ✅ This is key fix
 
                 // ✅ Broadcast message to everyone in the room (sender + receiver)

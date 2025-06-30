@@ -5,5 +5,5 @@ model ProviderOnClient {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now())
   client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  provider   Provider @relation(fields: [providerId], references: [id])
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
 }

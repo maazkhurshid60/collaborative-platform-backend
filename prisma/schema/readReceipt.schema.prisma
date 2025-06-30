@@ -3,7 +3,8 @@ model ReadReceipt {
   messageId  String
   providerId String
   readAt     DateTime    @default(now())
-  message    ChatMessage @relation(fields: [messageId], references: [id])
+  message    ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  provider   Provider    @relation(fields: [providerId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, providerId])
 }

@@ -2,6 +2,6 @@ model GroupMembers {
   id          String     @id @default(uuid())
   groupChatId String?
   providerId  String?
-  GroupChat   GroupChat? @relation(fields: [groupChatId], references: [id])
-  Provider    Provider?  @relation(fields: [providerId], references: [id])
+  GroupChat   GroupChat? @relation(fields: [groupChatId], references: [id], onDelete: Cascade)
+  Provider    Provider?  @relation(fields: [providerId], references: [id], onDelete: Cascade)
 }

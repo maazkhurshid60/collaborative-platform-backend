@@ -63,7 +63,7 @@ function setupSocket(server) {
         // Direct message
         socket.on('send_direct', ({ toProviderId, message }) => {
             try {
-                // 🛠️ Ensure the sender (Basit) is also joined to the room
+                // 🛠️ Ensure the sender is also joined to the room
                 socket.join(message.chatChannelId); // ✅ This is key fix
                 // ✅ Broadcast message to everyone in the room (sender + receiver)
                 io.to(message === null || message === void 0 ? void 0 : message.chatChannelId).emit('receive_direct', message);
