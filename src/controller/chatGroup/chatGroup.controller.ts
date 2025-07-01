@@ -121,7 +121,20 @@ const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) =
                 type: type || 'text',
                 group: { connect: { id: groupId } },
             },
+            include: {
+                sender: {
+                    include: {
+                        user: {
+                            select: {
+                                fullName: true,
+                                profileImage: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
+
 
         // Create read receipts for all group members except the sender
         const groupMembers = await prisma.groupChat.findUnique({
@@ -160,32 +173,59 @@ const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) =
 
 
 const getGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
-    const { groupId, loginUserId } = req.body;
+    const { groupId, loginUserId, page = 1, limit = 10 } = req.body;
 
+    const skip = (page - 1) * limit;
+
+    // Check if group exists
     const isGroupExist = await prisma.groupChat.findFirst({ where: { id: groupId } });
     if (!isGroupExist) {
-        return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, { message: `This group does not exist.` }, "Group Not Found"));
+        return res.status(StatusCodes.CONFLICT).json(
+            new ApiResponse(StatusCodes.CONFLICT, { message: `This group does not exist.` }, "Group Not Found")
+        );
     }
 
+    // Get total messages count for the group (useful for frontend pagination)
+    const totalMessages = await prisma.chatMessage.count({
+        where: { groupId }
+    });
+
+    // Fetch paginated messages
     const groupMessages = await prisma.chatMessage.findMany({
-        where: { groupId: groupId },
+        where: { groupId },
+        orderBy: { createdAt: 'desc' }, // latest messages first
+        skip,
+        take: limit,
         include: {
             sender: { include: { user: true } },
             groupReadReceipts: {
-                where: { providerId: loginUserId }, // Get read receipt for the logged-in user
+                where: { providerId: loginUserId }, // For current user's read status
             },
         },
     });
 
-    const groupMessagesWithReadStatus = groupMessages.map(message => ({
+    // Reverse to display old → new
+    const reversedMessages = groupMessages.reverse();
+
+    // Add readStatus field
+    const groupMessagesWithReadStatus = reversedMessages.map(message => ({
         ...message,
         readStatus: message.groupReadReceipts.length > 0 ? 'read' : 'unread',
     }));
 
+    const unreadMessagesCount = groupMessagesWithReadStatus.filter(msg => msg.readStatus === 'unread').length;
+
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { groupMessages: groupMessagesWithReadStatus }, 'Fetched group messages successfully')
+        new ApiResponse(StatusCodes.OK, {
+            groupMessages: groupMessagesWithReadStatus,
+            unreadMessagesCount,
+            totalMessages,
+            currentPage: page,
+            hasMore: skip + limit < totalMessages,
+        }, 'Fetched group messages successfully')
     );
 });
+
 
 
 const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {

@@ -80,8 +80,19 @@ function setupSocket(server) {
             socket.join(chatChannelId);
         });
         // Group message
+        // socket.on('send_group', ({ message }: { message: any }) => {
+        //     try {
+        //         io.to(message.groupId).emit('receive_group', message);
+        //         console.log('Group message emitted:', message);
+        //     } catch (err) {
+        //         console.error('Error in send_group:', err);
+        //     }
+        // });
         socket.on('send_group', ({ message }) => {
             try {
+                // ✅ Ensure the sender is joined to the group room
+                socket.join(message.groupId); // 🔑 Important for sender to also receive the message
+                // ✅ Emit message to everyone in the group
                 io.to(message.groupId).emit('receive_group', message);
                 console.log('Group message emitted:', message);
             }

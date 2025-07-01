@@ -158,9 +158,9 @@ const sendMessageToSingleConservation = asyncHandler(async (req: Request, res: R
         const chatMessage = await prisma.chatMessage.create({
             data: {
                 senderId,
-                message: message || '', // fallback if empty
+                message: message || '',
                 chatChannelId,
-                mediaUrl: uploadedMediaUrls.join(','), // store as CSV or use separate Media table
+                mediaUrl: uploadedMediaUrls.join(','),
                 type: type || 'text',
                 readReceipts: {
                     create: {
@@ -168,7 +168,20 @@ const sendMessageToSingleConservation = asyncHandler(async (req: Request, res: R
                     },
                 },
             },
+            include: {
+                sender: {
+                    include: {
+                        user: {
+                            select: {
+                                fullName: true,
+                                profileImage: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
+
 
         await prisma.chatChannel.update({
             where: { id: chatChannelId },

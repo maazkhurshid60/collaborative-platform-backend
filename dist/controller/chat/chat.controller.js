@@ -138,13 +138,25 @@ const sendMessageToSingleConservation = (0, asyncHandler_1.asyncHandler)((req, r
         const chatMessage = yield db_config_1.default.chatMessage.create({
             data: {
                 senderId,
-                message: message || '', // fallback if empty
+                message: message || '',
                 chatChannelId,
-                mediaUrl: uploadedMediaUrls.join(','), // store as CSV or use separate Media table
+                mediaUrl: uploadedMediaUrls.join(','),
                 type: type || 'text',
                 readReceipts: {
                     create: {
                         providerId: senderId,
+                    },
+                },
+            },
+            include: {
+                sender: {
+                    include: {
+                        user: {
+                            select: {
+                                fullName: true,
+                                profileImage: true,
+                            },
+                        },
                     },
                 },
             },
