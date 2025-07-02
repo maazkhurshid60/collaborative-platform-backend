@@ -290,46 +290,30 @@ const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
 
 
 
-const deleteGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
-    const { groupId, messageId, loginUserId } = req.body;
+const deleteGroupChannel = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.body;
 
-    // Ensure the group exists
-    const isGroupExist = await prisma.groupChat.findFirst({
-        where: { id: groupId },
-    });
-
-    if (!isGroupExist) {
-        return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { message: `This group does not exist.` }, "Group Not Found")
-        );
+    if (!id) {
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(new ApiResponse(StatusCodes.BAD_REQUEST, null, "Channel ID is required"));
     }
 
-    // Ensure the message exists and check if the message is sent by the logged-in user
-    const message = await prisma.chatMessage.findFirst({
-        where: {
-            id: messageId,
-            groupId: groupId, // Ensure the message belongs to the group
-            senderId: loginUserId, // Ensure the message is sent by the login user
-        },
-    });
+    try {
+        const isAllChatMessagesDeleted = await prisma.chatMessage.deleteMany({ where: { groupId: id } });
+        const isChatDeleted = await prisma.groupChat.delete({ where: { id } });
 
-    if (!message) {
-        return res.status(StatusCodes.FORBIDDEN).json(
-            new ApiResponse(StatusCodes.FORBIDDEN, { message: `You can only delete your own messages.` }, "Message Not Found or Permission Denied")
-        );
+        return res
+            .status(StatusCodes.OK)
+            .json(new ApiResponse(StatusCodes.OK, { channel: isChatDeleted }, "Conversation deleted successfully"));
+
+    } catch (error) {
+        return res
+            .status(StatusCodes.INTERNAL_SERVER_ERROR)
+            .json(new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error }, "Internal Server Error"));
     }
-
-    // Proceed to delete the message
-    const deletedMessage = await prisma.chatMessage.delete({
-        where: { id: messageId },
-    });
-
-    // Return success response
-    return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { deletedMessage }, 'Message deleted successfully.')
-    );
 });
 
 
-export { createGroupApi, sendMessageToGroupApi, getGroupMessageApi, getAllGroupsApi, updateGroupApi, deleteGroupMessageApi }
+export { createGroupApi, sendMessageToGroupApi, getGroupMessageApi, getAllGroupsApi, updateGroupApi, deleteGroupChannel }
 

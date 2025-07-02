@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createGroupApi, deleteGroupMessageApi, getAllGroupsApi, getGroupMessageApi, sendMessageToGroupApi, updateGroupApi } from "../../controller/chatGroup/chatGroup.controller";
+import { createGroupApi, deleteGroupChannel, getAllGroupsApi, getGroupMessageApi, sendMessageToGroupApi, updateGroupApi } from "../../controller/chatGroup/chatGroup.controller";
 import { ouRoleCheck } from "../../middlewares/roleCheck.middleware";
 import { authJWT } from "../../middlewares/auth.middleware";
 import { markMessagesAsRead } from "../../controller/chat/chat.controller";
@@ -13,6 +13,6 @@ chatGroupRouter.post("/send-message-to-group", uploadChatMedia.array('mediaUrl')
 chatGroupRouter.post("/get-all-group", getAllGroupsApi)
 chatGroupRouter.post("/read-message", markMessagesAsRead)
 chatGroupRouter.patch("/update-group", updateGroupApi)
-chatGroupRouter.delete("/delete-group-message", deleteGroupMessageApi)
+chatGroupRouter.delete("/delete-group-message", deleteGroupChannel)
 
 export default chatGroupRouter

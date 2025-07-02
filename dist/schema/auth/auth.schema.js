@@ -18,6 +18,7 @@ exports.userSchema = zod_1.z.object({
 // Client Schema (Extends User)
 exports.clientSchema = exports.userSchema.extend({
     eSignature: zod_1.z.string().optional(),
+    clientShowToOthers: zod_1.z.boolean().optional(),
     email: zod_1.z.string().nonempty("Email is required").email("Invalid email format"),
     password: zod_1.z
         .string()

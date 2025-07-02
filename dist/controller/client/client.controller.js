@@ -107,7 +107,7 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientData.error.errors }, "Validation Failed"));
     }
     // Destructure validated data
-    const { fullName, gender, age, contactNo, address, status, licenseNo, email, password, clientId } = clientData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, email, password, clientId, clientShowToOthers } = clientData.data;
     // Hash password only if provided
     let hashedPassword;
     if (password && password.trim() !== "") {
@@ -161,8 +161,9 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
             return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Full Name ${fullName} already taken` }, "Duplicate Error"));
         }
     }
+    const clientShowToOthersBool = clientShowToOthers === "true";
     // Prepare client update data
-    const updatedClientData = { email };
+    const updatedClientData = { email, clientShowToOthers: clientShowToOthersBool, };
     if (hashedPassword) {
         updatedClientData.password = hashedPassword;
     }
@@ -230,7 +231,7 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
     }
     const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
-    const { email, password, isAccountCreatedByOwnClient, providerId } = req.body;
+    const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
     let profileImageUrl = null;
     if (req.file) {
         const file = req.file;
@@ -238,37 +239,48 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     }
     // 2. Check if user with licenseNo already exists
     const existingUser = yield db_config_1.default.user.findFirst({ where: { licenseNo } });
+    console.log("><<<<<<<<<<<<<<<<<<<", existingUser);
     if (existingUser) {
-        // Ensure the role is 'client'
-        if (existingUser.role !== client_1.Role.client) {
-            return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, "This license number is registered but not as a client"));
-        }
-        // Fetch existing client by userId
-        const existingClient = yield db_config_1.default.client.findUnique({
-            where: { userId: existingUser.id }
-        });
-        if (!existingClient) {
-            return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, null, "Client record not found for existing license number"));
-        }
-        // Check if already linked to the same provider
-        const alreadyLinked = yield db_config_1.default.providerOnClient.findFirst({
-            where: {
-                clientId: existingClient.id,
-                providerId
-            }
-        });
-        if (alreadyLinked) {
-            return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, null, "This provider has already added the client"));
-        }
-        // Link existing client to current provider
-        yield db_config_1.default.providerOnClient.create({
-            data: {
-                providerId,
-                clientId: existingClient.id
-            }
-        });
-        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, existingClient, "Existing client linked to provider successfully"));
+        return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, "This license number is already registered"));
+        // // Ensure the role is 'client'
+        // if (existingUser.role !== Role.client) {
+        //     return res.status(StatusCodes.BAD_REQUEST).json(
+        //         new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is registered but not as a client")
+        //     );
+        // }
+        // // Fetch existing client by userId
+        // const existingClient = await prisma.client.findUnique({
+        //     where: { userId: existingUser.id }
+        // });
+        // if (!existingClient) {
+        //     return res.status(StatusCodes.NOT_FOUND).json(
+        //         new ApiResponse(StatusCodes.NOT_FOUND, null, "Client record not found for existing license number")
+        //     );
+        // }
+        // // Check if already linked to the same provider
+        // const alreadyLinked = await prisma.providerOnClient.findFirst({
+        //     where: {
+        //         clientId: existingClient.id,
+        //         providerId
+        //     }
+        // });
+        // if (alreadyLinked) {
+        //     return res.status(StatusCodes.CONFLICT).json(
+        //         new ApiResponse(StatusCodes.CONFLICT, null, "This provider has already added the client")
+        //     );
+        // }
+        // // Link existing client to current provider
+        // await prisma.providerOnClient.create({
+        //     data: {
+        //         providerId,
+        //         clientId: existingClient.id
+        //     }
+        // });
+        // return res.status(StatusCodes.CREATED).json(
+        //     new ApiResponse(StatusCodes.CREATED, existingClient, "Existing client linked to provider successfully")
+        // );
     }
+    console.log("><<<<<<<<<<<<<<<<<<<360");
     // 3. Proceed to create new user
     const userCreated = yield db_config_1.default.user.create({
         data: {
@@ -283,8 +295,10 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
             profileImage: profileImageUrl
         }
     });
+    console.log("><<<<<<<<<<<<<<<<<<<377", userCreated);
     // 4. If role is client, create client and link provider
     if (role === client_1.Role.client) {
+        console.log("><<<<<<<<<<<<<<<<<<<381", role);
         const clientParsed = client_schema_1.clientSchema.safeParse(req.body);
         if (!clientParsed.success) {
             return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed"));
@@ -295,10 +309,14 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
             return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed"));
         }
         const hashedPassword = yield bcrypt_1.default.hash(password !== null && password !== void 0 ? password : "", 10);
+        console.log("data add client", "email", email, " password", password, "isAccountCreatedByOwnClient", isAccountCreatedByOwnClient, "clientShowToOthers", clientShowToOthers, "fullName", fullName, "gender", gender, "age", age, "contactNo", contactNo, "address", address, "status", status, "licenseNo", licenseNo, "role", role);
+        const clientShowToOthersBool = clientShowToOthers === "true";
+        console.log("<<<<<<<<<<<<<<<<<<<clientShowToOthersBool>>>>>>>>>>>>>>>>>>>>", clientShowToOthersBool, "typeof clientShowToOthersBool", typeof clientShowToOthersBool);
         const clientCreated = yield db_config_1.default.client.create({
             data: {
                 userId: userCreated.id,
                 isAccountCreatedByOwnClient,
+                clientShowToOthers: clientShowToOthersBool,
                 email,
                 password: hashedPassword
             },

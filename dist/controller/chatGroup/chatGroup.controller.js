@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteGroupMessageApi = exports.updateGroupApi = exports.getAllGroupsApi = exports.getGroupMessageApi = exports.sendMessageToGroupApi = exports.createGroupApi = void 0;
+exports.deleteGroupChannel = exports.updateGroupApi = exports.getAllGroupsApi = exports.getGroupMessageApi = exports.sendMessageToGroupApi = exports.createGroupApi = void 0;
 const asyncHandler_1 = require("../../utils/asyncHandler");
 const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
@@ -238,31 +238,24 @@ const getAllGroupsApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { allgroups: enrichedGroups }, 'Fetched all groups.'));
 }));
 exports.getAllGroupsApi = getAllGroupsApi;
-const deleteGroupMessageApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { groupId, messageId, loginUserId } = req.body;
-    // Ensure the group exists
-    const isGroupExist = yield db_config_1.default.groupChat.findFirst({
-        where: { id: groupId },
-    });
-    if (!isGroupExist) {
-        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { message: `This group does not exist.` }, "Group Not Found"));
+const deleteGroupChannel = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.body;
+    if (!id) {
+        return res
+            .status(http_status_codes_1.StatusCodes.BAD_REQUEST)
+            .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, "Channel ID is required"));
     }
-    // Ensure the message exists and check if the message is sent by the logged-in user
-    const message = yield db_config_1.default.chatMessage.findFirst({
-        where: {
-            id: messageId,
-            groupId: groupId, // Ensure the message belongs to the group
-            senderId: loginUserId, // Ensure the message is sent by the login user
-        },
-    });
-    if (!message) {
-        return res.status(http_status_codes_1.StatusCodes.FORBIDDEN).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.FORBIDDEN, { message: `You can only delete your own messages.` }, "Message Not Found or Permission Denied"));
+    try {
+        const isAllChatMessagesDeleted = yield db_config_1.default.chatMessage.deleteMany({ where: { groupId: id } });
+        const isChatDeleted = yield db_config_1.default.groupChat.delete({ where: { id } });
+        return res
+            .status(http_status_codes_1.StatusCodes.OK)
+            .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { channel: isChatDeleted }, "Conversation deleted successfully"));
     }
-    // Proceed to delete the message
-    const deletedMessage = yield db_config_1.default.chatMessage.delete({
-        where: { id: messageId },
-    });
-    // Return success response
-    return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { deletedMessage }, 'Message deleted successfully.'));
+    catch (error) {
+        return res
+            .status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR)
+            .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, { error }, "Internal Server Error"));
+    }
 }));
-exports.deleteGroupMessageApi = deleteGroupMessageApi;
+exports.deleteGroupChannel = deleteGroupChannel;

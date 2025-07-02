@@ -4,6 +4,7 @@ model Client {
   eSignature                  String?
   email                       String              @unique
   password                    String?
+  clientShowToOthers          Boolean             @default(true)
   createdAt                   DateTime            @default(now())
   updatedAt                   DateTime            @default(now())
   userId                      String              @unique

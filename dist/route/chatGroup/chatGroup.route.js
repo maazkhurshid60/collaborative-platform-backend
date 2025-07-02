@@ -16,5 +16,5 @@ chatGroupRouter.post("/send-message-to-group", chatMedia_1.default.array('mediaU
 chatGroupRouter.post("/get-all-group", chatGroup_controller_1.getAllGroupsApi);
 chatGroupRouter.post("/read-message", chat_controller_1.markMessagesAsRead);
 chatGroupRouter.patch("/update-group", chatGroup_controller_1.updateGroupApi);
-chatGroupRouter.delete("/delete-group-message", chatGroup_controller_1.deleteGroupMessageApi);
+chatGroupRouter.delete("/delete-group-message", chatGroup_controller_1.deleteGroupChannel);
 exports.default = chatGroupRouter;

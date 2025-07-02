@@ -136,7 +136,8 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         licenseNo,
         email,
         password,
-        clientId
+        clientId,
+        clientShowToOthers
     } = clientData.data;
 
     // Hash password only if provided
@@ -207,13 +208,13 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         }
     }
 
+    const clientShowToOthersBool = clientShowToOthers === "true";
 
     // Prepare client update data
-    const updatedClientData: any = { email };
+    const updatedClientData: any = { email, clientShowToOthers: clientShowToOthersBool, };
     if (hashedPassword) {
         updatedClientData.password = hashedPassword;
     }
-
     // Prepare user update data
     const updatedUserData: any = {
         fullName,
@@ -223,6 +224,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         address,
         status,
         licenseNo,
+
         role: Role.client
     };
 
@@ -294,7 +296,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
-    const { email, password, isAccountCreatedByOwnClient, providerId } = req.body;
+    const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
 
     let profileImageUrl: string | null = null;
     if (req.file) {
@@ -305,52 +307,57 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
 
     // 2. Check if user with licenseNo already exists
     const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
+    console.log("><<<<<<<<<<<<<<<<<<<", existingUser);
 
     if (existingUser) {
-        // Ensure the role is 'client'
-        if (existingUser.role !== Role.client) {
-            return res.status(StatusCodes.BAD_REQUEST).json(
-                new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is registered but not as a client")
-            );
-        }
-
-        // Fetch existing client by userId
-        const existingClient = await prisma.client.findUnique({
-            where: { userId: existingUser.id }
-        });
-
-        if (!existingClient) {
-            return res.status(StatusCodes.NOT_FOUND).json(
-                new ApiResponse(StatusCodes.NOT_FOUND, null, "Client record not found for existing license number")
-            );
-        }
-
-        // Check if already linked to the same provider
-        const alreadyLinked = await prisma.providerOnClient.findFirst({
-            where: {
-                clientId: existingClient.id,
-                providerId
-            }
-        });
-
-        if (alreadyLinked) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, null, "This provider has already added the client")
-            );
-        }
-
-        // Link existing client to current provider
-        await prisma.providerOnClient.create({
-            data: {
-                providerId,
-                clientId: existingClient.id
-            }
-        });
-
-        return res.status(StatusCodes.CREATED).json(
-            new ApiResponse(StatusCodes.CREATED, existingClient, "Existing client linked to provider successfully")
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is already registered")
         );
+        // // Ensure the role is 'client'
+        // if (existingUser.role !== Role.client) {
+        //     return res.status(StatusCodes.BAD_REQUEST).json(
+        //         new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is registered but not as a client")
+        //     );
+        // }
+
+        // // Fetch existing client by userId
+        // const existingClient = await prisma.client.findUnique({
+        //     where: { userId: existingUser.id }
+        // });
+
+        // if (!existingClient) {
+        //     return res.status(StatusCodes.NOT_FOUND).json(
+        //         new ApiResponse(StatusCodes.NOT_FOUND, null, "Client record not found for existing license number")
+        //     );
+        // }
+
+        // // Check if already linked to the same provider
+        // const alreadyLinked = await prisma.providerOnClient.findFirst({
+        //     where: {
+        //         clientId: existingClient.id,
+        //         providerId
+        //     }
+        // });
+
+        // if (alreadyLinked) {
+        //     return res.status(StatusCodes.CONFLICT).json(
+        //         new ApiResponse(StatusCodes.CONFLICT, null, "This provider has already added the client")
+        //     );
+        // }
+
+        // // Link existing client to current provider
+        // await prisma.providerOnClient.create({
+        //     data: {
+        //         providerId,
+        //         clientId: existingClient.id
+        //     }
+        // });
+
+        // return res.status(StatusCodes.CREATED).json(
+        //     new ApiResponse(StatusCodes.CREATED, existingClient, "Existing client linked to provider successfully")
+        // );
     }
+    console.log("><<<<<<<<<<<<<<<<<<<360");
 
     // 3. Proceed to create new user
     const userCreated = await prisma.user.create({
@@ -363,12 +370,16 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
             status,
             licenseNo,
             role,
+
             profileImage: profileImageUrl
         }
     });
+    console.log("><<<<<<<<<<<<<<<<<<<377", userCreated);
 
     // 4. If role is client, create client and link provider
     if (role === Role.client) {
+        console.log("><<<<<<<<<<<<<<<<<<<381", role);
+
         const clientParsed = clientSchema.safeParse(req.body);
         if (!clientParsed.success) {
             return res.status(StatusCodes.BAD_REQUEST).json(
@@ -385,11 +396,15 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
         }
 
         const hashedPassword = await bcrypt.hash(password ?? "", 10);
+        console.log("data add client", "email", email, " password", password, "isAccountCreatedByOwnClient", isAccountCreatedByOwnClient, "clientShowToOthers", clientShowToOthers, "fullName", fullName, "gender", gender, "age", age, "contactNo", contactNo, "address", address, "status", status, "licenseNo", licenseNo, "role", role);
+        const clientShowToOthersBool = clientShowToOthers === "true";
+        console.log("<<<<<<<<<<<<<<<<<<<clientShowToOthersBool>>>>>>>>>>>>>>>>>>>>", clientShowToOthersBool, "typeof clientShowToOthersBool", typeof clientShowToOthersBool);
 
         const clientCreated = await prisma.client.create({
             data: {
                 userId: userCreated.id,
                 isAccountCreatedByOwnClient,
+                clientShowToOthers: clientShowToOthersBool,
                 email,
                 password: hashedPassword
             },

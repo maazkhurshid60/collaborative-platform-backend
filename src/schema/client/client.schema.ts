@@ -3,6 +3,7 @@ import { z } from "zod";
 // Client Schema (Extends User)
 export const clientSchema = z.object({
     eSignature: z.string().optional(),
+    clientShowToOthers: z.string().optional(),
     clientId: z.string().optional(),
     email: z.string().nonempty("Email is required").email("Invalid email format"),
     password: z

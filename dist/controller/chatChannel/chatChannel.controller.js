@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllChatChannel = exports.createChatChannel = void 0;
+exports.deleteChatChannel = exports.getAllChatChannel = exports.createChatChannel = void 0;
 const asyncHandler_1 = require("../../utils/asyncHandler");
 const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
@@ -97,3 +97,24 @@ const getAllChatChannel = (0, asyncHandler_1.asyncHandler)((req, res) => __await
         .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { findAllChatChannel: enrichedChannels }, "Chat Channels fetched successfully"));
 }));
 exports.getAllChatChannel = getAllChatChannel;
+const deleteChatChannel = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.body;
+    if (!id) {
+        return res
+            .status(http_status_codes_1.StatusCodes.BAD_REQUEST)
+            .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, "Channel ID is required"));
+    }
+    try {
+        const isAllChatMessagesDeleted = yield db_config_1.default.chatMessage.deleteMany({ where: { chatChannelId: id } });
+        const isChatDeleted = yield db_config_1.default.chatChannel.delete({ where: { id } });
+        return res
+            .status(http_status_codes_1.StatusCodes.OK)
+            .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { channel: isChatDeleted }, "Conversation deleted successfully"));
+    }
+    catch (error) {
+        return res
+            .status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR)
+            .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, { error }, "Internal Server Error"));
+    }
+}));
+exports.deleteChatChannel = deleteChatChannel;

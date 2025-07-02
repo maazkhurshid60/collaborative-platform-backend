@@ -103,6 +103,29 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
 
 });
 
+const deleteChatChannel = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.body;
+
+    if (!id) {
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(new ApiResponse(StatusCodes.BAD_REQUEST, null, "Channel ID is required"));
+    }
+
+    try {
+        const isAllChatMessagesDeleted = await prisma.chatMessage.deleteMany({ where: { chatChannelId: id } });
+        const isChatDeleted = await prisma.chatChannel.delete({ where: { id } });
+
+        return res
+            .status(StatusCodes.OK)
+            .json(new ApiResponse(StatusCodes.OK, { channel: isChatDeleted }, "Conversation deleted successfully"));
+
+    } catch (error) {
+        return res
+            .status(StatusCodes.INTERNAL_SERVER_ERROR)
+            .json(new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error }, "Internal Server Error"));
+    }
+});
 
 
-export { createChatChannel, getAllChatChannel }
+export { createChatChannel, getAllChatChannel, deleteChatChannel }

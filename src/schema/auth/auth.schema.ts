@@ -16,6 +16,7 @@ export const userSchema = z.object({
 // Client Schema (Extends User)
 export const clientSchema = userSchema.extend({
     eSignature: z.string().optional(),
+    clientShowToOthers: z.boolean().optional(),
     email: z.string().nonempty("Email is required").email("Invalid email format"),
     password: z
         .string()
