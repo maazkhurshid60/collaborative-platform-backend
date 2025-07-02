@@ -17,7 +17,7 @@ export const sendDocumentEmail = async (
       <h2>Hello ${clientName},</h2>
       <p><strong>${providerName}</strong> has shared some documents with you.</p>
       <p>Please login to your dashboard to review and sign them.</p>
-      <a href="http://localhost:5173/"
+      <a href="https://www.collaborateme.com/signup-with-license/"
          style="display:inline-block; padding:10px 20px; background-color:#0F766E; color:white; border-radius:4px; text-decoration:none;">
          Login to View
       </a>
