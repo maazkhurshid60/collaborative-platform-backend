@@ -6,7 +6,7 @@ import { ApiResponse } from "../../utils/apiResponse";
 import { uploadToS3 } from "../../utils/multer/chatMediaConfig";
 
 const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
-    const { groupName, membersId } = req.body
+    const { groupName, membersId, createdBy } = req.body
     const isDuplicateGroupName = await prisma.groupChat.findFirst({ where: { name: groupName } })
     if (isDuplicateGroupName) {
         return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, { message: `${groupName} already exist.` }, "Duplicate Error."))
@@ -19,6 +19,7 @@ const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
     const group = await prisma.groupChat.create({
         data: {
             name: groupName,
+            providerId: createdBy,
             members: {
                 create: membersId.map((id: string) => ({
                     Provider: { connect: { id } }
@@ -238,6 +239,7 @@ const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
             }
         },
         include: {
+            provider: { include: { user: true } },
             members: {
                 include: {
                     Provider: {
@@ -291,7 +293,7 @@ const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
 
 
 const deleteGroupChannel = asyncHandler(async (req: Request, res: Response) => {
-    const { id } = req.body;
+    const { id, createdBy, } = req.body;
 
     if (!id) {
         return res
@@ -299,13 +301,28 @@ const deleteGroupChannel = asyncHandler(async (req: Request, res: Response) => {
             .json(new ApiResponse(StatusCodes.BAD_REQUEST, null, "Channel ID is required"));
     }
 
+    if (!createdBy) {
+        return res
+            .status(StatusCodes.BAD_REQUEST)
+            .json(new ApiResponse(StatusCodes.BAD_REQUEST, null, "Provider ID is required"));
+    }
+
     try {
-        const isAllChatMessagesDeleted = await prisma.chatMessage.deleteMany({ where: { groupId: id } });
-        const isChatDeleted = await prisma.groupChat.delete({ where: { id } });
+        const group = await prisma.groupChat.findUnique({ where: { id } });
+        if (group?.providerId !== createdBy) {
+            return res
+                .status(StatusCodes.UNAUTHORIZED)
+                .json(new ApiResponse(StatusCodes.UNAUTHORIZED, null, "You are not allowed to delete this group"));
+        }
+
+        await prisma.chatMessage.deleteMany({ where: { groupId: id } });
+
+
+        const deletedGroup = await prisma.groupChat.delete({ where: { id } });
 
         return res
             .status(StatusCodes.OK)
-            .json(new ApiResponse(StatusCodes.OK, { channel: isChatDeleted }, "Conversation deleted successfully"));
+            .json(new ApiResponse(StatusCodes.OK, { channel: deletedGroup }, "Conversation deleted successfully"));
 
     } catch (error) {
         return res

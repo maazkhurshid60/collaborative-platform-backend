@@ -1,6 +1,8 @@
 model GroupChat {
   id           String         @id @default(uuid())
   name         String
+  providerId   String         @unique
+  provider     Provider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
   chatMessages ChatMessage[]
   members      GroupMembers[]
 }

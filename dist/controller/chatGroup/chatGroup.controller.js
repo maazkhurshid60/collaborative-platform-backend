@@ -19,7 +19,7 @@ const http_status_codes_1 = require("http-status-codes");
 const apiResponse_1 = require("../../utils/apiResponse");
 const chatMediaConfig_1 = require("../../utils/multer/chatMediaConfig");
 const createGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { groupName, membersId } = req.body;
+    const { groupName, membersId, createdBy } = req.body;
     const isDuplicateGroupName = yield db_config_1.default.groupChat.findFirst({ where: { name: groupName } });
     if (isDuplicateGroupName) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { message: `${groupName} already exist.` }, "Duplicate Error."));
@@ -31,6 +31,7 @@ const createGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(
     const group = yield db_config_1.default.groupChat.create({
         data: {
             name: groupName,
+            providerId: createdBy,
             members: {
                 create: membersId.map((id) => ({
                     Provider: { connect: { id } }
@@ -200,6 +201,7 @@ const getAllGroupsApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter
             }
         },
         include: {
+            provider: { include: { user: true } },
             members: {
                 include: {
                     Provider: {
@@ -239,18 +241,29 @@ const getAllGroupsApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter
 }));
 exports.getAllGroupsApi = getAllGroupsApi;
 const deleteGroupChannel = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { id } = req.body;
+    const { id, createdBy, } = req.body;
     if (!id) {
         return res
             .status(http_status_codes_1.StatusCodes.BAD_REQUEST)
             .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, "Channel ID is required"));
     }
+    if (!createdBy) {
+        return res
+            .status(http_status_codes_1.StatusCodes.BAD_REQUEST)
+            .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, "Provider ID is required"));
+    }
     try {
-        const isAllChatMessagesDeleted = yield db_config_1.default.chatMessage.deleteMany({ where: { groupId: id } });
-        const isChatDeleted = yield db_config_1.default.groupChat.delete({ where: { id } });
+        const group = yield db_config_1.default.groupChat.findUnique({ where: { id } });
+        if ((group === null || group === void 0 ? void 0 : group.providerId) !== createdBy) {
+            return res
+                .status(http_status_codes_1.StatusCodes.UNAUTHORIZED)
+                .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.UNAUTHORIZED, null, "You are not allowed to delete this group"));
+        }
+        yield db_config_1.default.chatMessage.deleteMany({ where: { groupId: id } });
+        const deletedGroup = yield db_config_1.default.groupChat.delete({ where: { id } });
         return res
             .status(http_status_codes_1.StatusCodes.OK)
-            .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { channel: isChatDeleted }, "Conversation deleted successfully"));
+            .json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { channel: deletedGroup }, "Conversation deleted successfully"));
     }
     catch (error) {
         return res
