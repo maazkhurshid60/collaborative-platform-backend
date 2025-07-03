@@ -29,7 +29,7 @@ const sendInvitationEmail = (toEmail, providerName) => __awaiter(void 0, void 0,
     </div>
   `;
     yield NodeMailer_1.transporter.sendMail({
-        from: `"Collaborative Platform" <${process.env.MAIL_USER}>`,
+        from: `"Collaborative Platform" <${process.env.NODE_MAILER_USER}>`,
         to: toEmail,
         subject: `${providerName} invited you to join the platform`,
         html: htmlContent,

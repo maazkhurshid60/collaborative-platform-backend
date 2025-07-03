@@ -26,7 +26,7 @@ export const sendDocumentEmail = async (
   `;
 
   await transporter.sendMail({
-    from: `"Collaborative Platform" <${process.env.MAIL_USER}>`,
+    from: `"Collaborative Platform" <${process.env.NODE_MAILER_USER}>`,
     to: toEmail,
     subject: "New Documents Shared With You",
     html: htmlContent,
