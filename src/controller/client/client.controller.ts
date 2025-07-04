@@ -313,49 +313,157 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
         return res.status(StatusCodes.BAD_REQUEST).json(
             new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is already registered")
         );
-        // // Ensure the role is 'client'
-        // if (existingUser.role !== Role.client) {
-        //     return res.status(StatusCodes.BAD_REQUEST).json(
-        //         new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is registered but not as a client")
-        //     );
-        // }
 
-        // // Fetch existing client by userId
-        // const existingClient = await prisma.client.findUnique({
-        //     where: { userId: existingUser.id }
-        // });
+    }
+    console.log("><<<<<<<<<<<<<<<<<<<360");
 
-        // if (!existingClient) {
-        //     return res.status(StatusCodes.NOT_FOUND).json(
-        //         new ApiResponse(StatusCodes.NOT_FOUND, null, "Client record not found for existing license number")
-        //     );
-        // }
+    // 3. Proceed to create new user
+    const userCreated = await prisma.user.create({
+        data: {
+            fullName,
+            gender,
+            age,
+            contactNo,
+            address,
+            status,
+            licenseNo,
+            role,
 
-        // // Check if already linked to the same provider
-        // const alreadyLinked = await prisma.providerOnClient.findFirst({
-        //     where: {
-        //         clientId: existingClient.id,
-        //         providerId
-        //     }
-        // });
+            profileImage: profileImageUrl
+        }
+    });
+    console.log("><<<<<<<<<<<<<<<<<<<377", userCreated);
 
-        // if (alreadyLinked) {
-        //     return res.status(StatusCodes.CONFLICT).json(
-        //         new ApiResponse(StatusCodes.CONFLICT, null, "This provider has already added the client")
-        //     );
-        // }
+    // 4. If role is client, create client and link provider
+    if (role === Role.client) {
+        console.log("><<<<<<<<<<<<<<<<<<<381", role);
 
-        // // Link existing client to current provider
-        // await prisma.providerOnClient.create({
-        //     data: {
-        //         providerId,
-        //         clientId: existingClient.id
-        //     }
-        // });
+        const clientParsed = clientSchema.safeParse(req.body);
+        if (!clientParsed.success) {
+            return res.status(StatusCodes.BAD_REQUEST).json(
+                new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
+            );
+        }
 
-        // return res.status(StatusCodes.CREATED).json(
-        //     new ApiResponse(StatusCodes.CREATED, existingClient, "Existing client linked to provider successfully")
-        // );
+        // Check for duplicate client email
+        const existingClientEmail = await prisma.client.findFirst({ where: { email } });
+        if (existingClientEmail) {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
+            );
+        }
+
+        const hashedPassword = await bcrypt.hash(password ?? "", 10);
+        console.log("data add client", "email", email, " password", password, "isAccountCreatedByOwnClient", isAccountCreatedByOwnClient, "clientShowToOthers", clientShowToOthers, "fullName", fullName, "gender", gender, "age", age, "contactNo", contactNo, "address", address, "status", status, "licenseNo", licenseNo, "role", role);
+        const clientShowToOthersBool = clientShowToOthers === "true";
+        console.log("<<<<<<<<<<<<<<<<<<<clientShowToOthersBool>>>>>>>>>>>>>>>>>>>>", clientShowToOthersBool, "typeof clientShowToOthersBool", typeof clientShowToOthersBool);
+
+        const clientCreated = await prisma.client.create({
+            data: {
+                userId: userCreated.id,
+                isAccountCreatedByOwnClient,
+                clientShowToOthers: clientShowToOthersBool,
+                email,
+                password: hashedPassword
+            },
+            include: {
+                user: true
+            }
+        });
+
+        if (providerId) {
+            await prisma.providerOnClient.create({
+                data: {
+                    providerId,
+                    clientId: clientCreated.id
+                }
+            });
+        }
+
+        return res.status(StatusCodes.CREATED).json(
+            new ApiResponse(StatusCodes.CREATED, clientCreated, "Client created and linked to provider successfully")
+        );
+    }
+
+    // 5. If role is not client
+    return res.status(StatusCodes.CREATED).json(
+        new ApiResponse(StatusCodes.CREATED, userCreated, "User created successfully")
+    );
+});
+
+
+const addExistingClientToProvider = asyncHandler(async (req: Request, res: Response) => {
+    if (req.body.age) req.body.age = Number(req.body.age);
+    if (req.body.isAccountCreatedByOwnClient)
+        req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
+
+    // 1. Validate user schema
+    const userParsedData = userSchema.safeParse(req.body);
+    if (!userParsedData.success) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
+        );
+    }
+
+    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
+    const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
+
+    let profileImageUrl: string | null = null;
+    if (req.file) {
+        const file = req.file as Express.Multer.File & { location?: string };
+        profileImageUrl = file.location ?? null;
+    }
+
+
+    // 2. Check if user with licenseNo already exists
+    const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
+    console.log("><<<<<<<<<<<<<<<<<<<", existingUser);
+
+    if (existingUser) {
+
+        // Ensure the role is 'client'
+        if (existingUser?.role !== Role.client) {
+            return res.status(StatusCodes.BAD_REQUEST).json(
+                new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is registered but not as a client")
+            );
+        }
+
+        // Fetch existing client by userId
+        const existingClient = await prisma.client.findUnique({
+            where: { userId: existingUser.id }
+        });
+
+        if (!existingClient) {
+            return res.status(StatusCodes.NOT_FOUND).json(
+                new ApiResponse(StatusCodes.NOT_FOUND, null, "Client record not found for existing license number")
+            );
+        }
+
+        // Check if already linked to the same provider
+        const alreadyLinked = await prisma.providerOnClient.findFirst({
+            where: {
+                clientId: existingClient.id,
+                providerId
+            }
+        });
+
+        if (alreadyLinked) {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, null, "This provider has already added the client")
+            );
+        }
+
+        // Link existing client to current provider
+        await prisma.providerOnClient.create({
+            data: {
+                providerId,
+                clientId: existingClient.id
+            }
+        });
+
+        return res.status(StatusCodes.CREATED).json(
+            new ApiResponse(StatusCodes.CREATED, existingClient, "Existing client linked to provider successfully")
+        );
     }
     console.log("><<<<<<<<<<<<<<<<<<<360");
 
@@ -435,7 +543,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
 
 
 
-
+//logined provider can add existing client(not present in logined provider list) by just one add button click without entering record manually
 const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: Response) => {
     // Validate data
     const clientData = clientSchema.safeParse(req.body);
@@ -559,4 +667,4 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
 
 
 
-export { getAllClients, deletClient, updateClient, getTotalClient, addClient, updateExistingClientOnLicenseNo }
+export { getAllClients, deletClient, updateClient, getTotalClient, addClient, updateExistingClientOnLicenseNo, addExistingClientToProvider }

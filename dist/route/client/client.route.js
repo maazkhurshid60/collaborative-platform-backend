@@ -9,6 +9,7 @@ clientRouter.delete("/delete-client", auth_middleware_1.authJWT, client_controll
 clientRouter.patch("/update-client", auth_middleware_1.authJWT, s3ImgUploader_1.uploadImg.single('profileImage'), client_controller_1.updateClient);
 clientRouter.patch("/update-existing-client", client_controller_1.updateExistingClientOnLicenseNo);
 clientRouter.post("/add-client", auth_middleware_1.authJWT, s3ImgUploader_1.uploadImg.single('profileImage'), client_controller_1.addClient);
+clientRouter.post("/add-existing-client-to-provider", auth_middleware_1.authJWT, s3ImgUploader_1.uploadImg.single('profileImage'), client_controller_1.addExistingClientToProvider);
 clientRouter.post("/get-all-clients", auth_middleware_1.authJWT, client_controller_1.getAllClients);
 clientRouter.get("/get-total-clients", auth_middleware_1.authJWT, client_controller_1.getTotalClient);
 exports.default = clientRouter;

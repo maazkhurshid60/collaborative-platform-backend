@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateExistingClientOnLicenseNo = exports.addClient = exports.getTotalClient = exports.updateClient = exports.deletClient = exports.getAllClients = void 0;
+exports.addExistingClientToProvider = exports.updateExistingClientOnLicenseNo = exports.addClient = exports.getTotalClient = exports.updateClient = exports.deletClient = exports.getAllClients = void 0;
 const asyncHandler_1 = require("../../utils/asyncHandler");
 const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
@@ -242,43 +242,6 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     console.log("><<<<<<<<<<<<<<<<<<<", existingUser);
     if (existingUser) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, "This license number is already registered"));
-        // // Ensure the role is 'client'
-        // if (existingUser.role !== Role.client) {
-        //     return res.status(StatusCodes.BAD_REQUEST).json(
-        //         new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is registered but not as a client")
-        //     );
-        // }
-        // // Fetch existing client by userId
-        // const existingClient = await prisma.client.findUnique({
-        //     where: { userId: existingUser.id }
-        // });
-        // if (!existingClient) {
-        //     return res.status(StatusCodes.NOT_FOUND).json(
-        //         new ApiResponse(StatusCodes.NOT_FOUND, null, "Client record not found for existing license number")
-        //     );
-        // }
-        // // Check if already linked to the same provider
-        // const alreadyLinked = await prisma.providerOnClient.findFirst({
-        //     where: {
-        //         clientId: existingClient.id,
-        //         providerId
-        //     }
-        // });
-        // if (alreadyLinked) {
-        //     return res.status(StatusCodes.CONFLICT).json(
-        //         new ApiResponse(StatusCodes.CONFLICT, null, "This provider has already added the client")
-        //     );
-        // }
-        // // Link existing client to current provider
-        // await prisma.providerOnClient.create({
-        //     data: {
-        //         providerId,
-        //         clientId: existingClient.id
-        //     }
-        // });
-        // return res.status(StatusCodes.CREATED).json(
-        //     new ApiResponse(StatusCodes.CREATED, existingClient, "Existing client linked to provider successfully")
-        // );
     }
     console.log("><<<<<<<<<<<<<<<<<<<360");
     // 3. Proceed to create new user
@@ -338,6 +301,117 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, userCreated, "User created successfully"));
 }));
 exports.addClient = addClient;
+const addExistingClientToProvider = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    if (req.body.age)
+        req.body.age = Number(req.body.age);
+    if (req.body.isAccountCreatedByOwnClient)
+        req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
+    // 1. Validate user schema
+    const userParsedData = auth_schema_1.userSchema.safeParse(req.body);
+    if (!userParsedData.success) {
+        return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
+    }
+    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
+    const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
+    let profileImageUrl = null;
+    if (req.file) {
+        const file = req.file;
+        profileImageUrl = (_a = file.location) !== null && _a !== void 0 ? _a : null;
+    }
+    // 2. Check if user with licenseNo already exists
+    const existingUser = yield db_config_1.default.user.findFirst({ where: { licenseNo } });
+    console.log("><<<<<<<<<<<<<<<<<<<", existingUser);
+    if (existingUser) {
+        // Ensure the role is 'client'
+        if ((existingUser === null || existingUser === void 0 ? void 0 : existingUser.role) !== client_1.Role.client) {
+            return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, "This license number is registered but not as a client"));
+        }
+        // Fetch existing client by userId
+        const existingClient = yield db_config_1.default.client.findUnique({
+            where: { userId: existingUser.id }
+        });
+        if (!existingClient) {
+            return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, null, "Client record not found for existing license number"));
+        }
+        // Check if already linked to the same provider
+        const alreadyLinked = yield db_config_1.default.providerOnClient.findFirst({
+            where: {
+                clientId: existingClient.id,
+                providerId
+            }
+        });
+        if (alreadyLinked) {
+            return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, null, "This provider has already added the client"));
+        }
+        // Link existing client to current provider
+        yield db_config_1.default.providerOnClient.create({
+            data: {
+                providerId,
+                clientId: existingClient.id
+            }
+        });
+        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, existingClient, "Existing client linked to provider successfully"));
+    }
+    console.log("><<<<<<<<<<<<<<<<<<<360");
+    // 3. Proceed to create new user
+    const userCreated = yield db_config_1.default.user.create({
+        data: {
+            fullName,
+            gender,
+            age,
+            contactNo,
+            address,
+            status,
+            licenseNo,
+            role,
+            profileImage: profileImageUrl
+        }
+    });
+    console.log("><<<<<<<<<<<<<<<<<<<377", userCreated);
+    // 4. If role is client, create client and link provider
+    if (role === client_1.Role.client) {
+        console.log("><<<<<<<<<<<<<<<<<<<381", role);
+        const clientParsed = client_schema_1.clientSchema.safeParse(req.body);
+        if (!clientParsed.success) {
+            return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed"));
+        }
+        // Check for duplicate client email
+        const existingClientEmail = yield db_config_1.default.client.findFirst({ where: { email } });
+        if (existingClientEmail) {
+            return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed"));
+        }
+        const hashedPassword = yield bcrypt_1.default.hash(password !== null && password !== void 0 ? password : "", 10);
+        console.log("data add client", "email", email, " password", password, "isAccountCreatedByOwnClient", isAccountCreatedByOwnClient, "clientShowToOthers", clientShowToOthers, "fullName", fullName, "gender", gender, "age", age, "contactNo", contactNo, "address", address, "status", status, "licenseNo", licenseNo, "role", role);
+        const clientShowToOthersBool = clientShowToOthers === "true";
+        console.log("<<<<<<<<<<<<<<<<<<<clientShowToOthersBool>>>>>>>>>>>>>>>>>>>>", clientShowToOthersBool, "typeof clientShowToOthersBool", typeof clientShowToOthersBool);
+        const clientCreated = yield db_config_1.default.client.create({
+            data: {
+                userId: userCreated.id,
+                isAccountCreatedByOwnClient,
+                clientShowToOthers: clientShowToOthersBool,
+                email,
+                password: hashedPassword
+            },
+            include: {
+                user: true
+            }
+        });
+        if (providerId) {
+            yield db_config_1.default.providerOnClient.create({
+                data: {
+                    providerId,
+                    clientId: clientCreated.id
+                }
+            });
+        }
+        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, clientCreated, "Client created and linked to provider successfully"));
+    }
+    // 5. If role is not client
+    return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, userCreated, "User created successfully"));
+}));
+exports.addExistingClientToProvider = addExistingClientToProvider;
+//logined provider can add existing client(not present in logined provider list) by just one add button click without entering record manually
 const updateExistingClientOnLicenseNo = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // Validate data
     const clientData = client_schema_1.clientSchema.safeParse(req.body);
