@@ -14,5 +14,5 @@ model Provider {
   user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   clientList     ProviderOnClient[]
   readReceipts   ReadReceipt[]
-  createdGroup   GroupChat?
+  createdGroup   GroupChat[]
 }

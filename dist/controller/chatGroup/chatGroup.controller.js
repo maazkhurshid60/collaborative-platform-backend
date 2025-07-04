@@ -22,7 +22,7 @@ const createGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(
     const { groupName, membersId, createdBy } = req.body;
     const isDuplicateGroupName = yield db_config_1.default.groupChat.findFirst({ where: { name: groupName } });
     if (isDuplicateGroupName) {
-        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { message: `${groupName} already exist.` }, "Duplicate Error."));
+        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, null, `Group name "${groupName}" already exists.`));
     }
     const membersRoleCheck = yield db_config_1.default.provider.findMany({ where: { id: { in: membersId } } });
     if (membersRoleCheck.length !== membersId.length) {

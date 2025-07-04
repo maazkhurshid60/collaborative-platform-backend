@@ -9,8 +9,15 @@ const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
     const { groupName, membersId, createdBy } = req.body
     const isDuplicateGroupName = await prisma.groupChat.findFirst({ where: { name: groupName } })
     if (isDuplicateGroupName) {
-        return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, { message: `${groupName} already exist.` }, "Duplicate Error."))
+        return res.status(StatusCodes.CONFLICT).json(
+            new ApiResponse(
+                StatusCodes.CONFLICT,
+                null,
+                `Group name "${groupName}" already exists.`
+            )
+        );
     }
+
 
     const membersRoleCheck = await prisma.provider.findMany({ where: { id: { in: membersId } } })
     if (membersRoleCheck.length !== membersId.length) {
