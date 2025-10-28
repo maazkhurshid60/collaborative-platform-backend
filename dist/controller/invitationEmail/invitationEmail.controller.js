@@ -15,12 +15,12 @@ const SendInvitationEmail_1 = require("../../utils/nodeMailer/SendInvitationEmai
 const http_status_codes_1 = require("http-status-codes");
 const apiResponse_1 = require("../../utils/apiResponse");
 const sendInvitationEmailApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { invitationEmail, providerName } = req.body;
+    const { invitationEmail, providerName, invitationChatLink } = req.body;
     if (!invitationEmail || !providerName) {
         return res.status(400).json({ success: false, message: "Missing email or provider name." });
     }
     try {
-        yield (0, SendInvitationEmail_1.sendInvitationEmail)(invitationEmail, providerName);
+        yield (0, SendInvitationEmail_1.sendInvitationEmail)(invitationEmail, providerName, invitationChatLink);
         return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { message: `Invitation email sent to ${invitationEmail}` }, "ok"));
     }
     catch (error) {

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { blockUserApi, changePasswordApi, deleteMeAccountApi, findByLicenseNo, getAllUsersApi, getMeApi, logInApi, logoutApi, signupApi, unblockUserApi, updateMeApi } from "../../controller/auth/auth.controller";
+import { blockUserApi, changePasswordApi, deleteMeAccountApi, getAllValidUsersApi, findByLicenseNo, forgotPasswordApi, getAllUsersApi, getMeApi, logInApi, logoutApi, resetPasswordApi, signupApi, unblockUserApi, updateMeApi, approveValidUser, rejectUser, restoreUser } from "../../controller/auth/auth.controller";
 import { authJWT } from "../../middlewares/auth.middleware";
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
 const authRouter = Router()
@@ -21,7 +21,13 @@ authRouter.patch(
 authRouter.delete("/delete-me-account", authJWT, deleteMeAccountApi)
 authRouter.post("/get-me", authJWT, getMeApi)
 authRouter.get("/get-all-users", authJWT, getAllUsersApi)
+authRouter.patch("/approve-user", authJWT, approveValidUser)
+authRouter.patch("/reject-user", authJWT, rejectUser)
+authRouter.patch("/restore-user", authJWT, restoreUser)
+authRouter.get("/get-all-valid-users", authJWT, getAllValidUsersApi)
 authRouter.patch("/change-password", authJWT, changePasswordApi)
+authRouter.post("/forgot-password", forgotPasswordApi)
+authRouter.patch("/reset-password/:token", resetPasswordApi)
 
 
 export default authRouter

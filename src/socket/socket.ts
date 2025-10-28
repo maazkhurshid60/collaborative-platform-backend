@@ -2,6 +2,7 @@
 
 import { Server } from 'socket.io';
 import prisma from '../db/db.config';
+import { decryptText } from '../utils/encryptedMessage/EncryptedMessage';
 
 let io: Server;
 
@@ -21,14 +22,27 @@ export function setupSocket(server: any) {
 
     io.on('connection', async (socket: any) => {
         const providerId = socket.handshake.query.providerId;
-        // const userId = socket.handshake.query.userId;
+        const userId = socket.handshake.query.userId;
 
-        console.log(`Socket connected  providerId: ${providerId || '-'}`);
+        console.log(`Socket connected  providerId`);
 
         // Join notification room
-        // if (userId) {
-        //     socket.join(userId);
-        // }
+        if (userId) {
+            socket.join(userId);
+        }
+
+        if (providerId) {
+            socket.join(providerId);
+
+            // Sab direct chat channels join karwa do
+            const channels = await prisma.chatChannel.findMany({
+                where: {
+                    OR: [{ providerAId: providerId.toString() }, { providerBId: providerId.toString() }],
+                },
+                select: { id: true },
+            });
+            channels.forEach(c => socket.join(c.id));
+        }
 
         // Join provider personal room and their group chats
         if (providerId) {
@@ -44,38 +58,54 @@ export function setupSocket(server: any) {
             }
         }
 
+
         // Direct message
         // socket.on('send_direct', ({ toProviderId, message }: { toProviderId: string, message: any }) => {
         //     try {
+        //         // 🛠️ Ensure the sender is also joined to the room
+        //         socket.join(message.chatChannelId); // ✅ This is key fix
 
-        //         io.to(message?.chatChannelId).emit('receive_direct', message);
-        //         io.to(toProviderId).emit('receive_direct', message); // this ensures the other user gets it
+        //         // // ✅ Broadcast message to everyone in the room (sender + receiver)
+        //         // const decryptedMessage = {
+        //         //     ...message,
+        //         //     message: decryptText(message.message),
+        //         // };
+        //         io.to(message?.chatChannelId).emit('receive_direct', message.message);
+
+        //         // 🔄 Unread refresh still sent to receiver only
         //         io.to(toProviderId).emit('refresh_unread', { chatChannelId: message.chatChannelId });
-
 
         //     } catch (err) {
         //         console.error('Error sending direct message:', err);
         //     }
         // });
-        // Direct message
+
         socket.on('send_direct', ({ toProviderId, message }: { toProviderId: string, message: any }) => {
             try {
-                // 🛠️ Ensure the sender is also joined to the room
-                socket.join(message.chatChannelId); // ✅ This is key fix
+                // sender ko room me pakka join kara do
+                socket.join(message.chatChannelId);
 
-                // ✅ Broadcast message to everyone in the room (sender + receiver)
-                io.to(message?.chatChannelId).emit('receive_direct', message);
+                // Plaintext object hi aayega (aap REST response me decrypt kar ke bhej chuke ho)
+                const plainMessage = {
+                    ...message, // id, senderId, chatChannelId, createdAt, sender, etc.
+                    // message already plaintext from API response
+                };
 
-                // 🔄 Unread refresh still sent to receiver only
+                io.to(message.chatChannelId).emit('receive_direct', {
+                    ...message, // id, senderId, chatChannelId, createdAt, sender, etc.
+                });
+
+                // Unread refresh receiver ko
                 io.to(toProviderId).emit('refresh_unread', { chatChannelId: message.chatChannelId });
 
             } catch (err) {
                 console.error('Error sending direct message:', err);
             }
         });
+
         // Join direct chat room
         socket.on('join_channel', ({ chatChannelId }: { chatChannelId: string }) => {
-            console.log(`Socket ${socket.id} joining ROOM: ${chatChannelId}`);
+            console.log(`Socket socket.id joining ROOM: chatChannelId`);
             socket.join(chatChannelId);
         });
 
@@ -96,7 +126,7 @@ export function setupSocket(server: any) {
                 // ✅ Emit message to everyone in the group
                 io.to(message.groupId).emit('receive_group', message);
 
-                console.log('Group message emitted:', message);
+                console.log('Group message emitted:');
             } catch (err) {
                 console.error('Error in send_group:', err);
             }
@@ -105,7 +135,7 @@ export function setupSocket(server: any) {
 
         // Disconnect handling
         socket.on('disconnect', () => {
-            console.log(`Disconnected | providerId: ${providerId || '-'}`);
+            console.log(`Disconnected | providerId: `);
             if (providerId) socket.leave(providerId);
             // if (userId) socket.leave(userId);
         });

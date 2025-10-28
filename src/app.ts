@@ -72,7 +72,6 @@ app.use(
     '/uploads',
     express.static(path.join(__dirname, '..', 'uploads'), {
         setHeaders: (res, filePath) => {
-            console.log("Serving file:", filePath); // <== ADD THIS
             res.setHeader('Access-Control-Allow-Origin', '*');
             res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
         }

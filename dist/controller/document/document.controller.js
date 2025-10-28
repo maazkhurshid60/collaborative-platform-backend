@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllSharedDocumentWithClientApi = exports.documentSignByClientApi = exports.documentSharedWithClientApi = exports.getAllDocumentApi = exports.addDocumentApi = void 0;
+exports.deleteDocumentApi = exports.getAllSharedDocumentWithClientApi = exports.documentSignByClientApi = exports.documentSharedWithClientApi = exports.getAllDocumentApi = exports.addDocumentApi = void 0;
 const asyncHandler_1 = require("../../utils/asyncHandler");
 const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
@@ -93,7 +93,8 @@ const getAllDocumentApi = (0, asyncHandler_1.asyncHandler)((req, res) => __await
         data: {
             completedDocuments,
             uncompletedDocuments,
-            sharedDocuments
+            sharedDocuments,
+            allDocuments
         }
     }, "Fetched."));
 }));
@@ -179,9 +180,20 @@ const documentSharedWithClientApi = (0, asyncHandler_1.asyncHandler)((req, res) 
 exports.documentSharedWithClientApi = documentSharedWithClientApi;
 const documentSignByClientApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
-    const { clientId, sharedDocumentId, isAgree, senderId } = req.body;
-    const eSignatureFile = req.file;
-    if (!clientId || !sharedDocumentId || !eSignatureFile || isAgree === undefined) {
+    const { clientId, sharedDocumentId, isAgree, senderId, eSignature } = req.body;
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>", req.body);
+    console.log(">>>>>>>", clientId, sharedDocumentId, isAgree, senderId, eSignature);
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    if (!clientId || !sharedDocumentId || !eSignature || isAgree === undefined) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: "Missing or invalid input fields." }, "Bad Request"));
     }
     const isShareDocumentExist = yield db_config_1.default.documentShareWith.findFirst({
@@ -193,12 +205,11 @@ const documentSignByClientApi = (0, asyncHandler_1.asyncHandler)((req, res) => _
     if (!isShareDocumentExist) {
         return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { error: "Document not found or not assigned to this client." }, "Not Found"));
     }
-    const eSignatureS3File = eSignatureFile;
     const documentUpdated = yield db_config_1.default.documentShareWith.update({
         where: { id: sharedDocumentId },
         data: {
-            eSignature: eSignatureS3File.location, // ✅ Save full S3 URL
-            isAgree: isAgree === "true",
+            eSignature: eSignature,
+            isAgree: isAgree,
             updatedAt: new Date()
         },
         include: {
@@ -256,3 +267,16 @@ const getAllSharedDocumentWithClientApi = (0, asyncHandler_1.asyncHandler)((req,
     }, "Success"));
 }));
 exports.getAllSharedDocumentWithClientApi = getAllSharedDocumentWithClientApi;
+const deleteDocumentApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.body;
+    const isDocumentExist = yield db_config_1.default.document.findFirst({ where: { id } });
+    if (!isDocumentExist) {
+        return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { message: "Document not found" }, "Validation failed"));
+    }
+    const isDocumentDelete = yield db_config_1.default.document.delete({ where: { id } });
+    if (isDocumentDelete) {
+        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { message: "Document has deleted successfully" }, "Success"));
+    }
+    return res.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, { message: "Internal Server Error. Try Later" }, "Internal Server Error"));
+}));
+exports.deleteDocumentApi = deleteDocumentApi;

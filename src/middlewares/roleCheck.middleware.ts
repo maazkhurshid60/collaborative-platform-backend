@@ -1,23 +1,43 @@
-import { NextFunction, Response, Request } from "express";
-import { ApiError } from "../utils/apiError";
-import { asyncHandler } from "../utils/asyncHandler";
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+import { StatusCodes } from "http-status-codes";
+import { ApiResponse } from "../utils/apiResponse";
 
-// A middleware to check user roles
-export const ouRoleCheck = (roles: string[]) => {
-    return asyncHandler(async (req: any, res: any, next: any) => {
-        console.log("Allowed roles:", roles);
+export const authorizeRoles = (...allowedRoles: string[]) => {
+    return (req: Request, res: Response, next: NextFunction): void => {
+        const authHeader = req.headers.authorization;
 
-        // Ensure the user is logged in (req.user is populated by the authentication middleware)
-        if (!req.user) {
-            throw new ApiError(401, "You must be logged in to access this route");
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            res.status(StatusCodes.UNAUTHORIZED).json(
+                new ApiResponse(StatusCodes.UNAUTHORIZED, {}, "Unauthorized")
+            );
+            return;
         }
 
-        // Check if the user's role matches one of the allowed roles
-        if (!roles.includes(req.user.role)) {
-            throw new ApiError(403, `You are not authorized to access this route. Role: ${req.user.role} is not allowed`);
-        }
+        const token = authHeader.split(" ")[1];
 
-        // Proceed to the next middleware/route handler if the role is correct
-        next();
-    });
+        try {
+            const jwtSecret = process.env.JWT_SECRET || "default_secret";
+            const decoded = jwt.verify(token, jwtSecret) as {
+                userId: string;
+                email: string;
+                role: string;
+            };
+
+            if (!allowedRoles.includes(decoded.role)) {
+                res.status(StatusCodes.FORBIDDEN).json(
+                    new ApiResponse(StatusCodes.FORBIDDEN, {}, "Access denied: Insufficient role")
+                );
+                return;
+            }
+
+            // Attach user to request object
+            (req as any).user = decoded;
+            next();
+        } catch (error) {
+            res.status(StatusCodes.UNAUTHORIZED).json(
+                new ApiResponse(StatusCodes.UNAUTHORIZED, {}, "Invalid token")
+            );
+        }
+    };
 };

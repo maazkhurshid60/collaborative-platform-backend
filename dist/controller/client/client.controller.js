@@ -67,7 +67,6 @@ const getAllClients = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(v
 exports.getAllClients = getAllClients;
 const deletClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { clientId, providerId } = req.body;
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>", clientId, providerId);
     // 1. Check if client exists
     const client = yield db_config_1.default.client.findUnique({ where: { id: clientId } });
     if (!client) {
@@ -107,7 +106,7 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientData.error.errors }, "Validation Failed"));
     }
     // Destructure validated data
-    const { fullName, gender, age, contactNo, address, status, licenseNo, email, password, clientId, clientShowToOthers } = clientData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, email, password, clientId, clientShowToOthers, state, country } = clientData.data;
     // Hash password only if provided
     let hashedPassword;
     if (password && password.trim() !== "") {
@@ -141,7 +140,6 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
     if (isLicenseNoExists) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `License Number ${licenseNo} already taken` }, "Duplicate Error"));
     }
-    console.log("client id", clientId, "isClientExist", isClientExist);
     // Check for duplicate full name (excluding current user)
     const isFullNameExist = yield db_config_1.default.user.findFirst({
         where: {
@@ -176,6 +174,8 @@ const updateClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
         address,
         status,
         licenseNo,
+        state, country,
+        isApprove: "approve",
         role: client_1.Role.client
     };
     // Handle profile image updates
@@ -230,7 +230,7 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     if (!userParsedData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
     }
-    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
+    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state, } = userParsedData.data;
     const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
     let profileImageUrl = null;
     if (req.file) {
@@ -239,11 +239,14 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     }
     // 2. Check if user with licenseNo already exists
     const existingUser = yield db_config_1.default.user.findFirst({ where: { licenseNo } });
-    console.log("><<<<<<<<<<<<<<<<<<<", existingUser);
     if (existingUser) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, "This license number is already registered"));
     }
-    console.log("><<<<<<<<<<<<<<<<<<<360");
+    // Check for duplicate client email
+    const existingClientEmail = yield db_config_1.default.client.findFirst({ where: { email } });
+    if (existingClientEmail) {
+        return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, null, `Email: ${email} is already taken.`));
+    }
     // 3. Proceed to create new user
     const userCreated = yield db_config_1.default.user.create({
         data: {
@@ -254,27 +257,20 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
             address,
             status,
             licenseNo,
+            country, state,
             role,
+            isApprove,
             profileImage: profileImageUrl
         }
     });
-    console.log("><<<<<<<<<<<<<<<<<<<377", userCreated);
     // 4. If role is client, create client and link provider
     if (role === client_1.Role.client) {
-        console.log("><<<<<<<<<<<<<<<<<<<381", role);
         const clientParsed = client_schema_1.clientSchema.safeParse(req.body);
         if (!clientParsed.success) {
             return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed"));
         }
-        // Check for duplicate client email
-        const existingClientEmail = yield db_config_1.default.client.findFirst({ where: { email } });
-        if (existingClientEmail) {
-            return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed"));
-        }
         const hashedPassword = yield bcrypt_1.default.hash(password !== null && password !== void 0 ? password : "", 10);
-        console.log("data add client", "email", email, " password", password, "isAccountCreatedByOwnClient", isAccountCreatedByOwnClient, "clientShowToOthers", clientShowToOthers, "fullName", fullName, "gender", gender, "age", age, "contactNo", contactNo, "address", address, "status", status, "licenseNo", licenseNo, "role", role);
         const clientShowToOthersBool = clientShowToOthers === "true";
-        console.log("<<<<<<<<<<<<<<<<<<<clientShowToOthersBool>>>>>>>>>>>>>>>>>>>>", clientShowToOthersBool, "typeof clientShowToOthersBool", typeof clientShowToOthersBool);
         const clientCreated = yield db_config_1.default.client.create({
             data: {
                 userId: userCreated.id,
@@ -295,7 +291,7 @@ const addClient = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
                 }
             });
         }
-        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, clientCreated, "Client created and linked to provider successfully"));
+        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, clientCreated, "Client Data has been sent to the super admin for verification. Client will receive a verification email once approved, after which Client will be able to log in."));
     }
     // 5. If role is not client
     return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, userCreated, "User created successfully"));
@@ -312,7 +308,7 @@ const addExistingClientToProvider = (0, asyncHandler_1.asyncHandler)((req, res) 
     if (!userParsedData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
     }
-    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
+    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state } = userParsedData.data;
     const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
     let profileImageUrl = null;
     if (req.file) {
@@ -321,7 +317,6 @@ const addExistingClientToProvider = (0, asyncHandler_1.asyncHandler)((req, res) 
     }
     // 2. Check if user with licenseNo already exists
     const existingUser = yield db_config_1.default.user.findFirst({ where: { licenseNo } });
-    console.log("><<<<<<<<<<<<<<<<<<<", existingUser);
     if (existingUser) {
         // Ensure the role is 'client'
         if ((existingUser === null || existingUser === void 0 ? void 0 : existingUser.role) !== client_1.Role.client) {
@@ -345,15 +340,17 @@ const addExistingClientToProvider = (0, asyncHandler_1.asyncHandler)((req, res) 
             return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, null, "This provider has already added the client"));
         }
         // Link existing client to current provider
-        yield db_config_1.default.providerOnClient.create({
+        const clientCreated = yield db_config_1.default.providerOnClient.create({
             data: {
                 providerId,
                 clientId: existingClient.id
             }
         });
+        if (isApprove === "pending") {
+            return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, clientCreated, "Client Data has been already sent to the super admin for verification. Client will receive a verification email once approved, after which Client will be able to log in."));
+        }
         return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, existingClient, "Existing client linked to provider successfully"));
     }
-    console.log("><<<<<<<<<<<<<<<<<<<360");
     // 3. Proceed to create new user
     const userCreated = yield db_config_1.default.user.create({
         data: {
@@ -365,13 +362,12 @@ const addExistingClientToProvider = (0, asyncHandler_1.asyncHandler)((req, res) 
             status,
             licenseNo,
             role,
+            isApprove, country, state,
             profileImage: profileImageUrl
         }
     });
-    console.log("><<<<<<<<<<<<<<<<<<<377", userCreated);
     // 4. If role is client, create client and link provider
     if (role === client_1.Role.client) {
-        console.log("><<<<<<<<<<<<<<<<<<<381", role);
         const clientParsed = client_schema_1.clientSchema.safeParse(req.body);
         if (!clientParsed.success) {
             return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed"));
@@ -382,9 +378,7 @@ const addExistingClientToProvider = (0, asyncHandler_1.asyncHandler)((req, res) 
             return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed"));
         }
         const hashedPassword = yield bcrypt_1.default.hash(password !== null && password !== void 0 ? password : "", 10);
-        console.log("data add client", "email", email, " password", password, "isAccountCreatedByOwnClient", isAccountCreatedByOwnClient, "clientShowToOthers", clientShowToOthers, "fullName", fullName, "gender", gender, "age", age, "contactNo", contactNo, "address", address, "status", status, "licenseNo", licenseNo, "role", role);
         const clientShowToOthersBool = clientShowToOthers === "true";
-        console.log("<<<<<<<<<<<<<<<<<<<clientShowToOthersBool>>>>>>>>>>>>>>>>>>>>", clientShowToOthersBool, "typeof clientShowToOthersBool", typeof clientShowToOthersBool);
         const clientCreated = yield db_config_1.default.client.create({
             data: {
                 userId: userCreated.id,

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.changePasswordApi = exports.findByLicenseNo = exports.getAllUsersApi = exports.getMeApi = exports.deleteMeAccountApi = exports.updateMeApi = exports.logoutApi = exports.unblockUserApi = exports.blockUserApi = exports.logInApi = exports.signupApi = void 0;
+exports.getAllValidUsersApi = exports.resetPasswordApi = exports.forgotPasswordApi = exports.changePasswordApi = exports.findByLicenseNo = exports.getAllUsersApi = exports.getMeApi = exports.restoreUser = exports.rejectUser = exports.approveValidUser = exports.deleteMeAccountApi = exports.updateMeApi = exports.logoutApi = exports.unblockUserApi = exports.blockUserApi = exports.logInApi = exports.signupApi = void 0;
 const asyncHandler_1 = require("../../utils/asyncHandler");
 const auth_schema_1 = require("../../schema/auth/auth.schema");
 const apiResponse_1 = require("../../utils/apiResponse");
@@ -22,6 +22,9 @@ const client_1 = require("@prisma/client");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const constants_1 = require("../../utils/constants");
+const generateResetPasswordToken_1 = require("../../utils/generateResetPasswordToken");
+const ResetPassword_1 = require("../../utils/nodeMailer/ResetPassword");
+const crypto_1 = __importDefault(require("crypto"));
 const signupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // Validate User Schema
     const userParsedData = auth_schema_1.userSchema.safeParse(req.body);
@@ -29,14 +32,25 @@ const signupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
     }
     //get data for user
-    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
+    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state, publicKey, privateKey } = userParsedData.data;
     // Check if User Exists
     const existingUser = yield db_config_1.default.user.findFirst({ where: { licenseNo } });
     if (existingUser) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `License Number ${licenseNo} is already registered.` }, "Validation failed"));
     }
+    const clientParsed = auth_schema_1.clientSchema.safeParse(req.body);
+    if (!clientParsed.success) {
+        return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed"));
+    }
+    //get client data
+    const { isAccountCreatedByOwnClient, email, password } = clientParsed.data;
+    //check duplicate client
+    const existingClient = yield db_config_1.default.client.findFirst({ where: { email } });
+    if (existingClient) {
+        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed"));
+    }
     const userData = {
-        fullName, gender, age, contactNo, address, status, licenseNo, role
+        fullName, gender, age, contactNo, address, status, licenseNo, role, isApprove: "pending", country, state, publicKey, privateKey
     };
     if (gender !== undefined)
         userData.gender = gender;
@@ -53,21 +67,10 @@ const signupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
     });
     // Handle Client Signup
     if (role === client_1.Role.client) {
-        const clientParsed = auth_schema_1.clientSchema.safeParse(req.body);
-        if (!clientParsed.success) {
-            return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed"));
-        }
-        //get client data
-        const { isAccountCreatedByOwnClient, email, password } = clientParsed.data;
-        //check duplicate client
-        const existingClient = yield db_config_1.default.client.findFirst({ where: { email } });
-        if (existingClient) {
-            return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed"));
-        }
         //hashing the client's password
         const hashedPassword = yield bcrypt_1.default.hash(password !== null && password !== void 0 ? password : "", 10);
         const clientCreated = yield db_config_1.default.client.create({ data: { userId: userCreated.id, isAccountCreatedByOwnClient, email, password: hashedPassword }, include: { user: true } });
-        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, clientCreated, "User created successfully"));
+        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, clientCreated, "Your account has been sent to the super admin for verification. You will receive a verification email once approved, after which you'll be able to log in."));
     }
     // Handle Provider Signup
     else if (role === client_1.Role.provider) {
@@ -86,12 +89,33 @@ const signupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
             return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed"));
         }
         const providerCreated = yield db_config_1.default.provider.create({ data: { userId: userCreated.id, department, email, password: hashedPassword }, include: { user: true } });
-        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, providerCreated, "User created successfully"));
+        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, providerCreated, "Your account has been sent to the super admin for verification. You will receive a verification email once approved, after which you'll be able to log in."));
+    }
+    // Handle Super Admin Signup
+    else if (role === client_1.Role.superadmin) {
+        const superAdminParsed = auth_schema_1.superAdminSchema.safeParse(req.body);
+        if (!superAdminParsed.success) {
+            return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: superAdminParsed.error.errors }, "Validation failed"));
+        }
+        const { email, password } = superAdminParsed.data;
+        const existingUserByEmail = yield db_config_1.default.superAdmin.findFirst({ where: { email } });
+        if (existingUserByEmail) {
+            return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email ${email} is already registered.` }, "Validation failed"));
+        }
+        const hashedPassword = yield bcrypt_1.default.hash(password !== null && password !== void 0 ? password : "", 10);
+        const existingProvider = yield db_config_1.default.superAdmin.findFirst({ where: { email } });
+        if (existingProvider) {
+            return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed"));
+        }
+        const providerCreated = yield db_config_1.default.superAdmin.create({ data: { userId: userCreated.id, email, password: hashedPassword }, include: { user: true } });
+        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, providerCreated, "Your account has been sent to the super admin for verification. You will receive a verification email once approved, after which you'll be able to log in."));
     }
 }));
 exports.signupApi = signupApi;
 const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
+    // Get existing user data
+    const { loginUserId } = req.body;
     // Convert values from form-data strings to appropriate types
     if (req.body.age) {
         req.body.age = Number(req.body.age);
@@ -104,8 +128,6 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
     const profileImage = (_a = files === null || files === void 0 ? void 0 : files.profileImage) === null || _a === void 0 ? void 0 : _a[0];
     ;
     const eSignature = (_b = files === null || files === void 0 ? void 0 : files.eSignature) === null || _b === void 0 ? void 0 : _b[0];
-    // Get existing user data
-    const { loginUserId } = req.body;
     const existingUser = yield db_config_1.default.user.findFirst({
         where: { id: loginUserId },
         select: { profileImage: true, role: true }
@@ -123,7 +145,7 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
     if (!userParsedData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed"));
     }
-    const { fullName, gender, age, contactNo, address, status, licenseNo, role } = userParsedData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, role, country, state } = userParsedData.data;
     // Update User
     const updatedUser = yield db_config_1.default.user.update({
         where: { id: loginUserId },
@@ -134,7 +156,7 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
             address,
             status,
             licenseNo,
-            role }, (profileImageUpdate !== undefined && { profileImage: profileImageUpdate }))
+            role, isApprove: "approve", country, state }, (profileImageUpdate !== undefined && { profileImage: profileImageUpdate }))
     });
     // Handle Client Update
     if (role === client_1.Role.client) {
@@ -152,8 +174,15 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
         const updateData = {
             email,
         };
-        if (password) {
+        const oldClient = yield db_config_1.default.client.findFirst({
+            where: { userId: loginUserId },
+            select: { password: true }
+        });
+        if (password && password.trim() !== "") {
             updateData.password = yield bcrypt_1.default.hash(password, 10);
+        }
+        else {
+            updateData.password = oldClient === null || oldClient === void 0 ? void 0 : oldClient.password;
         }
         // Handle eSignature updates
         if (eSignature) {
@@ -187,7 +216,7 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
             email,
             department,
         };
-        if (password) {
+        if (password && password.trim() !== "") {
             updateData.password = yield bcrypt_1.default.hash(password, 10);
         }
         const providerUpdate = yield db_config_1.default.provider.update({
@@ -201,14 +230,26 @@ const updateMeApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(voi
 exports.updateMeApi = updateMeApi;
 const logInApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    // Validate request body with Zod
     const parsedLoginData = auth_schema_1.loginSchema.safeParse(req.body);
     if (!parsedLoginData.success) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: parsedLoginData.error.errors }, "Validation failed"));
     }
-    // Extract email and password
     const { email, password } = parsedLoginData.data;
-    // Check if user exists in 'client' or 'provider'
+    // Check in superadmin table first
+    const superAdmin = yield db_config_1.default.superAdmin.findFirst({
+        where: { email },
+        include: { user: true },
+    });
+    if (superAdmin) {
+        const isPasswordValid = yield bcrypt_1.default.compare(password, superAdmin.password);
+        if (!isPasswordValid) {
+            return res.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.UNAUTHORIZED, { error: "Incorrect password" }, "Authentication failed"));
+        }
+        const jwtSecret = process.env.JWT_SECRET || "default_secret";
+        const token = jsonwebtoken_1.default.sign({ userId: superAdmin.user.id, email: superAdmin.email, role: "superadmin" }, jwtSecret, { expiresIn: "45m" });
+        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { token, user: superAdmin }, "Login successful"));
+    }
+    // Fallback: Check in provider or client
     const user = (yield db_config_1.default.provider.findFirst({
         where: { email },
         include: {
@@ -223,26 +264,26 @@ const logInApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0
                 }
             }
         }
-    }))
-        || (yield db_config_1.default.client.findFirst({ where: { email }, include: { user: true, providerList: true } }));
+    })) || (yield db_config_1.default.client.findFirst({
+        where: { email },
+        include: {
+            user: true,
+            providerList: true
+        }
+    }));
     if (!user) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: `Email: ${email} not found` }, "Validation failed"));
     }
-    // Check if password is null (for clients where password may be optional)
     if (!user.password) {
         return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: "Password not set for this account" }, "Validation failed"));
     }
-    // Verify password
     const isPasswordValid = yield bcrypt_1.default.compare(password, user.password);
     if (!isPasswordValid) {
         return res.status(http_status_codes_1.StatusCodes.UNAUTHORIZED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.UNAUTHORIZED, { error: "Password is wrong" }, "Authentication failed"));
     }
-    // Determine the role based on the user type (this was corrected)
-    const role = ((_a = user === null || user === void 0 ? void 0 : user.user) === null || _a === void 0 ? void 0 : _a.role) === "provider" ? "provider" : "client";
-    // Generate JWT Token
-    const jwtSecret = process.env.JWT_SECRET || "default_secret"; // Ensure this is set in the environment
-    const token = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email, role }, jwtSecret, { expiresIn: "7d" } // Token expires in 7 days
-    );
+    const role = (_a = user === null || user === void 0 ? void 0 : user.user) === null || _a === void 0 ? void 0 : _a.role;
+    const jwtSecret = process.env.JWT_SECRET || "default_secret";
+    const token = jsonwebtoken_1.default.sign({ userId: user.id, email: user.email, role }, jwtSecret, { expiresIn: "45m" });
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { token, user }, "Login successful"));
 }));
 exports.logInApi = logInApi;
@@ -264,7 +305,6 @@ const blockUserApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
     }
     // 4. Add blockUserid to blockedMembers list
     const updatedBlockedMembers = [...loginUser.blockedMembers, blockUserid];
-    console.log("updatedBlockedMembers", updatedBlockedMembers);
     // 5. Update user
     const updatedUser = yield db_config_1.default.user.update({
         where: { id: loginUserId },
@@ -276,10 +316,66 @@ const blockUserApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(vo
 }));
 exports.blockUserApi = blockUserApi;
 const getAllUsersApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const allUsers = yield db_config_1.default.user.findMany();
+    const allUsers = yield db_config_1.default.user.findMany({ include: { client: true, provider: true } });
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { totalDocument: allUsers.length, user: allUsers }, "User fetched successfully"));
 }));
 exports.getAllUsersApi = getAllUsersApi;
+const approveValidUser = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id, name, email } = req.body;
+    const isUserExist = yield db_config_1.default.user.findFirst({ where: { id } });
+    if (!isUserExist) {
+        return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"));
+    }
+    const isUserApproved = yield db_config_1.default.user.update({
+        where: { id }, data: {
+            isApprove: "approve"
+        }
+    });
+    // await sendVerificationEmail(email, name);
+    if (isUserApproved) {
+        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { message: "User approved successfully." }, "Approve"));
+    }
+}));
+exports.approveValidUser = approveValidUser;
+const rejectUser = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id, name, email } = req.body;
+    const isUserExist = yield db_config_1.default.user.findFirst({ where: { id } });
+    if (!isUserExist) {
+        return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"));
+    }
+    const isUserApproved = yield db_config_1.default.user.update({
+        where: { id }, data: {
+            isApprove: "reject"
+        }
+    });
+    // await sendVerificationEmail(email, name);
+    if (isUserApproved) {
+        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { message: "User rejected successfully." }, "reject"));
+    }
+}));
+exports.rejectUser = rejectUser;
+const restoreUser = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id, name, email } = req.body;
+    const isUserExist = yield db_config_1.default.user.findFirst({ where: { id } });
+    if (!isUserExist) {
+        return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"));
+    }
+    const isUserApproved = yield db_config_1.default.user.update({
+        where: { id }, data: {
+            isApprove: "pending"
+        }
+    });
+    // await sendVerificationEmail(email, name);
+    if (isUserApproved) {
+        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { message: "User restored successfully." }, "restore"));
+    }
+}));
+exports.restoreUser = restoreUser;
+const getAllValidUsersApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const allUsers = yield db_config_1.default.user.findMany({ where: { isApprove: "approve" } });
+    return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { totalDocument: allUsers.length, user: allUsers }, "User fetched successfully"));
+}));
+exports.getAllValidUsersApi = getAllValidUsersApi;
 const unblockUserApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const { blockUserid, loginUserId } = req.body;
@@ -314,15 +410,11 @@ const logoutApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 
 exports.logoutApi = logoutApi;
 const deleteMeAccountApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { loginUserId } = req.body;
-    console.log("id>>>>>>>>", loginUserId);
     const isUserExist = yield db_config_1.default.user.findFirst({ where: { id: loginUserId } });
-    console.log(">>>>>>>>>>", isUserExist);
     if (!isUserExist) {
         return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"));
     }
-    console.log("<<<<<<<<<<<", loginUserId);
     const isUserDeleted = yield db_config_1.default.user.delete({ where: { id: loginUserId } });
-    console.log(">>>>>>>>>>>>>>>", isUserDeleted);
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { message: "" }, "User deleted successfully"));
 }));
 exports.deleteMeAccountApi = deleteMeAccountApi;
@@ -425,3 +517,88 @@ const changePasswordApi = (0, asyncHandler_1.asyncHandler)((req, res) => __await
     }
 }));
 exports.changePasswordApi = changePasswordApi;
+const forgotPasswordApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email } = req.body;
+    const isProvider = yield db_config_1.default.provider.findFirst({ where: { email }, include: { user: true } });
+    const isClient = yield db_config_1.default.client.findFirst({ where: { email }, include: { user: true } });
+    const account = isProvider || isClient;
+    if (!account) {
+        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { error: `Email: ${email} is not found.` }, "Validation failed"));
+    }
+    const { token, hashedToken } = (0, generateResetPasswordToken_1.generateResetToken)();
+    const updatedUser = yield db_config_1.default.user.update({
+        where: { id: account.user.id },
+        data: {
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
+        },
+    });
+    const respnse = yield (0, ResetPassword_1.sendResetPasswordEmail)(email, account.user.fullName, token);
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------response", respnse);
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    return res.status(200).json(new apiResponse_1.ApiResponse(200, { success: true, user: updatedUser }, "Reset link sent successfully"));
+}));
+exports.forgotPasswordApi = forgotPasswordApi;
+const resetPasswordApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+    const hashedToken = crypto_1.default.createHash("sha256").update(token).digest("hex");
+    const user = yield db_config_1.default.user.findFirst({
+        where: {
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: {
+                gt: new Date(),
+            },
+        },
+        include: { provider: true, client: true },
+    });
+    if (!user) {
+        return res.status(http_status_codes_1.StatusCodes.BAD_REQUEST).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.BAD_REQUEST, { error: "Invalid or expired token" }, "Token invalid"));
+    }
+    const hashedNewPassword = yield bcrypt_1.default.hash(newPassword, 12);
+    if (user.provider) {
+        yield db_config_1.default.provider.update({
+            where: { id: user.provider.id },
+            data: {
+                password: hashedNewPassword,
+                user: {
+                    update: {
+                        resetPasswordToken: null,
+                        resetPasswordExpires: null,
+                    },
+                },
+            },
+        });
+    }
+    else if (user.client) {
+        yield db_config_1.default.client.update({
+            where: { id: user.client.id },
+            data: {
+                password: hashedNewPassword,
+                user: {
+                    update: {
+                        resetPasswordToken: null,
+                        resetPasswordExpires: null,
+                    },
+                },
+            },
+        });
+    }
+    return res.status(200).json(new apiResponse_1.ApiResponse(200, { success: true }, "Password has been reset successfully"));
+}));
+exports.resetPasswordApi = resetPasswordApi;

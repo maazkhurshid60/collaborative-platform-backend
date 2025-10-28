@@ -18,5 +18,11 @@ authRouter.patch("/update-me", auth_middleware_1.authJWT, s3ImgUploader_1.upload
 authRouter.delete("/delete-me-account", auth_middleware_1.authJWT, auth_controller_1.deleteMeAccountApi);
 authRouter.post("/get-me", auth_middleware_1.authJWT, auth_controller_1.getMeApi);
 authRouter.get("/get-all-users", auth_middleware_1.authJWT, auth_controller_1.getAllUsersApi);
+authRouter.patch("/approve-user", auth_middleware_1.authJWT, auth_controller_1.approveValidUser);
+authRouter.patch("/reject-user", auth_middleware_1.authJWT, auth_controller_1.rejectUser);
+authRouter.patch("/restore-user", auth_middleware_1.authJWT, auth_controller_1.restoreUser);
+authRouter.get("/get-all-valid-users", auth_middleware_1.authJWT, auth_controller_1.getAllValidUsersApi);
 authRouter.patch("/change-password", auth_middleware_1.authJWT, auth_controller_1.changePasswordApi);
+authRouter.post("/forgot-password", auth_controller_1.forgotPasswordApi);
+authRouter.patch("/reset-password/:token", auth_controller_1.resetPasswordApi);
 exports.default = authRouter;

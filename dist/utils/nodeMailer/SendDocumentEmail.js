@@ -12,17 +12,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendDocumentEmail = void 0;
 const NodeMailer_1 = require("./NodeMailer");
 const sendDocumentEmail = (toEmail, clientName, providerName) => __awaiter(void 0, void 0, void 0, function* () {
-    // ✅ Log the values
-    console.log("Sending Document Email:");
-    console.log("To:", toEmail);
-    console.log("Client Name:", clientName);
-    console.log("Provider Name:", providerName);
     const htmlContent = `
     <div style="font-family: sans-serif; padding: 20px;">
       <h2>Hello ${clientName},</h2>
       <p><strong>${providerName}</strong> has shared some documents with you.</p>
       <p>Please login to your dashboard to review and sign them.</p>
-      <a href="https://www.collaborateme.com/signup-with-license/"
+      <a href="${process.env.NODE_ENV === "DEVELOPMENT" ? process.env.FRONTEND_LOCAL_URL : process.env.FRONTEND_AWS_URL}/signup-with-license/"
          style="display:inline-block; padding:10px 20px; background-color:#0F766E; color:white; border-radius:4px; text-decoration:none;">
          Login to View
       </a>
@@ -30,7 +25,8 @@ const sendDocumentEmail = (toEmail, clientName, providerName) => __awaiter(void 
     </div>
   `;
     yield NodeMailer_1.transporter.sendMail({
-        from: `"Collaborative Platform" <${process.env.NODE_MAILER_USER}>`,
+        // from: `"Collaborative Platform" <${process.env.NODE_MAILER_USER}>`,
+        from: `"Collaborative Platform" <${process.env.NODE_MAILER_EMAIL}>`,
         to: toEmail,
         subject: "New Documents Shared With You",
         html: htmlContent,

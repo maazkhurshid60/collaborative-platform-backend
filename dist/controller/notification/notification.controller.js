@@ -31,15 +31,6 @@ const sendNotification = (0, asyncHandler_1.asyncHandler)((req, res) => __awaite
                 type,
             },
         });
-        console.log("<<<<<<<<<<<<<<<<<<<<<<notification controller line25<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-        console.log("<<<<<<<<<<<<<<<<<<<<<<notification controller line26<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-        console.log("<<<<<<<<<<<<<<<<<<<<<notification controller line27<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-        console.log("<<<<<<<<<<<<<<<<<<<<<notification controller line28<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-        console.log("<<<<<<<<<<<<<<<<<<<<<notification controller line29<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", recipientNotification);
-        console.log("<<<<<<<<<<<<<<<<<<<<<notification controller line30<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-        console.log("<<<<<<<<<<<<<<<<<<<<<notification controller line31<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-        console.log("<<<<<<<<<<<<<<<<<<<<<notification controller line32<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-        console.log("<<<<<<<<<<<<<<<<<<<<<notification controller line33<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
         socket_1.io.to(recipientId).emit("new_notification", recipientNotification);
         let senderNotification = null;
         // Create separate notification for sender ONLY if they are different

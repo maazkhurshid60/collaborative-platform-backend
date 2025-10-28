@@ -5,13 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const chatGroup_controller_1 = require("../../controller/chatGroup/chatGroup.controller");
-const roleCheck_middleware_1 = require("../../middlewares/roleCheck.middleware");
 const auth_middleware_1 = require("../../middlewares/auth.middleware");
 const chat_controller_1 = require("../../controller/chat/chat.controller");
 const chatMedia_1 = __importDefault(require("../../utils/multer/chatMedia"));
 const chatGroupRouter = (0, express_1.Router)();
-chatGroupRouter.post("/create-group", auth_middleware_1.authJWT, (0, roleCheck_middleware_1.ouRoleCheck)(["provider"]), chatGroup_controller_1.createGroupApi);
-chatGroupRouter.post("/get-group-messages", chatGroup_controller_1.getGroupMessageApi);
+chatGroupRouter.post("/create-group", auth_middleware_1.authJWT, chatGroup_controller_1.createGroupApi);
+chatGroupRouter.post("/ get-group-messages", chatGroup_controller_1.getGroupMessageApi);
 chatGroupRouter.post("/send-message-to-group", chatMedia_1.default.array('mediaUrl'), chatGroup_controller_1.sendMessageToGroupApi);
 chatGroupRouter.post("/get-all-group", chatGroup_controller_1.getAllGroupsApi);
 chatGroupRouter.post("/read-message", chat_controller_1.markMessagesAsRead);

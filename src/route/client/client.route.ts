@@ -3,6 +3,7 @@ import { deletClient, getAllClients, getTotalClient, updateClient, addClient, up
 import { authJWT } from "../../middlewares/auth.middleware";
 import { upload } from "../../utils/multer/multerImgConfig";
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
+import { authorizeRoles } from "../../middlewares/roleCheck.middleware";
 
 
 const clientRouter = Router()
@@ -11,7 +12,7 @@ clientRouter.patch("/update-client", authJWT, uploadImg.single('profileImage'), 
 clientRouter.patch("/update-existing-client", updateExistingClientOnLicenseNo)
 clientRouter.post("/add-client", authJWT, uploadImg.single('profileImage'), addClient)
 clientRouter.post("/add-existing-client-to-provider", authJWT, uploadImg.single('profileImage'), addExistingClientToProvider)
-clientRouter.post("/get-all-clients", authJWT, getAllClients)
+clientRouter.post("/get-all-clients", authJWT, authorizeRoles("provider"), getAllClients)
 clientRouter.get("/get-total-clients", authJWT, getTotalClient)
 
 export default clientRouter

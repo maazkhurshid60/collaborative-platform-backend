@@ -3,6 +3,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
+import { decryptText } from "../../utils/encryptedMessage/EncryptedMessage";
 const createChatChannel = asyncHandler(async (req: Request, res: Response) => {
     const { providerId, toProviderId } = req.body;
 
@@ -88,11 +89,26 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
             }
         });
 
+        // return {
+        //     ...channel,
+        //     totalUnread: unreadCount,
+        //     lastMessage: lastMessage
+        //         ? {
+        //             ...lastMessage,
+        //             message: lastMessage.message
+        //         }
+        //         : null // Include the last message (if any)// <-- include this
+        // };
         return {
             ...channel,
-            totalUnread: unreadCount,
-            lastMessage: lastMessage || null // <-- include this
+            lastMessage: lastMessage
+                ? {
+                    ...lastMessage,
+                    message: lastMessage.message ? decryptText(lastMessage.message) : ''
+                }
+                : null
         };
+
 
     }));
 

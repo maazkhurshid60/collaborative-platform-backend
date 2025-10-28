@@ -69,7 +69,6 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
 
 const deletClient = asyncHandler(async (req: Request, res: Response) => {
     const { clientId, providerId } = req.body;
-    console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>>>>", clientId, providerId);
 
     // 1. Check if client exists
     const client = await prisma.client.findUnique({ where: { id: clientId } });
@@ -137,7 +136,8 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         email,
         password,
         clientId,
-        clientShowToOthers
+        clientShowToOthers,
+        state, country
     } = clientData.data;
 
     // Hash password only if provided
@@ -183,7 +183,6 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
             new ApiResponse(StatusCodes.CONFLICT, { error: `License Number ${licenseNo} already taken` }, "Duplicate Error")
         );
     }
-    console.log("client id", clientId, "isClientExist", isClientExist);
 
     // Check for duplicate full name (excluding current user)
     const isFullNameExist = await prisma.user.findFirst({
@@ -224,7 +223,8 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         address,
         status,
         licenseNo,
-
+        state, country,
+        isApprove: "approve",
         role: Role.client
     };
 
@@ -287,6 +287,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
     if (req.body.isAccountCreatedByOwnClient)
         req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
 
+
     // 1. Validate user schema
     const userParsedData = userSchema.safeParse(req.body);
     if (!userParsedData.success) {
@@ -295,7 +296,8 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
+    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state,
+    } = userParsedData.data;
     const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
 
     let profileImageUrl: string | null = null;
@@ -307,7 +309,6 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
 
     // 2. Check if user with licenseNo already exists
     const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
-    console.log("><<<<<<<<<<<<<<<<<<<", existingUser);
 
     if (existingUser) {
         return res.status(StatusCodes.BAD_REQUEST).json(
@@ -315,7 +316,14 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
         );
 
     }
-    console.log("><<<<<<<<<<<<<<<<<<<360");
+    // Check for duplicate client email
+    const existingClientEmail = await prisma.client.findFirst({ where: { email } });
+    if (existingClientEmail) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, null, `Email: ${email} is already taken.`)
+        );
+
+    }
 
     // 3. Proceed to create new user
     const userCreated = await prisma.user.create({
@@ -327,17 +335,15 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
             address,
             status,
             licenseNo,
+            country, state,
             role,
-
+            isApprove,
             profileImage: profileImageUrl
         }
     });
-    console.log("><<<<<<<<<<<<<<<<<<<377", userCreated);
 
     // 4. If role is client, create client and link provider
     if (role === Role.client) {
-        console.log("><<<<<<<<<<<<<<<<<<<381", role);
-
         const clientParsed = clientSchema.safeParse(req.body);
         if (!clientParsed.success) {
             return res.status(StatusCodes.BAD_REQUEST).json(
@@ -345,18 +351,10 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
             );
         }
 
-        // Check for duplicate client email
-        const existingClientEmail = await prisma.client.findFirst({ where: { email } });
-        if (existingClientEmail) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-            );
-        }
+
 
         const hashedPassword = await bcrypt.hash(password ?? "", 10);
-        console.log("data add client", "email", email, " password", password, "isAccountCreatedByOwnClient", isAccountCreatedByOwnClient, "clientShowToOthers", clientShowToOthers, "fullName", fullName, "gender", gender, "age", age, "contactNo", contactNo, "address", address, "status", status, "licenseNo", licenseNo, "role", role);
         const clientShowToOthersBool = clientShowToOthers === "true";
-        console.log("<<<<<<<<<<<<<<<<<<<clientShowToOthersBool>>>>>>>>>>>>>>>>>>>>", clientShowToOthersBool, "typeof clientShowToOthersBool", typeof clientShowToOthersBool);
 
         const clientCreated = await prisma.client.create({
             data: {
@@ -381,7 +379,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
         }
 
         return res.status(StatusCodes.CREATED).json(
-            new ApiResponse(StatusCodes.CREATED, clientCreated, "Client created and linked to provider successfully")
+            new ApiResponse(StatusCodes.CREATED, clientCreated, "Client Data has been sent to the super admin for verification. Client will receive a verification email once approved, after which Client will be able to log in.")
         );
     }
 
@@ -396,7 +394,6 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
     if (req.body.age) req.body.age = Number(req.body.age);
     if (req.body.isAccountCreatedByOwnClient)
         req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
-
     // 1. Validate user schema
     const userParsedData = userSchema.safeParse(req.body);
     if (!userParsedData.success) {
@@ -405,7 +402,7 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
         );
     }
 
-    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role } = userParsedData.data;
+    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state } = userParsedData.data;
     const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
 
     let profileImageUrl: string | null = null;
@@ -417,8 +414,6 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
 
     // 2. Check if user with licenseNo already exists
     const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
-    console.log("><<<<<<<<<<<<<<<<<<<", existingUser);
-
     if (existingUser) {
 
         // Ensure the role is 'client'
@@ -454,18 +449,22 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
         }
 
         // Link existing client to current provider
-        await prisma.providerOnClient.create({
+        const clientCreated = await prisma.providerOnClient.create({
             data: {
                 providerId,
                 clientId: existingClient.id
             }
         });
+        if (isApprove === "pending") {
 
+            return res.status(StatusCodes.CREATED).json(
+                new ApiResponse(StatusCodes.CREATED, clientCreated, "Client Data has been already sent to the super admin for verification. Client will receive a verification email once approved, after which Client will be able to log in.")
+            );
+        }
         return res.status(StatusCodes.CREATED).json(
             new ApiResponse(StatusCodes.CREATED, existingClient, "Existing client linked to provider successfully")
         );
     }
-    console.log("><<<<<<<<<<<<<<<<<<<360");
 
     // 3. Proceed to create new user
     const userCreated = await prisma.user.create({
@@ -478,15 +477,13 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
             status,
             licenseNo,
             role,
-
+            isApprove, country, state,
             profileImage: profileImageUrl
         }
     });
-    console.log("><<<<<<<<<<<<<<<<<<<377", userCreated);
 
     // 4. If role is client, create client and link provider
     if (role === Role.client) {
-        console.log("><<<<<<<<<<<<<<<<<<<381", role);
 
         const clientParsed = clientSchema.safeParse(req.body);
         if (!clientParsed.success) {
@@ -504,9 +501,7 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
         }
 
         const hashedPassword = await bcrypt.hash(password ?? "", 10);
-        console.log("data add client", "email", email, " password", password, "isAccountCreatedByOwnClient", isAccountCreatedByOwnClient, "clientShowToOthers", clientShowToOthers, "fullName", fullName, "gender", gender, "age", age, "contactNo", contactNo, "address", address, "status", status, "licenseNo", licenseNo, "role", role);
         const clientShowToOthersBool = clientShowToOthers === "true";
-        console.log("<<<<<<<<<<<<<<<<<<<clientShowToOthersBool>>>>>>>>>>>>>>>>>>>>", clientShowToOthersBool, "typeof clientShowToOthersBool", typeof clientShowToOthersBool);
 
         const clientCreated = await prisma.client.create({
             data: {

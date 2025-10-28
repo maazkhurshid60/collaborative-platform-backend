@@ -18,6 +18,7 @@ const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
 const apiResponse_1 = require("../../utils/apiResponse");
 const chatMediaConfig_1 = require("../../utils/multer/chatMediaConfig");
+const EncryptedMessage_1 = require("../../utils/encryptedMessage/EncryptedMessage");
 const createGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { groupName, membersId, createdBy } = req.body;
     const isDuplicateGroupName = yield db_config_1.default.groupChat.findFirst({ where: { name: groupName } });
@@ -45,44 +46,98 @@ const createGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(
     return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, { group }, 'New group has created.'));
 }));
 exports.createGroupApi = createGroupApi;
+// const updateGroupApi = asyncHandler(async (req: Request, res: Response) => {
+//     const { groupName, membersId } = req.body;
+//     const { groupId } = req.body;
+//     // Check if the group exists
+//     const isGroupExist = await prisma.groupChat.findFirst({ where: { id: groupId } });
+//     if (!isGroupExist) {
+//         return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, { message: `Group does not exist.` }, "Duplicate Error."));
+//     }
+//     // Check if the group name already exists
+//     const isDuplicateGroupName = await prisma.groupChat.findFirst({ where: { name: groupName } });
+//     if (isDuplicateGroupName) {
+//         return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, { message: `${groupName} already exists.` }, "Duplicate Error."));
+//     }
+//     // Check if all members are valid providers
+//     const membersRoleCheck = await prisma.provider.findMany({ where: { id: { in: membersId } } });
+//     if (membersRoleCheck.length !== membersId.length) {
+//         return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, { message: `Only providers can be added to groups.` }, "Duplicate Error."));
+//     }
+//     // Get current members of the group
+//     const currentMembers = await prisma.groupChat.findUnique({
+//         where: { id: groupId },
+//         include: { members: { select: { id: true } } }
+//     });
+//     if (!currentMembers) {
+//         return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, { message: `Group does not exist.` }, "Group Error."));
+//     }
+//     // Find members to disconnect (those who are no longer in the new members list)
+//     const membersToDisconnect = currentMembers.members
+//         .filter(member => !membersId.includes(member.id))
+//         .map(member => ({ id: member.id }));
+//     // Update the group by disconnecting old members and connecting new ones
+//     const updateGroup = await prisma.groupChat.update({
+//         where: { id: groupId },
+//         data: {
+//             name: groupName,  // Update group name
+//             members: {
+//                 disconnect: membersToDisconnect,  // Disconnect members not in the new list
+//                 connect: membersId.map((id: string) => ({ id }))  // Connect the new members
+//             }
+//         },
+//         include: {
+//             members: true // Include the updated members list in the response
+//         }
+//     });
+//     if (updateGroup) {
+//         return res.status(StatusCodes.CREATED).json(
+//             new ApiResponse(StatusCodes.CREATED, { updateGroup }, 'Group has been updated.')
+//         );
+//     }
+//     return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+//         new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { message: "Something went wrong" }, 'Group update failed.')
+//     );
+// });
 const updateGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { groupName, membersId } = req.body;
-    const { groupId } = req.body;
+    const { groupId, memberEmail } = req.body;
     // Check if the group exists
     const isGroupExist = yield db_config_1.default.groupChat.findFirst({ where: { id: groupId } });
     if (!isGroupExist) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { message: `Group does not exist.` }, "Duplicate Error."));
     }
-    // Check if the group name already exists
-    const isDuplicateGroupName = yield db_config_1.default.groupChat.findFirst({ where: { name: groupName } });
-    if (isDuplicateGroupName) {
-        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { message: `${groupName} already exists.` }, "Duplicate Error."));
+    // Find member by email and get their ID
+    const member = yield db_config_1.default.provider.findFirst({ where: { email: memberEmail } });
+    if (!member) {
+        return res.status(http_status_codes_1.StatusCodes.NOT_FOUND).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.NOT_FOUND, { message: `Member not found with email: ${memberEmail}. Please create an account. Once verified, you can join the group using this link.` }, "Member Error."));
     }
-    // Check if all members are valid providers
-    const membersRoleCheck = yield db_config_1.default.provider.findMany({ where: { id: { in: membersId } } });
-    if (membersRoleCheck.length !== membersId.length) {
-        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { message: `Only providers can be added to groups.` }, "Duplicate Error."));
-    }
+    const memberId = member.id; // Get member's ID
     // Get current members of the group
     const currentMembers = yield db_config_1.default.groupChat.findUnique({
         where: { id: groupId },
-        include: { members: { select: { id: true } } }
+        include: { members: { select: { id: true, providerId: true } } } // Include both id and providerId from GroupMembers
     });
     if (!currentMembers) {
         return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { message: `Group does not exist.` }, "Group Error."));
     }
-    // Find members to disconnect (those who are no longer in the new members list)
-    const membersToDisconnect = currentMembers.members
-        .filter(member => !membersId.includes(member.id))
-        .map(member => ({ id: member.id }));
-    // Update the group by disconnecting old members and connecting new ones
+    // Check if the member is already in the group
+    const isMemberAlreadyInGroup = currentMembers.members.some(existingMember => existingMember.providerId === memberId);
+    if (isMemberAlreadyInGroup) {
+        return res.status(http_status_codes_1.StatusCodes.CONFLICT).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CONFLICT, { message: `Member is already part of this group.` }, "Duplicate Member Error."));
+    }
+    // Create a new GroupMembers entry for the member
+    const createGroupMember = yield db_config_1.default.groupMembers.create({
+        data: {
+            providerId: memberId,
+            groupChatId: groupId
+        }
+    });
+    // Now connect the new GroupMembers record to the group
     const updateGroup = yield db_config_1.default.groupChat.update({
         where: { id: groupId },
         data: {
-            name: groupName, // Update group name
             members: {
-                disconnect: membersToDisconnect, // Disconnect members not in the new list
-                connect: membersId.map((id) => ({ id })) // Connect the new members
+                connect: [{ id: createGroupMember.id }] // Connect the new GroupMember by its id
             }
         },
         include: {
@@ -90,9 +145,9 @@ const updateGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(
         }
     });
     if (updateGroup) {
-        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, { updateGroup }, 'Group has been updated.'));
+        return res.status(http_status_codes_1.StatusCodes.CREATED).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.CREATED, { updateGroup }, 'You have joined the group. Please log in yourself and go to the chat for more information.'));
     }
-    return res.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, { message: "Something went wrong" }, 'Group update failed.'));
+    return res.status(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.INTERNAL_SERVER_ERROR, { message: "Something went wrong" }, 'Group joining failed.'));
 }));
 exports.updateGroupApi = updateGroupApi;
 const sendMessageToGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -105,11 +160,14 @@ const sendMessageToGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __a
             const uploadPromises = files.map(file => (0, chatMediaConfig_1.uploadToS3)(file));
             uploadedMediaUrls = yield Promise.all(uploadPromises);
         }
+        // Encrypt message
+        const encryptedMessage = message ? (0, EncryptedMessage_1.encryptText)(message) : '';
         // Create the group chat message
         const chatMessage = yield db_config_1.default.chatMessage.create({
             data: {
                 sender: { connect: { id: senderId } },
-                message: message || '',
+                // message: message || '',
+                message: encryptedMessage,
                 mediaUrl: uploadedMediaUrls.join(','),
                 type: type || 'text',
                 group: { connect: { id: groupId } },
@@ -142,7 +200,11 @@ const sendMessageToGroupApi = (0, asyncHandler_1.asyncHandler)((req, res) => __a
             providerId: member.id,
         }));
         yield db_config_1.default.groupReadReceipt.createMany({ data: readReceipts });
-        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { chatMessage }, 'Message sent to the group.'));
+        // return res.status(StatusCodes.OK).json(
+        //     new ApiResponse(StatusCodes.OK, { chatMessage }, 'Message sent to the group.')
+        // );
+        const plainMessage = Object.assign(Object.assign({}, chatMessage), { message: chatMessage.message ? (0, EncryptedMessage_1.decryptText)(chatMessage.message) : '' });
+        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { chatMessage: plainMessage }, 'Message sent to the group.'));
     }
     catch (err) {
         console.error(err);
@@ -181,7 +243,11 @@ const getGroupMessageApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awai
     // Reverse to display old → new
     const reversedMessages = groupMessages.reverse();
     // Add readStatus field
-    const groupMessagesWithReadStatus = reversedMessages.map(message => (Object.assign(Object.assign({}, message), { readStatus: message.groupReadReceipts.length > 0 ? 'read' : 'unread' })));
+    // const groupMessagesWithReadStatus = reversedMessages.map(message => ({
+    //     ...message,
+    //     readStatus: message.groupReadReceipts.length > 0 ? 'read' : 'unread',
+    // }));
+    const groupMessagesWithReadStatus = reversedMessages.map(message => (Object.assign(Object.assign({}, message), { message: message.message ? (0, EncryptedMessage_1.decryptText)(message.message) : '', readStatus: message.groupReadReceipts.length > 0 ? 'read' : 'unread' })));
     const unreadMessagesCount = groupMessagesWithReadStatus.filter(msg => msg.readStatus === 'unread').length;
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, {
         groupMessages: groupMessagesWithReadStatus,
@@ -235,7 +301,13 @@ const getAllGroupsApi = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter
                 }
             }
         });
-        return Object.assign(Object.assign({}, group), { lastMessage: lastMessage || null, unreadCount: unreadCount || 0 });
+        // return {
+        //     ...group,
+        //     lastMessage: lastMessage || null,
+        //     unreadCount: unreadCount || 0
+        // };
+        return Object.assign(Object.assign({}, group), { lastMessage: lastMessage
+                ? Object.assign(Object.assign({}, lastMessage), { message: lastMessage.message ? (0, EncryptedMessage_1.decryptText)(lastMessage.message) : '' }) : null, unreadCount: unreadCount || 0 });
     })));
     return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { allgroups: enrichedGroups }, 'Fetched all groups.'));
 }));

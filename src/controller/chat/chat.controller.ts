@@ -4,60 +4,12 @@ import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { uploadToS3 } from "../../utils/multer/chatMediaConfig";
+import { decryptText, encryptText } from "../../utils/encryptedMessage/EncryptedMessage";
 
-
-
-// const getAllSingleConservationMessage = asyncHandler(async (req: Request, res: Response) => {
-//     const { chatChannelId, loginUserId } = req.body;
-
-//     try {
-//         const chatChannel = await prisma.chatChannel.findUnique({
-//             where: { id: chatChannelId },
-//             select: {
-
-//                 providerAId: true,
-//                 providerBId: true,
-//             },
-//         });
-
-//         if (!chatChannel) {
-//             return res.status(404).json({ message: 'Chat channel not found' });
-//         }
-
-//         if (![chatChannel.providerAId, chatChannel.providerBId].includes(loginUserId)) {
-//             return res.status(403).json({ message: 'You are not authorized to view this chat' });
-//         }
-
-//         // Fetch the messages along with read receipt for each message
-//         const messages = await prisma.chatMessage.findMany({
-//             where: { chatChannelId },
-//             orderBy: { createdAt: 'asc' },
-//             include: {
-//                 sender: { include: { user: true } },
-//                 readReceipts: {
-//                     where: { providerId: loginUserId }, // Get read receipt for the logged-in user
-//                 }
-//             },
-//         });
-
-//         // Add a field to each message to show if it's read or unread
-//         const messagesWithReadStatus = messages.map(message => ({
-//             ...message,
-//             readStatus: message.readReceipts.length > 0 ? 'read' : 'unread',
-//         }));
-//         const unreadMessagesCount = messagesWithReadStatus.filter(message => message.readStatus === 'unread').length;
-
-//         return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { messages: messagesWithReadStatus, unreadMessagesCount }, "Messages fetched successfully"));
-
-//     } catch (err) {
-//         res.status(500).json({ message: 'Error fetching messages', error: err });
-//     }
-// });
 
 const getAllSingleConservationMessage = asyncHandler(async (req: Request, res: Response) => {
     const { chatChannelId, loginUserId, page = 1, limit = 10 } = req.body;
-    console.log("chatChannelId received:", chatChannelId)
-    console.log("loginUserId received:", loginUserId)
+
     const skip = (page - 1) * limit;
 
     try {
@@ -95,25 +47,18 @@ const getAllSingleConservationMessage = asyncHandler(async (req: Request, res: R
                 }
             },
         });
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
-
-        console.log("Fetched messages count:",);
-        console.log("Fetched messages count:", messages.length);
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
-
         // Reverse to show old → new
         const reversedMessages = messages.reverse();
 
+
+
         const messagesWithReadStatus = reversedMessages.map(message => ({
-            ...message,
+            ...message, // keep all original fields
+            // message: message.message, // overwrite the encrypted message with decrypted one
+            message: message.message ? decryptText(message.message) : '',
             readStatus: message.readReceipts.length > 0 ? 'read' : 'unread',
         }));
+
 
         const unreadMessagesCount = messagesWithReadStatus.filter(message => message.readStatus === 'unread').length;
 
@@ -155,10 +100,15 @@ const sendMessageToSingleConservation = asyncHandler(async (req: Request, res: R
             uploadedMediaUrls = await Promise.all(uploadPromises);
         }
 
+        // const encryptedMessage = message ? message : '';
+        const encryptedMessage = message ? encryptText(message) : '';
+
+
+
         const chatMessage = await prisma.chatMessage.create({
             data: {
                 senderId,
-                message: message || '',
+                message: encryptedMessage || '',
                 chatChannelId,
                 mediaUrl: uploadedMediaUrls.join(','),
                 type: type || 'text',
@@ -190,9 +140,16 @@ const sendMessageToSingleConservation = asyncHandler(async (req: Request, res: R
             },
         });
 
+
+        const plainMessage = {
+            ...chatMessage,
+            message: chatMessage.message ? decryptText(chatMessage.message) : ''
+        };
+
         return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, { chatMessage }, 'Message sent successfully')
+            new ApiResponse(StatusCodes.OK, { chatMessage: plainMessage }, 'Message sent successfully')
         );
+
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: 'Error sending message', error: err });
@@ -278,10 +235,26 @@ const getAllConversations = asyncHandler(async (req: Request, res: Response) => 
                 }
             });
 
+
+            // return {
+            //     ...channel,
+            //     lastMessage: lastMessage
+            //         ? {
+            //             ...lastMessage,
+            //             message: lastMessage.message
+            //         }
+            //         : null // Include the last message (if any)
+            // };
             return {
                 ...channel,
-                lastMessage: lastMessage || null // Include the last message (if any)
+                lastMessage: lastMessage
+                    ? {
+                        ...lastMessage,
+                        message: lastMessage.message ? decryptText(lastMessage.message) : ''
+                    }
+                    : null
             };
+
         }));
 
         return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, {

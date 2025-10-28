@@ -77,6 +77,7 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
         .filter((item) => item.isAgree)
         .map((item) => item.documentId);
 
+
     // Step 4: Separate documents
     const completedDocuments = allDocuments.filter(doc => agreedDocs.includes(doc.id));
 
@@ -100,7 +101,8 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
             data: {
                 completedDocuments,
                 uncompletedDocuments,
-                sharedDocuments
+                sharedDocuments,
+                allDocuments
             }
         }, "Fetched.")
     );
@@ -213,10 +215,22 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
 
 
 const documentSignByClientApi = asyncHandler(async (req: Request, res: Response) => {
-    const { clientId, sharedDocumentId, isAgree, senderId } = req.body;
-    const eSignatureFile = req.file;
+    const { clientId, sharedDocumentId, isAgree, senderId, eSignature } = req.body;
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>", req.body);
+    console.log(">>>>>>>", clientId, sharedDocumentId, isAgree, senderId, eSignature);
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
+    console.log(">>>>>>>");
 
-    if (!clientId || !sharedDocumentId || !eSignatureFile || isAgree === undefined) {
+
+    if (!clientId || !sharedDocumentId || !eSignature || isAgree === undefined) {
         return res.status(StatusCodes.BAD_REQUEST).json(
             new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Missing or invalid input fields." }, "Bad Request")
         );
@@ -234,12 +248,12 @@ const documentSignByClientApi = asyncHandler(async (req: Request, res: Response)
             new ApiResponse(StatusCodes.NOT_FOUND, { error: "Document not found or not assigned to this client." }, "Not Found")
         );
     }
-    const eSignatureS3File = eSignatureFile as Express.Multer.File & { location: string };
+
     const documentUpdated = await prisma.documentShareWith.update({
         where: { id: sharedDocumentId },
         data: {
-            eSignature: eSignatureS3File.location, // ✅ Save full S3 URL
-            isAgree: isAgree === "true",
+            eSignature: eSignature,
+            isAgree: isAgree,
             updatedAt: new Date()
         },
         include: {
@@ -318,4 +332,30 @@ const getAllSharedDocumentWithClientApi = asyncHandler(async (req: Request, res:
 
 })
 
-export { addDocumentApi, getAllDocumentApi, documentSharedWithClientApi, documentSignByClientApi, getAllSharedDocumentWithClientApi }
+
+
+const deleteDocumentApi = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.body
+    const isDocumentExist = await prisma.document.findFirst({ where: { id } })
+    if (!isDocumentExist) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { message: "Document not found" }, "Validation failed")
+        );
+    }
+
+    const isDocumentDelete = await prisma.document.delete({ where: { id } })
+    if (isDocumentDelete) {
+
+        return res.status(StatusCodes.OK).json(
+            new ApiResponse(StatusCodes.OK, { message: "Document has deleted successfully" }, "Success")
+        );
+    }
+
+
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+        new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { message: "Internal Server Error. Try Later" }, "Internal Server Error")
+    );
+
+})
+
+export { addDocumentApi, getAllDocumentApi, documentSharedWithClientApi, documentSignByClientApi, getAllSharedDocumentWithClientApi, deleteDocumentApi }

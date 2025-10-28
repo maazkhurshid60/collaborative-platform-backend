@@ -18,48 +18,9 @@ const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
 const apiResponse_1 = require("../../utils/apiResponse");
 const chatMediaConfig_1 = require("../../utils/multer/chatMediaConfig");
-// const getAllSingleConservationMessage = asyncHandler(async (req: Request, res: Response) => {
-//     const { chatChannelId, loginUserId } = req.body;
-//     try {
-//         const chatChannel = await prisma.chatChannel.findUnique({
-//             where: { id: chatChannelId },
-//             select: {
-//                 providerAId: true,
-//                 providerBId: true,
-//             },
-//         });
-//         if (!chatChannel) {
-//             return res.status(404).json({ message: 'Chat channel not found' });
-//         }
-//         if (![chatChannel.providerAId, chatChannel.providerBId].includes(loginUserId)) {
-//             return res.status(403).json({ message: 'You are not authorized to view this chat' });
-//         }
-//         // Fetch the messages along with read receipt for each message
-//         const messages = await prisma.chatMessage.findMany({
-//             where: { chatChannelId },
-//             orderBy: { createdAt: 'asc' },
-//             include: {
-//                 sender: { include: { user: true } },
-//                 readReceipts: {
-//                     where: { providerId: loginUserId }, // Get read receipt for the logged-in user
-//                 }
-//             },
-//         });
-//         // Add a field to each message to show if it's read or unread
-//         const messagesWithReadStatus = messages.map(message => ({
-//             ...message,
-//             readStatus: message.readReceipts.length > 0 ? 'read' : 'unread',
-//         }));
-//         const unreadMessagesCount = messagesWithReadStatus.filter(message => message.readStatus === 'unread').length;
-//         return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { messages: messagesWithReadStatus, unreadMessagesCount }, "Messages fetched successfully"));
-//     } catch (err) {
-//         res.status(500).json({ message: 'Error fetching messages', error: err });
-//     }
-// });
+const EncryptedMessage_1 = require("../../utils/encryptedMessage/EncryptedMessage");
 const getAllSingleConservationMessage = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { chatChannelId, loginUserId, page = 1, limit = 10 } = req.body;
-    console.log("chatChannelId received:", chatChannelId);
-    console.log("loginUserId received:", loginUserId);
     const skip = (page - 1) * limit;
     try {
         const chatChannel = yield db_config_1.default.chatChannel.findUnique({
@@ -92,19 +53,11 @@ const getAllSingleConservationMessage = (0, asyncHandler_1.asyncHandler)((req, r
                 }
             },
         });
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:", messages.length);
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
-        console.log("Fetched messages count:");
         // Reverse to show old → new
         const reversedMessages = messages.reverse();
-        const messagesWithReadStatus = reversedMessages.map(message => (Object.assign(Object.assign({}, message), { readStatus: message.readReceipts.length > 0 ? 'read' : 'unread' })));
+        const messagesWithReadStatus = reversedMessages.map(message => (Object.assign(Object.assign({}, message), { 
+            // message: message.message, // overwrite the encrypted message with decrypted one
+            message: message.message ? (0, EncryptedMessage_1.decryptText)(message.message) : '', readStatus: message.readReceipts.length > 0 ? 'read' : 'unread' })));
         const unreadMessagesCount = messagesWithReadStatus.filter(message => message.readStatus === 'unread').length;
         return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, {
             messages: messagesWithReadStatus,
@@ -135,10 +88,12 @@ const sendMessageToSingleConservation = (0, asyncHandler_1.asyncHandler)((req, r
             const uploadPromises = files.map(file => (0, chatMediaConfig_1.uploadToS3)(file));
             uploadedMediaUrls = yield Promise.all(uploadPromises);
         }
+        // const encryptedMessage = message ? message : '';
+        const encryptedMessage = message ? (0, EncryptedMessage_1.encryptText)(message) : '';
         const chatMessage = yield db_config_1.default.chatMessage.create({
             data: {
                 senderId,
-                message: message || '',
+                message: encryptedMessage || '',
                 chatChannelId,
                 mediaUrl: uploadedMediaUrls.join(','),
                 type: type || 'text',
@@ -167,7 +122,8 @@ const sendMessageToSingleConservation = (0, asyncHandler_1.asyncHandler)((req, r
                 updatedAt: new Date().toISOString(),
             },
         });
-        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { chatMessage }, 'Message sent successfully'));
+        const plainMessage = Object.assign(Object.assign({}, chatMessage), { message: chatMessage.message ? (0, EncryptedMessage_1.decryptText)(chatMessage.message) : '' });
+        return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, { chatMessage: plainMessage }, 'Message sent successfully'));
     }
     catch (err) {
         console.error(err);
@@ -235,8 +191,17 @@ const getAllConversations = (0, asyncHandler_1.asyncHandler)((req, res) => __awa
                     createdAt: true
                 }
             });
-            return Object.assign(Object.assign({}, channel), { lastMessage: lastMessage || null // Include the last message (if any)
-             });
+            // return {
+            //     ...channel,
+            //     lastMessage: lastMessage
+            //         ? {
+            //             ...lastMessage,
+            //             message: lastMessage.message
+            //         }
+            //         : null // Include the last message (if any)
+            // };
+            return Object.assign(Object.assign({}, channel), { lastMessage: lastMessage
+                    ? Object.assign(Object.assign({}, lastMessage), { message: lastMessage.message ? (0, EncryptedMessage_1.decryptText)(lastMessage.message) : '' }) : null });
         })));
         return res.status(http_status_codes_1.StatusCodes.OK).json(new apiResponse_1.ApiResponse(http_status_codes_1.StatusCodes.OK, {
             chatChannels: chatChannelsWithLastMessage

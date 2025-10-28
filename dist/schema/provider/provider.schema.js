@@ -21,9 +21,9 @@ exports.providerSchema = zod_1.z.object({
         .min(10, { message: "Age must be at least 10" }) // Min 2-digit number (10)
         .max(99, { message: "Age must be at most 99" }), // Max 2-digit number (99)    
     contactNo: zod_1.z.string().nonempty().min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }),
-    address: zod_1.z.string().nonempty().min(10, { message: "Not less then 10letters" }),
+    address: zod_1.z.string().nonempty().min(1, { message: "Not less then 10letters" }),
     status: zod_1.z.enum(["active", "disable"], { message: "Status must be either active or disable" }),
-    licenseNo: zod_1.z.string().nonempty().min(12, { message: "Not" }),
+    licenseNo: zod_1.z.string().nonempty().min(1, { message: "Licsense No is required." }),
     isAccountCreatedByOwnprovider: zod_1.z.boolean().default(false),
     role: zod_1.z.string().optional()
 });

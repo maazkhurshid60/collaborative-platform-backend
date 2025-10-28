@@ -1,21 +1,28 @@
 model User {
-  id             String   @id @default(uuid())
-  fullName       String
-  profileImage   String?
-  gender         String?
-  age            Int?
-  contactNo      String?
-  address        String?
-  status         String?
-  licenseNo      String   @unique
-  blockedMembers String[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @default(now())
-  role           Role
-
-  client   Client?
-  provider Provider?
-
+  id                    String         @id @default(uuid())
+  fullName              String
+  profileImage          String?
+  gender                String?
+  age                   Int?
+  contactNo             String?
+  address               String?
+  status                String?
+  licenseNo             String         @unique
+  isLicenseNoValid      Boolean        @default(false)
+  blockedMembers        String[]
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @default(now())
+  role                  Role
+  isApprove             String?        @default("pending")
+  client                Client?
+  provider              Provider?
+  superAdmin            SuperAdmin?
+  country               String
+  state                 String
+  resetPasswordToken    String?
+  resetPasswordExpires  DateTime?      @default(now())
+  privateKey            String?
+  publicKey             String?
   // Relations
   sentNotifications     Notification[] @relation("SenderRelation")
   receivedNotifications Notification[] @relation("RecipientRelation")
@@ -24,4 +31,11 @@ model User {
 enum Role {
   client
   provider
+  superadmin
+}
+
+enum Approve {
+  approve
+  reject
+  pending
 }

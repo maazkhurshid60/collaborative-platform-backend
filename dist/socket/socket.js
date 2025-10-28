@@ -31,12 +31,23 @@ function setupSocket(server) {
     console.log("⚡️ Socket.IO initialized");
     io.on('connection', (socket) => __awaiter(this, void 0, void 0, function* () {
         const providerId = socket.handshake.query.providerId;
-        // const userId = socket.handshake.query.userId;
-        console.log(`Socket connected  providerId: ${providerId || '-'}`);
+        const userId = socket.handshake.query.userId;
+        console.log(`Socket connected  providerId`);
         // Join notification room
-        // if (userId) {
-        //     socket.join(userId);
-        // }
+        if (userId) {
+            socket.join(userId);
+        }
+        if (providerId) {
+            socket.join(providerId);
+            // Sab direct chat channels join karwa do
+            const channels = yield db_config_1.default.chatChannel.findMany({
+                where: {
+                    OR: [{ providerAId: providerId.toString() }, { providerBId: providerId.toString() }],
+                },
+                select: { id: true },
+            });
+            channels.forEach(c => socket.join(c.id));
+        }
         // Join provider personal room and their group chats
         if (providerId) {
             socket.join(providerId);
@@ -53,21 +64,28 @@ function setupSocket(server) {
         // Direct message
         // socket.on('send_direct', ({ toProviderId, message }: { toProviderId: string, message: any }) => {
         //     try {
-        //         io.to(message?.chatChannelId).emit('receive_direct', message);
-        //         io.to(toProviderId).emit('receive_direct', message); // this ensures the other user gets it
+        //         // 🛠️ Ensure the sender is also joined to the room
+        //         socket.join(message.chatChannelId); // ✅ This is key fix
+        //         // // ✅ Broadcast message to everyone in the room (sender + receiver)
+        //         // const decryptedMessage = {
+        //         //     ...message,
+        //         //     message: decryptText(message.message),
+        //         // };
+        //         io.to(message?.chatChannelId).emit('receive_direct', message.message);
+        //         // 🔄 Unread refresh still sent to receiver only
         //         io.to(toProviderId).emit('refresh_unread', { chatChannelId: message.chatChannelId });
         //     } catch (err) {
         //         console.error('Error sending direct message:', err);
         //     }
         // });
-        // Direct message
         socket.on('send_direct', ({ toProviderId, message }) => {
             try {
-                // 🛠️ Ensure the sender is also joined to the room
-                socket.join(message.chatChannelId); // ✅ This is key fix
-                // ✅ Broadcast message to everyone in the room (sender + receiver)
-                io.to(message === null || message === void 0 ? void 0 : message.chatChannelId).emit('receive_direct', message);
-                // 🔄 Unread refresh still sent to receiver only
+                // sender ko room me pakka join kara do
+                socket.join(message.chatChannelId);
+                // Plaintext object hi aayega (aap REST response me decrypt kar ke bhej chuke ho)
+                const plainMessage = Object.assign({}, message);
+                io.to(message.chatChannelId).emit('receive_direct', Object.assign({}, message));
+                // Unread refresh receiver ko
                 io.to(toProviderId).emit('refresh_unread', { chatChannelId: message.chatChannelId });
             }
             catch (err) {
@@ -76,7 +94,7 @@ function setupSocket(server) {
         });
         // Join direct chat room
         socket.on('join_channel', ({ chatChannelId }) => {
-            console.log(`Socket ${socket.id} joining ROOM: ${chatChannelId}`);
+            console.log(`Socket socket.id joining ROOM: chatChannelId`);
             socket.join(chatChannelId);
         });
         // Group message
@@ -94,7 +112,7 @@ function setupSocket(server) {
                 socket.join(message.groupId); // 🔑 Important for sender to also receive the message
                 // ✅ Emit message to everyone in the group
                 io.to(message.groupId).emit('receive_group', message);
-                console.log('Group message emitted:', message);
+                console.log('Group message emitted:');
             }
             catch (err) {
                 console.error('Error in send_group:', err);
@@ -102,7 +120,7 @@ function setupSocket(server) {
         });
         // Disconnect handling
         socket.on('disconnect', () => {
-            console.log(`Disconnected | providerId: ${providerId || '-'}`);
+            console.log(`Disconnected | providerId: `);
             if (providerId)
                 socket.leave(providerId);
             // if (userId) socket.leave(userId);

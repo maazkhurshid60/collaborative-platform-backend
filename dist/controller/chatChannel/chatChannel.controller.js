@@ -17,6 +17,7 @@ const asyncHandler_1 = require("../../utils/asyncHandler");
 const db_config_1 = __importDefault(require("../../db/db.config"));
 const http_status_codes_1 = require("http-status-codes");
 const apiResponse_1 = require("../../utils/apiResponse");
+const EncryptedMessage_1 = require("../../utils/encryptedMessage/EncryptedMessage");
 const createChatChannel = (0, asyncHandler_1.asyncHandler)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { providerId, toProviderId } = req.body;
     if (!providerId || !toProviderId) {
@@ -89,8 +90,18 @@ const getAllChatChannel = (0, asyncHandler_1.asyncHandler)((req, res) => __await
                 createdAt: true
             }
         });
-        return Object.assign(Object.assign({}, channel), { totalUnread: unreadCount, lastMessage: lastMessage || null // <-- include this
-         });
+        // return {
+        //     ...channel,
+        //     totalUnread: unreadCount,
+        //     lastMessage: lastMessage
+        //         ? {
+        //             ...lastMessage,
+        //             message: lastMessage.message
+        //         }
+        //         : null // Include the last message (if any)// <-- include this
+        // };
+        return Object.assign(Object.assign({}, channel), { lastMessage: lastMessage
+                ? Object.assign(Object.assign({}, lastMessage), { message: lastMessage.message ? (0, EncryptedMessage_1.decryptText)(lastMessage.message) : '' }) : null });
     })));
     return res
         .status(http_status_codes_1.StatusCodes.OK)

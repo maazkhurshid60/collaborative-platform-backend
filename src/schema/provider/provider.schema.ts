@@ -19,9 +19,9 @@ export const providerSchema = z.object({
         .min(10, { message: "Age must be at least 10" })  // Min 2-digit number (10)
         .max(99, { message: "Age must be at most 99" }), // Max 2-digit number (99)    
     contactNo: z.string().nonempty().min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }),
-    address: z.string().nonempty().min(10, { message: "Not less then 10letters" }),
+    address: z.string().nonempty().min(1, { message: "Not less then 10letters" }),
     status: z.enum(["active", "disable"], { message: "Status must be either active or disable" }),
-    licenseNo: z.string().nonempty().min(12, { message: "Not" }),
+    licenseNo: z.string().nonempty().min(1, { message: "Licsense No is required." }),
     isAccountCreatedByOwnprovider: z.boolean().default(false),
     role: z.string().optional()
 
