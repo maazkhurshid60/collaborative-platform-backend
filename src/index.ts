@@ -1,36 +1,59 @@
 import cluster from "cluster";
-import http from "http";  // Import HTTP module
-
+import http from "http";
 import { Server } from "http";
-import { CPUS_COUNT, PORT_NUMBER } from "./utils/constants";
-import { customLogger, simpleLogger } from "./utils/helper";
 import app from "./app";
 import { setupSocket } from "./socket/socket";
+import logger from "./utils/logger";
 
 export let server: Server | null;
 
-if (cluster.isPrimary) {
-    customLogger(`Master process ${process.pid} is running`, process.pid);
+// Use clustering only in production for better performance
+// In development, single process for faster restarts
+const shouldUseCluster = process.env.NODE_ENV === 'production' && process.env.USE_CLUSTER !== 'false';
+const workerCount = process.env.WORKER_COUNT ? parseInt(process.env.WORKER_COUNT) : Math.min(require('os').cpus().length, 4);
 
-    for (let i = 0; i < CPUS_COUNT; i++) {
+if (shouldUseCluster && cluster.isPrimary) {
+    logger.info(`Master process ${process.pid} is running with ${workerCount} workers`);
+
+    // Create workers
+    for (let i = 0; i < workerCount; i++) {
         cluster.fork();
     }
 
     cluster.on('exit', (worker, code, signal) => {
-        customLogger(`Worker process ${worker.process.pid} died. Restarting...`, worker.process.pid);
+        logger.warn(`Worker process ${worker.process.pid} died with code ${code} and signal ${signal}. Restarting...`);
         cluster.fork();
     });
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+        logger.info('Master received SIGTERM, shutting down gracefully');
+        for (const id in cluster.workers) {
+            cluster.workers[id]?.kill();
+        }
+    });
+
 } else {
-
-
-    // Create an HTTP server and pass it to Socket.IO
+    // Single process mode (development) or worker process
     const server = http.createServer(app);
-
+    
     // Initialize Socket.IO with the created server
-    setupSocket(server);  // Setup the socket logic
-
+    setupSocket(server);
+    
+    const PORT = process.env.PORT || 3000;
+    
     // Start the server
-    server.listen(process.env.PORT || 3000, () => {
-        console.log(`Server is running on port ${process.env.PORT || 3000}`);
+    server.listen(PORT, () => {
+        const processInfo = shouldUseCluster ? `Worker ${process.pid}` : `Single process ${process.pid}`;
+        logger.info(`🚀 ${processInfo} - Server running on port ${PORT}`);
+    });
+
+    // Graceful shutdown for worker process
+    process.on('SIGTERM', () => {
+        logger.info('Worker received SIGTERM, shutting down gracefully');
+        server.close(() => {
+            logger.info('HTTP server closed');
+            process.exit(0);
+        });
     });
 }

@@ -4,322 +4,442 @@ import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { uploadToS3 } from "../../utils/multer/chatMediaConfig";
-import { decryptText, encryptText } from "../../utils/encryptedMessage/EncryptedMessage";
+import {
+  decryptText,
+  encryptText,
+} from "../../utils/encryptedMessage/EncryptedMessage";
 
-
-const getAllSingleConservationMessage = asyncHandler(async (req: Request, res: Response) => {
+const getAllSingleConservationMessage = asyncHandler(
+  async (req: Request, res: Response) => {
     const { chatChannelId, loginUserId, page = 1, limit = 10 } = req.body;
 
     const skip = (page - 1) * limit;
 
     try {
-        const chatChannel = await prisma.chatChannel.findUnique({
-            where: { id: chatChannelId },
-            select: {
-                providerAId: true,
-                providerBId: true,
-            },
-        });
+      const chatChannel = await prisma.chatChannel.findUnique({
+        where: { id: chatChannelId },
+        select: {
+          providerAId: true,
+          providerBId: true,
+        },
+      });
 
-        if (!chatChannel) {
-            return res.status(404).json({ message: 'Chat channel not found' });
-        }
+      if (!chatChannel) {
+        return res.status(404).json({ message: "Chat channel not found" });
+      }
 
-        if (![chatChannel.providerAId, chatChannel.providerBId].includes(loginUserId)) {
-            return res.status(403).json({ message: 'You are not authorized to view this chat' });
-        }
+      if (
+        ![chatChannel.providerAId, chatChannel.providerBId].includes(
+          loginUserId,
+        )
+      ) {
+        return res
+          .status(403)
+          .json({ message: "You are not authorized to view this chat" });
+      }
 
-        // Get total message count (optional, useful for frontend pagination)
-        const totalMessages = await prisma.chatMessage.count({
-            where: { chatChannelId }
-        });
+      // Get total message count (optional, useful for frontend pagination)
+      const totalMessages = await prisma.chatMessage.count({
+        where: { chatChannelId },
+      });
 
-        // Get paginated messages
-        const messages = await prisma.chatMessage.findMany({
-            where: { chatChannelId },
-            orderBy: { createdAt: 'desc' }, // latest first
-            skip,
-            take: limit,
-            include: {
-                sender: { include: { user: true } },
-                readReceipts: {
-                    where: { providerId: loginUserId },
-                }
-            },
-        });
-        // Reverse to show old → new
-        const reversedMessages = messages.reverse();
+      // Get paginated messages
+      const messages = await prisma.chatMessage.findMany({
+        where: { chatChannelId },
+        orderBy: { createdAt: "desc" }, // latest first
+        skip,
+        take: limit,
+        include: {
+          sender: { include: { user: true } },
+          readReceipts: {
+            where: { providerId: loginUserId },
+          },
+        },
+      });
+      // Reverse to show old → new
+      const reversedMessages = messages.reverse();
 
+      const messagesWithReadStatus = reversedMessages.map((message) => ({
+        ...message, // keep all original fields
+        // message: message.message, // overwrite the encrypted message with decrypted one
+        message: message.message ? decryptText(message.message) : "",
+        readStatus: message.readReceipts.length > 0 ? "read" : "unread",
+      }));
 
+      const unreadMessagesCount = messagesWithReadStatus.filter(
+        (message) => message.readStatus === "unread",
+      ).length;
 
-        const messagesWithReadStatus = reversedMessages.map(message => ({
-            ...message, // keep all original fields
-            // message: message.message, // overwrite the encrypted message with decrypted one
-            message: message.message ? decryptText(message.message) : '',
-            readStatus: message.readReceipts.length > 0 ? 'read' : 'unread',
-        }));
-
-
-        const unreadMessagesCount = messagesWithReadStatus.filter(message => message.readStatus === 'unread').length;
-
-        return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, {
-                messages: messagesWithReadStatus,
-                unreadMessagesCount,
-                totalMessages,
-                currentPage: page,
-                hasMore: skip + limit < totalMessages
-            }, "Messages fetched successfully")
-        );
-
+      return res.status(StatusCodes.OK).json(
+        new ApiResponse(
+          StatusCodes.OK,
+          {
+            messages: messagesWithReadStatus,
+            unreadMessagesCount,
+            totalMessages,
+            currentPage: page,
+            hasMore: skip + limit < totalMessages,
+          },
+          "Messages fetched successfully",
+        ),
+      );
     } catch (err) {
-        res.status(500).json({ message: 'Error fetching messages', error: err });
+      res.status(500).json({ message: "Error fetching messages", error: err });
     }
-});
+  },
+);
 
-
-
-
-const sendMessageToSingleConservation = asyncHandler(async (req: Request, res: Response) => {
+const sendMessageToSingleConservation = asyncHandler(
+  async (req: Request, res: Response) => {
     const { chatChannelId, message, type, senderId } = req.body;
     const files = req.files as Express.Multer.File[]; // files from multer
 
     try {
-        const channel = await prisma.chatChannel.findUnique({
-            where: { id: chatChannelId },
-        });
+      const channel = await prisma.chatChannel.findUnique({
+        where: { id: chatChannelId },
+      });
 
-        if (!channel) {
-            return res.status(400).json({ message: 'Chat channel does not exist' });
-        }
+      if (!channel) {
+        return res.status(400).json({ message: "Chat channel does not exist" });
+      }
 
-        // Upload media files to S3
-        let uploadedMediaUrls: string[] = [];
-        if (files && files.length > 0) {
-            const uploadPromises = files.map(file => uploadToS3(file));
-            uploadedMediaUrls = await Promise.all(uploadPromises);
-        }
+      // Upload media files to S3
+      let uploadedMediaUrls: string[] = [];
+      if (files && files.length > 0) {
+        const uploadPromises = files.map((file) => uploadToS3(file));
+        uploadedMediaUrls = await Promise.all(uploadPromises);
+      }
 
-        // const encryptedMessage = message ? message : '';
-        const encryptedMessage = message ? encryptText(message) : '';
+      // const encryptedMessage = message ? message : '';
+      const encryptedMessage = message ? encryptText(message) : "";
 
-
-
-        const chatMessage = await prisma.chatMessage.create({
-            data: {
-                senderId,
-                message: encryptedMessage || '',
-                chatChannelId,
-                mediaUrl: uploadedMediaUrls.join(','),
-                type: type || 'text',
-                readReceipts: {
-                    create: {
-                        providerId: senderId,
-                    },
-                },
+      const chatMessage = await prisma.chatMessage.create({
+        data: {
+          senderId,
+          message: encryptedMessage || "",
+          chatChannelId,
+          mediaUrl: uploadedMediaUrls.join(","),
+          type: type || "text",
+          readReceipts: {
+            create: {
+              providerId: senderId,
             },
+          },
+        },
+        include: {
+          sender: {
             include: {
-                sender: {
-                    include: {
-                        user: {
-                            select: {
-                                fullName: true,
-                                profileImage: true,
-                            },
-                        },
-                    },
+              user: {
+                select: {
+                  fullName: true,
+                  profileImage: true,
                 },
+              },
             },
-        });
+          },
+        },
+      });
 
+      await prisma.chatChannel.update({
+        where: { id: chatChannelId },
+        data: {
+          updatedAt: new Date().toISOString(),
+        },
+      });
 
-        await prisma.chatChannel.update({
-            where: { id: chatChannelId },
-            data: {
-                updatedAt: new Date().toISOString(),
-            },
-        });
+      const plainMessage = {
+        ...chatMessage,
+        message: chatMessage.message ? decryptText(chatMessage.message) : "",
+      };
 
-
-        const plainMessage = {
-            ...chatMessage,
-            message: chatMessage.message ? decryptText(chatMessage.message) : ''
-        };
-
-        return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, { chatMessage: plainMessage }, 'Message sent successfully')
+      return res
+        .status(StatusCodes.OK)
+        .json(
+          new ApiResponse(
+            StatusCodes.OK,
+            { chatMessage: plainMessage },
+            "Message sent successfully",
+          ),
         );
-
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: 'Error sending message', error: err });
+      console.error(err);
+      return res
+        .status(500)
+        .json({ message: "Error sending message", error: err });
     }
-});
+  },
+);
 
-
-const deleteMessageToSingleConservation = asyncHandler(async (req: Request, res: Response) => {
+const deleteMessageToSingleConservation = asyncHandler(
+  async (req: Request, res: Response) => {
     const { channelId, messageId, loginUserId } = req.body;
 
     // Ensure the channel exists
     const isChannelExist = await prisma.chatChannel.findFirst({
-        where: { id: channelId },
+      where: { id: channelId },
     });
 
     if (!isChannelExist) {
-        return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { message: `This chat channe; does not exist.` }, "Channel Not Found")
+      return res
+        .status(StatusCodes.CONFLICT)
+        .json(
+          new ApiResponse(
+            StatusCodes.CONFLICT,
+            { message: `This chat channe; does not exist.` },
+            "Channel Not Found",
+          ),
         );
     }
 
     // Ensure the message exists and check if the message is sent by the logged-in user
     const message = await prisma.chatMessage.findFirst({
-        where: {
-            id: messageId,
-            chatChannelId: channelId, // Ensure the message belongs to the channel
-            senderId: loginUserId, // Ensure the message is sent by the login user
-        },
+      where: {
+        id: messageId,
+        chatChannelId: channelId, // Ensure the message belongs to the channel
+        senderId: loginUserId, // Ensure the message is sent by the login user
+      },
     });
 
     if (!message) {
-        return res.status(StatusCodes.FORBIDDEN).json(
-            new ApiResponse(StatusCodes.FORBIDDEN, { message: `You can only delete your own messages.` }, "Message Not Found or Permission Denied")
+      return res
+        .status(StatusCodes.FORBIDDEN)
+        .json(
+          new ApiResponse(
+            StatusCodes.FORBIDDEN,
+            { message: `You can only delete your own messages.` },
+            "Message Not Found or Permission Denied",
+          ),
         );
     }
 
     // Proceed to delete the message
     const deletedMessage = await prisma.chatMessage.delete({
-        where: { id: messageId },
+      where: { id: messageId },
     });
 
     // Return success response
-    return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { deletedMessage }, 'Message deleted successfully.')
-    );
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          { deletedMessage },
+          "Message deleted successfully.",
+        ),
+      );
+  },
+);
 
-})
-
-
-const getAllConversations = asyncHandler(async (req: Request, res: Response) => {
+const getAllConversations = asyncHandler(
+  async (req: Request, res: Response) => {
     const { loginUserId } = req.body;
 
     try {
-        // Fetch all chat channels for the logged-in user
-        const chatChannels = await prisma.chatChannel.findMany({
-            where: {
-                OR: [
-                    { providerAId: loginUserId },
-                    { providerBId: loginUserId }
-                ]
-            },
+      // Fetch all chat channels for the logged-in user
+      const chatChannels = await prisma.chatChannel.findMany({
+        where: {
+          OR: [{ providerAId: loginUserId }, { providerBId: loginUserId }],
+        },
+        select: {
+          id: true,
+          providerAId: true,
+          providerBId: true,
+        },
+      });
+
+      if (chatChannels.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "No chat channels found for this user" });
+      }
+
+      // For each channel, fetch the last message
+      const chatChannelsWithLastMessage = await Promise.all(
+        chatChannels.map(async (channel) => {
+          // Fetch the last message in the channel
+          const lastMessage = await prisma.chatMessage.findFirst({
+            where: { chatChannelId: channel.id },
+            orderBy: { createdAt: "desc" },
             select: {
-                id: true,
-                providerAId: true,
-                providerBId: true
-            }
-        });
+              id: true,
+              message: true,
+              createdAt: true,
+            },
+          });
 
-        if (chatChannels.length === 0) {
-            return res.status(404).json({ message: 'No chat channels found for this user' });
-        }
-
-        // For each channel, fetch the last message
-        const chatChannelsWithLastMessage = await Promise.all(chatChannels.map(async (channel) => {
-            // Fetch the last message in the channel
-            const lastMessage = await prisma.chatMessage.findFirst({
-                where: { chatChannelId: channel.id },
-                orderBy: { createdAt: 'desc' },
-                select: {
-                    id: true,
-                    message: true,
-                    createdAt: true
+          // return {
+          //     ...channel,
+          //     lastMessage: lastMessage
+          //         ? {
+          //             ...lastMessage,
+          //             message: lastMessage.message
+          //         }
+          //         : null // Include the last message (if any)
+          // };
+          return {
+            ...channel,
+            lastMessage: lastMessage
+              ? {
+                  ...lastMessage,
+                  message: lastMessage.message
+                    ? decryptText(lastMessage.message)
+                    : "",
                 }
-            });
+              : null,
+          };
+        }),
+      );
 
-
-            // return {
-            //     ...channel,
-            //     lastMessage: lastMessage
-            //         ? {
-            //             ...lastMessage,
-            //             message: lastMessage.message
-            //         }
-            //         : null // Include the last message (if any)
-            // };
-            return {
-                ...channel,
-                lastMessage: lastMessage
-                    ? {
-                        ...lastMessage,
-                        message: lastMessage.message ? decryptText(lastMessage.message) : ''
-                    }
-                    : null
-            };
-
-        }));
-
-        return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, {
-            chatChannels: chatChannelsWithLastMessage
-        }, "Chat channels fetched successfully"));
-
+      return res.status(StatusCodes.OK).json(
+        new ApiResponse(
+          StatusCodes.OK,
+          {
+            chatChannels: chatChannelsWithLastMessage,
+          },
+          "Chat channels fetched successfully",
+        ),
+      );
     } catch (err) {
-        res.status(500).json({ message: 'Error fetching chat channels', error: err });
+      res
+        .status(500)
+        .json({ message: "Error fetching chat channels", error: err });
     }
-});
-
+  },
+);
 
 // POST /chat/read-messages
 const markMessagesAsRead = asyncHandler(async (req: Request, res: Response) => {
-    const { loginUserId, chatChannelId, groupId } = req.body;
+  const { loginUserId, chatChannelId, groupId } = req.body;
+
+  try {
+    // Determine the filter based on chat type
+    const messageFilter: any = {
+      readReceipts: {
+        none: {
+          providerId: loginUserId,
+        },
+      },
+      NOT: {
+        senderId: loginUserId,
+      },
+    };
+
+    if (chatChannelId) {
+      messageFilter.chatChannelId = chatChannelId;
+    } else if (groupId) {
+      messageFilter.groupId = groupId;
+    } else {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "Either chatChannelId or groupId must be provided.",
+      });
+    }
+
+    // Get all unread messages
+    const unreadMessages = await prisma.chatMessage.findMany({
+      where: messageFilter,
+      select: { id: true },
+    });
+
+    // Mark them as read
+    await prisma.readReceipt.createMany({
+      data: unreadMessages.map((msg) => ({
+        messageId: msg.id,
+        providerId: loginUserId,
+      })),
+      skipDuplicates: true,
+    });
+
+    return res
+      .status(StatusCodes.OK)
+      .json(new ApiResponse(StatusCodes.OK, null, "Messages marked as read"));
+  } catch (error) {
+    console.error("Error marking messages as read:", error);
+    return res.status(500).json({ message: "Error marking messages as read" });
+  }
+});
+const getAllPublicSingleConservationMessage = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { chatChannelId, page = 1, limit = 10 } = req.body;
+
+    const skip = (page - 1) * limit;
 
     try {
-        // Determine the filter based on chat type
-        const messageFilter: any = {
-            readReceipts: {
-                none: {
-                    providerId: loginUserId
-                }
-            },
-            NOT: {
-                senderId: loginUserId
-            }
-        };
+      const chatChannel = await prisma.chatChannel.findUnique({
+        where: { id: chatChannelId },
+        select: {
+          providerAId: true,
+          providerBId: true,
+        },
+      });
 
-        if (chatChannelId) {
-            messageFilter.chatChannelId = chatChannelId;
-        } else if (groupId) {
-            messageFilter.groupId = groupId;
-        } else {
-            return res.status(StatusCodes.BAD_REQUEST).json({
-                message: 'Either chatChannelId or groupId must be provided.'
-            });
-        }
+      if (!chatChannel) {
+        return res.status(404).json({ message: "Chat channel not found" });
+      }
 
-        // Get all unread messages
-        const unreadMessages = await prisma.chatMessage.findMany({
-            where: messageFilter,
-            select: { id: true }
-        });
+      // if (
+      //   ![chatChannel.providerAId, chatChannel.providerBId].includes(
+      //     loginUserId,
+      //   )
+      // ) {
+      //   return res
+      //     .status(403)
+      //     .json({ message: "You are not authorized to view this chat" });
+      // }
 
-        // Mark them as read
-        await prisma.readReceipt.createMany({
-            data: unreadMessages.map(msg => ({
-                messageId: msg.id,
-                providerId: loginUserId
-            })),
-            skipDuplicates: true,
-        });
+      // Get total message count (optional, useful for frontend pagination)
+      const totalMessages = await prisma.chatMessage.count({
+        where: { chatChannelId },
+      });
 
-        return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, null, 'Messages marked as read')
-        );
-    } catch (error) {
-        console.error('Error marking messages as read:', error);
-        return res.status(500).json({ message: 'Error marking messages as read' });
+      // Get paginated messages
+      const messages = await prisma.chatMessage.findMany({
+        where: { chatChannelId },
+        orderBy: { createdAt: "desc" }, // latest first
+        skip,
+        take: limit,
+        include: {
+          sender: { include: { user: true } },
+          readReceipts: true,
+        },
+      });
+      // Reverse to show old → new
+      const reversedMessages = messages.reverse();
+
+      const messagesWithReadStatus = reversedMessages.map((message) => ({
+        ...message, // keep all original fields
+        // message: message.message, // overwrite the encrypted message with decrypted one
+        message: message.message ? decryptText(message.message) : "",
+        readStatus: message.readReceipts.length > 0 ? "read" : "unread",
+      }));
+
+      const unreadMessagesCount = messagesWithReadStatus.filter(
+        (message) => message.readStatus === "unread",
+      ).length;
+
+      return res.status(StatusCodes.OK).json(
+        new ApiResponse(
+          StatusCodes.OK,
+          {
+            messages: messagesWithReadStatus,
+            unreadMessagesCount,
+            totalMessages,
+            currentPage: page,
+            hasMore: skip + limit < totalMessages,
+          },
+          "Messages fetched successfully",
+        ),
+      );
+    } catch (err) {
+      res.status(500).json({ message: "Error fetching messages", error: err });
     }
-});
+  },
+);
 
-
-
-export { getAllSingleConservationMessage, sendMessageToSingleConservation, deleteMessageToSingleConservation, getAllConversations, markMessagesAsRead }
-
-
+export {
+  getAllSingleConservationMessage,
+  sendMessageToSingleConservation,
+  deleteMessageToSingleConservation,
+  getAllConversations,
+  getAllPublicSingleConservationMessage,
+  markMessagesAsRead,
+};

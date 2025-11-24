@@ -19,20 +19,16 @@ export const authJWT = asyncHandler(
                 return res.status(500).json({ message: "Access token secret not set in environment variables" });
             }
 
-            // Decode the token
             const decodedToken = jwt.decode(token);
 
             if (typeof decodedToken === 'object' && decodedToken !== null) {
                 const { id, email, exp, role } = decodedToken as { id: string; email: string; exp: number; role: string };
 
-                // Check if the token has expired
-                const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+                const currentTime = Math.floor(Date.now() / 1000); 
                 if (exp < currentTime) {
                     return res.status(401).json({ message: "Token has expired" });
                 }
-
-                // Attach the user data to the request object
-                req.user = { id, email, role }; // Add role along with id and email
+                req.user = { id, email, role }; 
                 next(); // Proceed to the next middleware or route handler
             } else {
                 return res.status(401).json({ message: "Invalid token" });
