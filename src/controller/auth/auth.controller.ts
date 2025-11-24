@@ -143,9 +143,8 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
 
 
 const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
-    // Get existing user data
     const { loginUserId } = req.body;
-    // Convert values from form-data strings to appropriate types
+    
     if (req.body.age) {
         req.body.age = Number(req.body.age);
     }
@@ -154,7 +153,6 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
     }
 
-    // Extract uploaded files
     const files = req.files as {
         profileImage?: Express.Multer.File[];
         eSignature?: Express.Multer.File[];
@@ -177,14 +175,12 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    // Handle profile image updates
     let profileImageUpdate: string = "null";
     if (profileImage) {
         profileImageUpdate = profileImage.location;
     }
 
 
-    // Validate User Schema
     const userParsedData = userSchema.safeParse({
         ...req.body,
         profileImage: profileImageUpdate !== undefined ? profileImageUpdate : existingUser.profileImage
@@ -198,7 +194,6 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
 
     const { fullName, gender, age, contactNo, address, status, licenseNo, role, country, state } = userParsedData.data;
 
-    // Update User
     const updatedUser = await prisma.user.update({
         where: { id: loginUserId },
         data: {
