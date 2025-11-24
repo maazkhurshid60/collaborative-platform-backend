@@ -18,13 +18,12 @@ export const sendInvitationEmail = async (
       </a>
             
         <p style="margin-top:20px;">If you didn’t expect this invitation, you can safely ignore this email.</p>
-      <p style="margin-top:20px;">Best regards,<br />The Collaborative Platform Team</p>
+      <p style="margin-top:20px;">Best regards,<br />The Kolabme Platform Team</p>
     </div>
   `;
 
   await transporter.sendMail({
-    // from: `"Collaborative Platform" <${process.env.NODE_MAILER_USER}>`,
-    from: `"Collaborative Platform" <${process.env.NODE_MAILER_EMAIL}>`,
+    from: `"Kolabme Platform" <${process.env.NODE_MAILER_EMAIL}>`,
     to: toEmail,
     subject: `${providerName} invited you to join the platform`,
     html: htmlContent,
