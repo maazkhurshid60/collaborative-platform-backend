@@ -17,7 +17,7 @@ const s3 = new AWS.S3(); // ✅ 100% v2 compatible
 const uploadImg = multer({
     storage: multerS3({
         s3: s3 as any, // 👈 FORCE override type mismatch
-        bucket: process.env.S3_BUCKET_NAME!,
+        bucket: process.env.S3_BUCKET_NAME as string,
         // acl: 'public-read',
         key: (req, file, cb) => {
             const ext = path.extname(file.originalname);

@@ -36,7 +36,6 @@ export const clientSchema = userSchema.extend({
 
     isAccountCreatedByOwnClient: z.coerce.boolean(),
 })
-
 // Provider Schema (Extends User)
 export const providerSchema = userSchema.extend({
     email: z.string().nonempty("Email is required").email("Invalid email format"),
@@ -47,9 +46,7 @@ export const providerSchema = userSchema.extend({
 
 
 })
-
 // Super Admin Schema (Extends User)
-
 export const superAdminSchema = userSchema.extend({
     email: z.string().nonempty("Email is required").email("Invalid email format"),
     password: z
@@ -57,8 +54,6 @@ export const superAdminSchema = userSchema.extend({
         .min(10, { message: "Password not less then 10letters" })
         .max(50, "Password not more then 50letters").optional(),
 })
-
-
 // Login Schema
 export const loginSchema = z.object({
     email: z.string().nonempty("Email is required").email("Invalid email format"),
@@ -67,3 +62,24 @@ export const loginSchema = z.object({
         .min(10, { message: "Password not less then 10letters" })
         .max(50, "Password not more then 50letters"),
 })
+
+
+export const updateClientSchema = z.object({
+    clientId: z.string().uuid(), // To identify which client to update
+    
+    // Fields for the Client model
+    email: z.string().email().optional(),
+    eSignature: z.string().optional(),
+    clientShowToOthers: z.boolean().optional(),
+    
+    // Fields for the related User model
+    fullName: z.string().min(2).optional(),
+    gender: z.string().optional(),
+    age: z.number().optional(),
+    contactNo: z.string().optional(),
+    address: z.string().optional(),
+    status: z.string().optional(),
+    licenseNo: z.string().optional(),
+    state: z.string().optional(),
+    country: z.string().optional(),
+});

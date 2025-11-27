@@ -242,11 +242,11 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
             select: { password: true }
         });
 
-        if (password && password.trim() !== "") {
-            updateData.password = await bcrypt.hash(password, 10);
-        } else {
-            updateData.password = oldClient?.password;
-        }
+        // if (password && password.trim() !== "") {
+        //     updateData.password = await bcrypt.hash(password, 10);
+        // } else {
+        //     updateData.password = oldClient?.password;
+        // }
         // Handle eSignature updates
         if (eSignature) {
             updateData.eSignature = eSignature.location;
@@ -308,9 +308,6 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 });
-
-
-
 
 const logInApi = asyncHandler(async (req: Request, res: Response) => {
     const parsedLoginData = loginSchema.safeParse(req.body);
