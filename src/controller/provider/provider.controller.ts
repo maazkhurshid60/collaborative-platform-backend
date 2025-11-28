@@ -35,7 +35,7 @@ const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) 
         }
     })
     //Only those providers will be shown which are not blocked by the login user
-    const filteredProviders = allProviders.filter(provider => !loginUser.blockedMembers.includes(provider.user.id))
+    const filteredProviders = allProviders.filter(provider => !loginUser.blockedMembers.includes(provider.user.id) && provider.user.id !== loginUserId)
     const totalDocument = filteredProviders.length
 
     res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { totalDocument: totalDocument, providers: filteredProviders }, "All Providers fetched successfully"))

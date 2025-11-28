@@ -105,3 +105,4 @@ app.use("/api/v1/notification", authJWT, notificationRouter);
 app.use("/api/v1/invite", authJWT, invitationEmailRouter);
 
 export default app;
+
