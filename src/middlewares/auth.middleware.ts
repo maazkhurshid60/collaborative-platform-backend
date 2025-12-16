@@ -24,11 +24,11 @@ export const authJWT = asyncHandler(
             if (typeof decodedToken === 'object' && decodedToken !== null) {
                 const { id, email, exp, role } = decodedToken as { id: string; email: string; exp: number; role: string };
 
-                const currentTime = Math.floor(Date.now() / 1000); 
+                const currentTime = Math.floor(Date.now() / 1000);
                 if (exp < currentTime) {
                     return res.status(401).json({ message: "Token has expired" });
                 }
-                req.user = { id, email, role }; 
+                req.user = { id, email, role };
                 next(); // Proceed to the next middleware or route handler
             } else {
                 return res.status(401).json({ message: "Invalid token" });

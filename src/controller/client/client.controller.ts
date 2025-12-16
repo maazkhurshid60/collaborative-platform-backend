@@ -134,7 +134,7 @@ const deletClient = asyncHandler(async (req: Request, res: Response) => {
 //         status,
 //         licenseNo,
 //         email,
-        
+
 //         clientId,
 //         clientShowToOthers,
 //         state, country
@@ -286,7 +286,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         // email is intentionally omitted here
         clientId,
         clientShowToOthers,
-        state, 
+        state,
         country,
         eSignature // Assuming you might want to update this
     } = clientData.data;
@@ -314,7 +314,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
     if (fullName && fullName !== isClientExist.user.fullName) {
         // ... your existing fullName check
     }
-    
+
     // --- End of Validation and Checks ---
 
     // Using a transaction to ensure both user and client are updated together
@@ -332,11 +332,11 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
                     licenseNo,
                     state,
                     country,
-                    profileImage: req.file 
-                        ? (req.file as any).location 
-                        : req.body.profileImage === "null" 
-                        ? null 
-                        : undefined 
+                    profileImage: req.file
+                        ? (req.file as any).location
+                        : req.body.profileImage === "null"
+                            ? null
+                            : undefined
                 },
             }),
             prisma.client.update({
@@ -363,8 +363,6 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 });
-
-
 
 const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
 
@@ -767,4 +765,12 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
 
 
 
-export { getAllClients, deletClient, updateClient, getTotalClient, addClient, updateExistingClientOnLicenseNo, addExistingClientToProvider }
+export {
+    getAllClients,
+    deletClient,
+    updateClient,
+    getTotalClient,
+    addClient,
+    updateExistingClientOnLicenseNo,
+    addExistingClientToProvider
+}
