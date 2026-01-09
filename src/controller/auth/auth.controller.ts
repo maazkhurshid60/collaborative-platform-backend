@@ -175,7 +175,9 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    let profileImageUpdate: string = "null";
+    // let profileImageUpdate: string = "null";
+    let profileImageUpdate: string | undefined = undefined;
+
     if (profileImage) {
         profileImageUpdate = profileImage.location;
     }
