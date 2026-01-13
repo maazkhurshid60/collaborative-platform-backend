@@ -250,9 +250,11 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         //     updateData.password = oldClient?.password;
         // }
         // Handle eSignature updates
+        const wantsRemove = String(req.body.eSignature).toLowerCase() === "null";
+
         if (eSignature) {
             updateData.eSignature = eSignature.location;
-        } else {
+        } else if (wantsRemove) {
             updateData.eSignature = "null";
         }
         const userId = String(loginUserId);
@@ -591,9 +593,13 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
     const { loginUserId, role } = req.body
 
     let getMeDetails
-    // Handle Client
+    // Handle Clients
     if (role === Role.client) {
         getMeDetails = await prisma.client.findFirst({ where: { id: loginUserId }, include: { user: true } })
+        // getMeDetails = await prisma.client.findFirst({
+        //     where: { userId: loginUserId },
+        //     include: { user: true }
+        // });
 
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, { data: getMeDetails }, "OK")
