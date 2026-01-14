@@ -196,6 +196,7 @@ import notificationRouter from "./route/notification/notification.route";
 import invitationEmailRouter from "./route/invitationEmail/invitationEmail.route";
 import publicChatRouter from "./route/chat/public.chat.route";
 import superAdminRouter from "./route/admin/superAdmin.route";
+import providerInviteRouter from "./route/invitationEmail/providerInvite.routes"
 
 // Declaration of Express App
 const app = express();
@@ -273,7 +274,7 @@ app.use(
   })
 );
 
-// Routers
+// Routes 
 app.use("/api/v1/health", healthCheckRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/client", clientRouter);
@@ -286,8 +287,11 @@ app.use("/api/v1/chat-group", authJWT, chatGroupRouter);
 app.use("/api/v1/document", authJWT, documentRouter);
 app.use("/api/v1/notification", authJWT, notificationRouter);
 app.use("/api/v1/invite", authJWT, invitationEmailRouter);
+app.use("/api/v1/individual-invites", authJWT, providerInviteRouter);
+
 
 // ✅ New Super Admin route
 app.use("/api/v1/super-admin", superAdminRouter);
+
 
 export default app;

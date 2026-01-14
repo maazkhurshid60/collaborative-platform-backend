@@ -385,113 +385,258 @@ const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
 
 
 
+// const addClient = asyncHandler(async (req: Request, res: Response) => {
+//     if (req.body.age) req.body.age = Number(req.body.age);
+//     if (req.body.isAccountCreatedByOwnClient)
+//         req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
+
+
+//     // 1. Validate user schema
+//     const userParsedData = userSchema.safeParse(req.body);
+//     if (!userParsedData.success) {
+//         return res.status(StatusCodes.BAD_REQUEST).json(
+//             new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
+//         );
+//     }
+
+//     const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state,
+//     } = userParsedData.data;
+//     const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
+
+//     let profileImageUrl: string | null = null;
+//     if (req.file) {
+//         const file = req.file as Express.Multer.File & { location?: string };
+//         profileImageUrl = file.location ?? null;
+//     }
+
+
+//     // 2. Check if user with licenseNo already exists
+//     const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
+
+//     if (existingUser) {
+//         return res.status(StatusCodes.BAD_REQUEST).json(
+//             new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is already registered")
+//         );
+
+//     }
+//     // Check for duplicate client email
+//     const existingClientEmail = await prisma.client.findFirst({ where: { email } });
+//     if (existingClientEmail) {
+//         return res.status(StatusCodes.BAD_REQUEST).json(
+//             new ApiResponse(StatusCodes.BAD_REQUEST, null, `Email: ${email} is already taken.`)
+//         );
+
+//     }
+
+//     // 3. Proceed to create new user
+//     const userCreated = await prisma.user.create({
+//         data: {
+//             fullName,
+//             gender,
+//             age,
+//             contactNo,
+//             address,
+//             status,
+//             licenseNo,
+//             country, state,
+//             role,
+//             isApprove,
+//             profileImage: profileImageUrl
+//         }
+//     });
+
+//     // 4. If role is client, create client and link provider
+//     if (role === Role.client) {
+//         const clientParsed = clientSchema.safeParse(req.body);
+//         if (!clientParsed.success) {
+//             return res.status(StatusCodes.BAD_REQUEST).json(
+//                 new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
+//             );
+//         }
+
+
+
+//         const hashedPassword = await bcrypt.hash(password ?? "", 10);
+//         const clientShowToOthersBool = clientShowToOthers === "true";
+
+//         const clientCreated = await prisma.client.create({
+//             data: {
+//                 userId: userCreated.id,
+//                 isAccountCreatedByOwnClient,
+//                 clientShowToOthers: clientShowToOthersBool,
+//                 email,
+//                 password: hashedPassword
+//             },
+//             include: {
+//                 user: true
+//             }
+//         });
+
+//         if (providerId) {
+//             await prisma.providerOnClient.create({
+//                 data: {
+//                     providerId,
+//                     clientId: clientCreated.id
+//                 }
+//             });
+//         }
+
+//         return res.status(StatusCodes.CREATED).json(
+//             new ApiResponse(StatusCodes.CREATED, clientCreated, "Client Data has been sent to the super admin for verification. Client will receive a verification email once approved, after which Client will be able to log in.")
+//         );
+//     }
+
+//     // 5. If role is not client
+//     return res.status(StatusCodes.CREATED).json(
+//         new ApiResponse(StatusCodes.CREATED, userCreated, "User created successfully")
+//     );
+// });
+
+
+
+
+
+// ...
+
 const addClient = asyncHandler(async (req: Request, res: Response) => {
-    if (req.body.age) req.body.age = Number(req.body.age);
-    if (req.body.isAccountCreatedByOwnClient)
-        req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
+  if (req.body.age) req.body.age = Number(req.body.age);
+  if (req.body.isAccountCreatedByOwnClient)
+    req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
 
+  // 1) Validate user fields
+  const userParsed = userSchema.safeParse(req.body);
+  if (!userParsed.success) {
+    return res.status(StatusCodes.BAD_REQUEST).json(
+      new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsed.error.errors }, "Validation failed")
+    );
+  }
 
-    // 1. Validate user schema
-    const userParsedData = userSchema.safeParse(req.body);
-    if (!userParsedData.success) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
-        );
-    }
+  // 2) Validate client fields (if role is client)
+  const role = req.body.role as Role;
+  if (role !== Role.client) {
+    return res.status(StatusCodes.BAD_REQUEST).json(
+      new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Role must be client." }, "Validation failed")
+    );
+  }
 
-    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state,
-    } = userParsedData.data;
-    const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
+  const clientParsed = clientSchema.safeParse(req.body);
+  if (!clientParsed.success) {
+    return res.status(StatusCodes.BAD_REQUEST).json(
+      new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
+    );
+  }
 
-    let profileImageUrl: string | null = null;
-    if (req.file) {
-        const file = req.file as Express.Multer.File & { location?: string };
-        profileImageUrl = file.location ?? null;
-    }
+  const {
+    fullName,
+    gender = "male",
+    age,
+    contactNo,
+    address,
+    status = "active",
+    licenseNo,
+    isApprove,
+    country,
+    state,
+  } = userParsed.data;
 
+  const { email, password, providerId, clientShowToOthers, isAccountCreatedByOwnClient } = req.body;
 
-    // 2. Check if user with licenseNo already exists
-    const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
+  // Normalize email (helps avoid duplicates like A@x.com vs a@x.com)
+  const normalizedEmail = String(email).trim().toLowerCase();
 
-    if (existingUser) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is already registered")
-        );
+  // 3) Pre-check duplicates BEFORE creating anything
+  const [existingUser, existingClientEmail] = await Promise.all([
+    prisma.user.findFirst({ where: { licenseNo } }),
+    prisma.client.findFirst({ where: { email: normalizedEmail } }),
+  ]);
 
-    }
-    // Check for duplicate client email
-    const existingClientEmail = await prisma.client.findFirst({ where: { email } });
-    if (existingClientEmail) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, null, `Email: ${email} is already taken.`)
-        );
+  if (existingUser) {
+    return res.status(StatusCodes.CONFLICT).json(
+      new ApiResponse(StatusCodes.CONFLICT, { error: "This license number is already registered." }, "Duplicate Error")
+    );
+  }
 
-    }
+  if (existingClientEmail) {
+    return res.status(StatusCodes.CONFLICT).json(
+      new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${normalizedEmail} is already taken.` }, "Duplicate Error")
+    );
+  }
 
-    // 3. Proceed to create new user
-    const userCreated = await prisma.user.create({
+  let profileImageUrl: string | null = null;
+  if (req.file) {
+    const file = req.file as Express.Multer.File & { location?: string };
+    profileImageUrl = file.location ?? null;
+  }
+
+  const hashedPassword = await bcrypt.hash(password ?? "", 10);
+  const clientShowToOthersBool = String(clientShowToOthers) === "true";
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      // Create user
+      const userCreated = await tx.user.create({
         data: {
-            fullName,
-            gender,
-            age,
-            contactNo,
-            address,
-            status,
-            licenseNo,
-            country, state,
-            role,
-            isApprove,
-            profileImage: profileImageUrl
-        }
+          fullName,
+          gender,
+          age,
+          contactNo,
+          address,
+          status,
+          licenseNo,
+          country,
+          state,
+          role: Role.client,
+          isApprove,
+          profileImage: profileImageUrl,
+        },
+      });
+
+      // Create client
+      const clientCreated = await tx.client.create({
+        data: {
+          userId: userCreated.id,
+          isAccountCreatedByOwnClient,
+          clientShowToOthers: clientShowToOthersBool,
+          email: normalizedEmail,
+          password: hashedPassword,
+        },
+        include: { user: true },
+      });
+
+      // Optional link to provider
+      if (providerId) {
+        await tx.providerOnClient.create({
+          data: {
+            providerId,
+            clientId: clientCreated.id,
+          },
+        });
+      }
+
+      return clientCreated;
     });
 
-    // 4. If role is client, create client and link provider
-    if (role === Role.client) {
-        const clientParsed = clientSchema.safeParse(req.body);
-        if (!clientParsed.success) {
-            return res.status(StatusCodes.BAD_REQUEST).json(
-                new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
-            );
-        }
-
-
-
-        const hashedPassword = await bcrypt.hash(password ?? "", 10);
-        const clientShowToOthersBool = clientShowToOthers === "true";
-
-        const clientCreated = await prisma.client.create({
-            data: {
-                userId: userCreated.id,
-                isAccountCreatedByOwnClient,
-                clientShowToOthers: clientShowToOthersBool,
-                email,
-                password: hashedPassword
-            },
-            include: {
-                user: true
-            }
-        });
-
-        if (providerId) {
-            await prisma.providerOnClient.create({
-                data: {
-                    providerId,
-                    clientId: clientCreated.id
-                }
-            });
-        }
-
-        return res.status(StatusCodes.CREATED).json(
-            new ApiResponse(StatusCodes.CREATED, clientCreated, "Client Data has been sent to the super admin for verification. Client will receive a verification email once approved, after which Client will be able to log in.")
-        );
+    return res.status(StatusCodes.CREATED).json(
+      new ApiResponse(
+        StatusCodes.CREATED,
+        result,
+        "Client Data has been sent to the super admin for verification. Client will receive a verification email once approved."
+      )
+    );
+  } catch (err: any) {
+    // If you have unique constraints, Prisma can throw P2002
+    if (err?.code === "P2002") {
+      return res.status(StatusCodes.CONFLICT).json(
+        new ApiResponse(StatusCodes.CONFLICT, { error: "Duplicate value. Please use different credentials." }, "Duplicate Error")
+      );
     }
 
-    // 5. If role is not client
-    return res.status(StatusCodes.CREATED).json(
-        new ApiResponse(StatusCodes.CREATED, userCreated, "User created successfully")
+    console.error("addClient transaction error:", err);
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+      new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Failed to create client." }, "Internal server error")
     );
+  }
 });
-
 
 const addExistingClientToProvider = asyncHandler(async (req: Request, res: Response) => {
     if (req.body.age) req.body.age = Number(req.body.age);

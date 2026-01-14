@@ -13,6 +13,11 @@ import { sendResetPasswordEmail } from "../../utils/nodeMailer/ResetPassword";
 import crypto from "crypto";
 import { sendVerificationEmail } from "../../utils/nodeMailer/VerificationEmail";
 
+import { sendApprovalEmail } from "../../utils/nodeMailer/sendApprovalEmail";
+
+
+
+
 const signupApi = asyncHandler(async (req: Request, res: Response) => {
     // Validate User Schema
     const userParsedData = userSchema.safeParse(req.body);
@@ -455,27 +460,67 @@ const getAllUsersApi = asyncHandler(async (req: Request, res: Response) => {
     );
 })
 
+// const approveValidUser = asyncHandler(async (req: Request, res: Response) => {
+//     const { id, name, email } = req.body
+
+//     const isUserExist = await prisma.user.findFirst({ where: { id } })
+//     if (!isUserExist) {
+//         return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"))
+//     }
+
+//     const isUserApproved = await prisma.user.update({
+//         where: { id }, data: {
+//             isApprove: "approve"
+//         }
+//     })
+//     // await sendVerificationEmail(email, name);
+
+
+//     if (isUserApproved) {
+//         return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { message: "User approved successfully." }, "Approve"))
+//     }
+
+// })
+
+
 const approveValidUser = asyncHandler(async (req: Request, res: Response) => {
-    const { id, name, email } = req.body
+  const { id } = req.body;
 
-    const isUserExist = await prisma.user.findFirst({ where: { id } })
-    if (!isUserExist) {
-        return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"))
+  const user = await prisma.user.findFirst({
+    where: { id },
+    include: { client: true, provider: true, superAdmin: true },
+  });
+
+  if (!user) {
+    return res.status(StatusCodes.NOT_FOUND).json(
+      new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error")
+    );
+  }
+
+  await prisma.user.update({
+    where: { id },
+    data: { isApprove: "approve" },
+  });
+
+  const email =
+    user.client?.email ||
+    user.provider?.email ||
+    user.superAdmin?.email;
+
+  if (email) {
+    try {
+      await sendApprovalEmail(email, user.fullName, user.licenseNo);
+    } catch (err) {
+      console.error("Approval email failed:", err);
+      // Do not fail approval just because email failed
     }
+  }
 
-    const isUserApproved = await prisma.user.update({
-        where: { id }, data: {
-            isApprove: "approve"
-        }
-    })
-    // await sendVerificationEmail(email, name);
+  return res.status(StatusCodes.OK).json(
+    new ApiResponse(StatusCodes.OK, { message: "User approved successfully." }, "Approve")
+  );
+});
 
-
-    if (isUserApproved) {
-        return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { message: "User approved successfully." }, "Approve"))
-    }
-
-})
 const rejectUser = asyncHandler(async (req: Request, res: Response) => {
     const { id, name, email } = req.body
 
