@@ -7,15 +7,14 @@ import logger from "./utils/logger";
 
 export let server: Server | null;
 
-// Use clustering only in production for better performance
-// In development, single process for faster restarts
+
 const shouldUseCluster = process.env.NODE_ENV === 'production' && process.env.USE_CLUSTER !== 'false';
 const workerCount = process.env.WORKER_COUNT ? parseInt(process.env.WORKER_COUNT) : Math.min(require('os').cpus().length, 4);
 
 if (shouldUseCluster && cluster.isPrimary) {
     logger.info(`Master process ${process.pid} is running with ${workerCount} workers`);
 
-    // Create workers
+
     for (let i = 0; i < workerCount; i++) {
         cluster.fork();
     }
@@ -25,7 +24,7 @@ if (shouldUseCluster && cluster.isPrimary) {
         cluster.fork();
     });
 
-    // Graceful shutdown
+
     process.on('SIGTERM', () => {
         logger.info('Master received SIGTERM, shutting down gracefully');
         for (const id in cluster.workers) {
@@ -34,7 +33,6 @@ if (shouldUseCluster && cluster.isPrimary) {
     });
 
 } else {
-    // Single process mode (development) or worker process
     const server = http.createServer(app);
     
     // Initialize Socket.IO with the created server

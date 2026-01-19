@@ -17,6 +17,7 @@ pids
 
 # Build output
 dist/
+temp_auto_push.bat
 build/
 
 # Temporary files
@@ -33,8 +34,9 @@ ehthumbs.db
 Thumbs.db
 
 # IDEs
-.vscode/
 .idea/
 *.swp
 *.swo
 *~
+.gitignore
+branch_structure.json

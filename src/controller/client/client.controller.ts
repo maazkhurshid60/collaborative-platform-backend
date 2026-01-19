@@ -274,7 +274,6 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    // Destructure validated data, EXCLUDING 'email'
     const {
         fullName,
         gender,
@@ -283,17 +282,14 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         address,
         status,
         licenseNo,
-        // email is intentionally omitted here
         clientId,
         clientShowToOthers,
         state,
         country,
-        eSignature // Assuming you might want to update this
+        eSignature 
     } = clientData.data;
 
-    // --- Start of Validation and Checks ---
 
-    // Check if client exists
     const isClientExist = await prisma.client.findUnique({
         where: { id: clientId },
         include: { user: true }
@@ -305,19 +301,13 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    // REMOVED: The duplicate email check is no longer needed as we are not updating the email.
 
-    // Check for duplicate licenseNo, fullName etc. (these checks can remain)
     if (licenseNo) {
-        // ... your existing licenseNo check
     }
     if (fullName && fullName !== isClientExist.user.fullName) {
-        // ... your existing fullName check
     }
 
-    // --- End of Validation and Checks ---
 
-    // Using a transaction to ensure both user and client are updated together
     try {
         const [updatedUser, updatedClient] = await prisma.$transaction([
             prisma.user.update({
@@ -341,11 +331,9 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
             }),
             prisma.client.update({
                 where: { id: clientId },
-                // The 'data' object now only contains fields that should be updated in the Client model
                 data: {
-                    eSignature, // Example: updating eSignature
+                    eSignature, 
                     clientShowToOthers: clientShowToOthers === "true"
-                    // 'email' is NOT included, so it will not be changed.
                 },
             })
         ]);
@@ -376,7 +364,7 @@ const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
                     }
                 }
             }
-        }, // Assuming 'user' is related to 'client'
+        }, 
     });
 
     res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { totalDocument: allClient.length, clients: allClient }, "All Clients fetched successfully"))
@@ -385,125 +373,12 @@ const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
 
 
 
-// const addClient = asyncHandler(async (req: Request, res: Response) => {
-//     if (req.body.age) req.body.age = Number(req.body.age);
-//     if (req.body.isAccountCreatedByOwnClient)
-//         req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
-
-
-//     // 1. Validate user schema
-//     const userParsedData = userSchema.safeParse(req.body);
-//     if (!userParsedData.success) {
-//         return res.status(StatusCodes.BAD_REQUEST).json(
-//             new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
-//         );
-//     }
-
-//     const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state,
-//     } = userParsedData.data;
-//     const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
-
-//     let profileImageUrl: string | null = null;
-//     if (req.file) {
-//         const file = req.file as Express.Multer.File & { location?: string };
-//         profileImageUrl = file.location ?? null;
-//     }
-
-
-//     // 2. Check if user with licenseNo already exists
-//     const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
-
-//     if (existingUser) {
-//         return res.status(StatusCodes.BAD_REQUEST).json(
-//             new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is already registered")
-//         );
-
-//     }
-//     // Check for duplicate client email
-//     const existingClientEmail = await prisma.client.findFirst({ where: { email } });
-//     if (existingClientEmail) {
-//         return res.status(StatusCodes.BAD_REQUEST).json(
-//             new ApiResponse(StatusCodes.BAD_REQUEST, null, `Email: ${email} is already taken.`)
-//         );
-
-//     }
-
-//     // 3. Proceed to create new user
-//     const userCreated = await prisma.user.create({
-//         data: {
-//             fullName,
-//             gender,
-//             age,
-//             contactNo,
-//             address,
-//             status,
-//             licenseNo,
-//             country, state,
-//             role,
-//             isApprove,
-//             profileImage: profileImageUrl
-//         }
-//     });
-
-//     // 4. If role is client, create client and link provider
-//     if (role === Role.client) {
-//         const clientParsed = clientSchema.safeParse(req.body);
-//         if (!clientParsed.success) {
-//             return res.status(StatusCodes.BAD_REQUEST).json(
-//                 new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
-//             );
-//         }
-
-
-
-//         const hashedPassword = await bcrypt.hash(password ?? "", 10);
-//         const clientShowToOthersBool = clientShowToOthers === "true";
-
-//         const clientCreated = await prisma.client.create({
-//             data: {
-//                 userId: userCreated.id,
-//                 isAccountCreatedByOwnClient,
-//                 clientShowToOthers: clientShowToOthersBool,
-//                 email,
-//                 password: hashedPassword
-//             },
-//             include: {
-//                 user: true
-//             }
-//         });
-
-//         if (providerId) {
-//             await prisma.providerOnClient.create({
-//                 data: {
-//                     providerId,
-//                     clientId: clientCreated.id
-//                 }
-//             });
-//         }
-
-//         return res.status(StatusCodes.CREATED).json(
-//             new ApiResponse(StatusCodes.CREATED, clientCreated, "Client Data has been sent to the super admin for verification. Client will receive a verification email once approved, after which Client will be able to log in.")
-//         );
-//     }
-
-//     // 5. If role is not client
-//     return res.status(StatusCodes.CREATED).json(
-//         new ApiResponse(StatusCodes.CREATED, userCreated, "User created successfully")
-//     );
-// });
-
-
-
-
-
-// ...
 
 const addClient = asyncHandler(async (req: Request, res: Response) => {
   if (req.body.age) req.body.age = Number(req.body.age);
   if (req.body.isAccountCreatedByOwnClient)
     req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
 
-  // 1) Validate user fields
   const userParsed = userSchema.safeParse(req.body);
   if (!userParsed.success) {
     return res.status(StatusCodes.BAD_REQUEST).json(
@@ -511,7 +386,6 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
     );
   }
 
-  // 2) Validate client fields (if role is client)
   const role = req.body.role as Role;
   if (role !== Role.client) {
     return res.status(StatusCodes.BAD_REQUEST).json(
@@ -541,10 +415,8 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
 
   const { email, password, providerId, clientShowToOthers, isAccountCreatedByOwnClient } = req.body;
 
-  // Normalize email (helps avoid duplicates like A@x.com vs a@x.com)
   const normalizedEmail = String(email).trim().toLowerCase();
 
-  // 3) Pre-check duplicates BEFORE creating anything
   const [existingUser, existingClientEmail] = await Promise.all([
     prisma.user.findFirst({ where: { licenseNo } }),
     prisma.client.findFirst({ where: { email: normalizedEmail } }),
@@ -573,7 +445,6 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // Create user
       const userCreated = await tx.user.create({
         data: {
           fullName,
@@ -591,7 +462,6 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
         },
       });
 
-      // Create client
       const clientCreated = await tx.client.create({
         data: {
           userId: userCreated.id,
@@ -603,7 +473,6 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
         include: { user: true },
       });
 
-      // Optional link to provider
       if (providerId) {
         await tx.providerOnClient.create({
           data: {
@@ -624,7 +493,6 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
       )
     );
   } catch (err: any) {
-    // If you have unique constraints, Prisma can throw P2002
     if (err?.code === "P2002") {
       return res.status(StatusCodes.CONFLICT).json(
         new ApiResponse(StatusCodes.CONFLICT, { error: "Duplicate value. Please use different credentials." }, "Duplicate Error")
@@ -660,18 +528,15 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
     }
 
 
-    // 2. Check if user with licenseNo already exists
     const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
     if (existingUser) {
 
-        // Ensure the role is 'client'
         if (existingUser?.role !== Role.client) {
             return res.status(StatusCodes.BAD_REQUEST).json(
                 new ApiResponse(StatusCodes.BAD_REQUEST, null, "This license number is registered but not as a client")
             );
         }
 
-        // Fetch existing client by userId
         const existingClient = await prisma.client.findUnique({
             where: { userId: existingUser.id }
         });
@@ -682,7 +547,6 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
             );
         }
 
-        // Check if already linked to the same provider
         const alreadyLinked = await prisma.providerOnClient.findFirst({
             where: {
                 clientId: existingClient.id,
@@ -696,7 +560,6 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
             );
         }
 
-        // Link existing client to current provider
         const clientCreated = await prisma.providerOnClient.create({
             data: {
                 providerId,
@@ -714,7 +577,6 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
         );
     }
 
-    // 3. Proceed to create new user
     const userCreated = await prisma.user.create({
         data: {
             fullName,
@@ -730,7 +592,6 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
         }
     });
 
-    // 4. If role is client, create client and link provider
     if (role === Role.client) {
 
         const clientParsed = clientSchema.safeParse(req.body);
@@ -740,7 +601,6 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
             );
         }
 
-        // Check for duplicate client email
         const existingClientEmail = await prisma.client.findFirst({ where: { email } });
         if (existingClientEmail) {
             return res.status(StatusCodes.CONFLICT).json(
@@ -778,7 +638,6 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
         );
     }
 
-    // 5. If role is not client
     return res.status(StatusCodes.CREATED).json(
         new ApiResponse(StatusCodes.CREATED, userCreated, "User created successfully")
     );
@@ -786,9 +645,7 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
 
 
 
-//logined provider can add existing client(not present in logined provider list) by just one add button click without entering record manually
 const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: Response) => {
-    // Validate data
     const clientData = clientSchema.safeParse(req.body);
     if (!clientData.success) {
         return res.status(StatusCodes.BAD_REQUEST).json(
@@ -798,13 +655,10 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
 
     let { fullName, gender, age, contactNo, address, status, licenseNo, email, password, clientId } = clientData.data;
 
-    // Normalize email
     email = email.trim().toLowerCase();
 
-    // Hash password if provided
     const hashedPassword = await bcrypt.hash(password ?? "", 10);
 
-    // Check if client exists
     const isClientExist = await prisma.client.findFirst({ where: { id: clientId } });
     if (!isClientExist) {
         return res.status(StatusCodes.NOT_FOUND).json(
@@ -812,13 +666,12 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
         );
     }
 
-    // Check for duplicate email only if it's being changed
     if (email !== isClientExist.email.trim().toLowerCase()) {
         const isEmailExist = await prisma.client.findFirst({
             where: {
-                email: email, // the new email
+                email: email, 
                 id: {
-                    not: clientId, // ensure it doesn’t belong to the same client
+                    not: clientId, 
                 },
             },
         });
@@ -832,7 +685,6 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
     }
 
 
-    // Check for duplicate licenseNo
     const isLicenseNoExists = await prisma.user.findFirst({
         where: {
             licenseNo,
@@ -847,7 +699,6 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
         );
     }
 
-    // Check for duplicate Full Name
     const isFullNameExist = await prisma.user.findFirst({
         where: {
             fullName,
@@ -864,7 +715,6 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
         );
     }
 
-    // Prepare update data
     const updatedClientData = {
         email,
         password: hashedPassword,
@@ -880,7 +730,6 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
         licenseNo,
         role: Role.client,
     };
-    // Update user and client
     const isUserUpdated = await prisma.user.update({
         where: { id: isClientExist.userId },
         data: updatedUserData,
