@@ -21,13 +21,46 @@ const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) 
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit
     const allProviders = await prisma.provider.findMany({
-        skip, take: limit, orderBy: {
+        skip,
+        take: limit,
+        orderBy: {
             createdAt: 'desc'  // 👈 Get latest first
-        }, include: {
-            user: true, sharedDocument: { include: { document: true, client: { include: { user: true } } } }, clientList: {
-                include: {
+        },
+        select: {
+            id: true,
+            email: true,
+            department: true,
+            createdAt: true,
+            updatedAt: true,
+            user: {
+                select: {
+                    id: true,
+                    fullName: true,
+                    profileImage: true,
+                    gender: true,
+                    age: true,
+                    contactNo: true,
+                    address: true,
+                    status: true,
+                    licenseNo: true,
+                    role: true,
+                    isApprove: true,
+                    country: true,
+                    state: true,
+                    blockedMembers: true,
+                }
+            },
+            clientList: {
+                select: {
                     client: {
-                        include: { user: true }
+                        select: {
+                            clientShowToOthers: true,
+                            user: {
+                                select: {
+                                    fullName: true
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -46,7 +79,49 @@ const getTotalProviders = asyncHandler(async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit
-    const allProviders = await prisma.provider.findMany({ skip, take: limit, include: { user: true, sharedDocument: { include: { document: true, client: { include: { user: true } } } } } })
+    const allProviders = await prisma.provider.findMany({
+        skip,
+        take: limit,
+        select: {
+            id: true,
+            email: true,
+            department: true,
+            createdAt: true,
+            updatedAt: true,
+            user: {
+                select: {
+                    id: true,
+                    fullName: true,
+                    profileImage: true,
+                    gender: true,
+                    age: true,
+                    contactNo: true,
+                    address: true,
+                    status: true,
+                    licenseNo: true,
+                    role: true,
+                    isApprove: true,
+                    country: true,
+                    state: true,
+                    blockedMembers: true,
+                }
+            },
+            clientList: {
+                select: {
+                    client: {
+                        select: {
+                            clientShowToOthers: true,
+                            user: {
+                                select: {
+                                    fullName: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    })
 
 
     res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { totalDocument: allProviders.length, providers: allProviders }, "All Providers fetched successfully"))

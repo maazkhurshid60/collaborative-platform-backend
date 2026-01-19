@@ -143,13 +143,9 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
 
 
 });
-
-
-
-
 const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
     const { loginUserId } = req.body;
-    
+
     if (req.body.age) {
         req.body.age = Number(req.body.age);
     }
@@ -361,10 +357,15 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
         include: {
             user: true,
             clientList: {
-                include: {
+                select: {
+
                     client: {
-                        include: {
-                            user: true
+                        select: {
+                            user: {
+                                select: {
+                                    fullName: true
+                                }
+                            }
                         }
                     }
                 }
@@ -454,7 +455,32 @@ const blockUserApi = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const getAllUsersApi = asyncHandler(async (req: Request, res: Response) => {
-    const allUsers = await prisma.user.findMany({ include: { client: true, provider: true } })
+    const allUsers = await prisma.user.findMany({
+        select: {
+            id: true,
+            fullName: true,
+            licenseNo: true,
+            age: true,
+            contactNo: true,
+            address: true,
+            country: true,
+            state: true,
+            profileImage: true,
+            isApprove: true,
+            role: true,
+            createdAt: true,
+            client: {
+                select: {
+                    email: true
+                }
+            },
+            provider: {
+                select: {
+                    email: true
+                }
+            }
+        }
+    })
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, { totalDocument: allUsers.length, user: allUsers }, "User fetched successfully")
     );
@@ -484,41 +510,41 @@ const getAllUsersApi = asyncHandler(async (req: Request, res: Response) => {
 
 
 const approveValidUser = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.body;
+    const { id } = req.body;
 
-  const user = await prisma.user.findFirst({
-    where: { id },
-    include: { client: true, provider: true, superAdmin: true },
-  });
+    const user = await prisma.user.findFirst({
+        where: { id },
+        include: { client: true, provider: true, superAdmin: true },
+    });
 
-  if (!user) {
-    return res.status(StatusCodes.NOT_FOUND).json(
-      new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error")
-    );
-  }
-
-  await prisma.user.update({
-    where: { id },
-    data: { isApprove: "approve" },
-  });
-
-  const email =
-    user.client?.email ||
-    user.provider?.email ||
-    user.superAdmin?.email;
-
-  if (email) {
-    try {
-      await sendApprovalEmail(email, user.fullName, user.licenseNo);
-    } catch (err) {
-      console.error("Approval email failed:", err);
-      // Do not fail approval just because email failed
+    if (!user) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error")
+        );
     }
-  }
 
-  return res.status(StatusCodes.OK).json(
-    new ApiResponse(StatusCodes.OK, { message: "User approved successfully." }, "Approve")
-  );
+    await prisma.user.update({
+        where: { id },
+        data: { isApprove: "approve" },
+    });
+
+    const email =
+        user.client?.email ||
+        user.provider?.email ||
+        user.superAdmin?.email;
+
+    if (email) {
+        try {
+            await sendApprovalEmail(email, user.fullName, user.licenseNo);
+        } catch (err) {
+            console.error("Approval email failed:", err);
+            // Do not fail approval just because email failed
+        }
+    }
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, { message: "User approved successfully." }, "Approve")
+    );
 });
 
 const rejectUser = asyncHandler(async (req: Request, res: Response) => {
@@ -658,10 +684,14 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
             where: { id: loginUserId }, include: {
                 user: true,
                 clientList: {
-                    include: {
+                    select: {
                         client: {
-                            include: {
-                                user: true
+                            select: {
+                                user: {
+                                    select: {
+                                        fullName: true
+                                    }
+                                }
                             }
                         }
                     }
@@ -825,24 +855,24 @@ const forgotPasswordApi = asyncHandler(async (req: Request, res: Response) => {
         },
     });
 
-  const respnse=  await sendResetPasswordEmail(email, account.user.fullName, token);
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------response",respnse);
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
+    const respnse = await sendResetPasswordEmail(email, account.user.fullName, token);
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------response", respnse);
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
+    console.log("_--------------------------");
 
     return res.status(200).json(
         new ApiResponse(200, { success: true, user: updatedUser }, "Reset link sent successfully")

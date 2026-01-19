@@ -50,7 +50,18 @@ const getAllSingleConservationMessage = asyncHandler(
         skip,
         take: limit,
         include: {
-          sender: { include: { user: true } },
+          sender: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  profileImage: true,
+                },
+              },
+            },
+          },
           readReceipts: {
             where: { providerId: loginUserId },
           },
@@ -280,11 +291,11 @@ const getAllConversations = asyncHandler(
             ...channel,
             lastMessage: lastMessage
               ? {
-                  ...lastMessage,
-                  message: lastMessage.message
-                    ? decryptText(lastMessage.message)
-                    : "",
-                }
+                ...lastMessage,
+                message: lastMessage.message
+                  ? decryptText(lastMessage.message)
+                  : "",
+              }
               : null,
           };
         }),
@@ -398,7 +409,18 @@ const getAllPublicSingleConservationMessage = asyncHandler(
         skip,
         take: limit,
         include: {
-          sender: { include: { user: true } },
+          sender: {
+            select: {
+              id: true,
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  profileImage: true,
+                },
+              },
+            },
+          },
           readReceipts: true,
         },
       });

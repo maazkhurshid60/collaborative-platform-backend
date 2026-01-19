@@ -178,10 +178,6 @@ const updateGroupApi = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
-
-
-
-
 const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) => {
     const { groupId, senderId, message, type } = req.body;
     const files = req.files as Express.Multer.File[];
@@ -261,9 +257,64 @@ const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) =
     }
 });
 
+// const getGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
+//     const { groupId, loginUserId, page = 1, limit = 10 } = req.body;
 
+//     const skip = (page - 1) * limit;
 
+//     // Check if group exists
+//     const isGroupExist = await prisma.groupChat.findFirst({ where: { id: groupId } });
+//     if (!isGroupExist) {
+//         return res.status(StatusCodes.CONFLICT).json(
+//             new ApiResponse(StatusCodes.CONFLICT, { message: `This group does not exist.` }, "Group Not Found")
+//         );
+//     }
 
+//     // Get total messages count for the group (useful for frontend pagination)
+//     const totalMessages = await prisma.chatMessage.count({
+//         where: { groupId }
+//     });
+
+//     // Fetch paginated messages
+//     const groupMessages = await prisma.chatMessage.findMany({
+//         where: { groupId },
+//         orderBy: { createdAt: 'desc' }, // latest messages first
+//         skip,
+//         take: limit,
+//         include: {
+//             sender: { include: { user: true } },
+//             groupReadReceipts: {
+//                 where: { providerId: loginUserId }, // For current user's read status
+//             },
+//         },
+//     });
+
+//     // Reverse to display old → new
+//     const reversedMessages = groupMessages.reverse();
+
+//     // Add readStatus field
+//     // const groupMessagesWithReadStatus = reversedMessages.map(message => ({
+//     //     ...message,
+//     //     readStatus: message.groupReadReceipts.length > 0 ? 'read' : 'unread',
+//     // }));
+//     const groupMessagesWithReadStatus = reversedMessages.map(message => ({
+//         ...message,
+//         message: message.message ? decryptText(message.message) : '',
+//         readStatus: message.groupReadReceipts.length > 0 ? 'read' : 'unread',
+//     }));
+
+//     const unreadMessagesCount = groupMessagesWithReadStatus.filter(msg => msg.readStatus === 'unread').length;
+
+//     return res.status(StatusCodes.OK).json(
+//         new ApiResponse(StatusCodes.OK, {
+//             groupMessages: groupMessagesWithReadStatus,
+//             unreadMessagesCount,
+//             totalMessages,
+//             currentPage: page,
+//             hasMore: skip + limit < totalMessages,
+//         }, 'Fetched group messages successfully')
+//     );
+// });
 const getGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
     const { groupId, loginUserId, page = 1, limit = 10 } = req.body;
 
@@ -288,10 +339,22 @@ const getGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
         orderBy: { createdAt: 'desc' }, // latest messages first
         skip,
         take: limit,
+        // OPTIMIZATION: Only select necessary fields
         include: {
-            sender: { include: { user: true } },
+            sender: {
+                select: {
+                    user: {
+                        select: {
+                            fullName: true,
+                            profileImage: true
+                        }
+                    }
+                }
+            },
+            // If the frontend doesn't use the per-message read status effectively, 
+            // you might even be able to remove this include, but keeping it for logic is fine.
             groupReadReceipts: {
-                where: { providerId: loginUserId }, // For current user's read status
+                where: { providerId: loginUserId },
             },
         },
     });
@@ -299,15 +362,12 @@ const getGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
     // Reverse to display old → new
     const reversedMessages = groupMessages.reverse();
 
-    // Add readStatus field
-    // const groupMessagesWithReadStatus = reversedMessages.map(message => ({
-    //     ...message,
-    //     readStatus: message.groupReadReceipts.length > 0 ? 'read' : 'unread',
-    // }));
     const groupMessagesWithReadStatus = reversedMessages.map(message => ({
         ...message,
         message: message.message ? decryptText(message.message) : '',
         readStatus: message.groupReadReceipts.length > 0 ? 'read' : 'unread',
+        // Optional: Remove groupReadReceipts from the final response if not used directly
+        groupReadReceipts: undefined
     }));
 
     const unreadMessagesCount = groupMessagesWithReadStatus.filter(msg => msg.readStatus === 'unread').length;
@@ -322,7 +382,6 @@ const getGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
         }, 'Fetched group messages successfully')
     );
 });
-
 const getPublicGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
     const { groupId, page = 1, limit = 10 } = req.body;
 
@@ -390,12 +449,28 @@ const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
             }
         },
         include: {
-            provider: { include: { user: true } },
+            provider: {
+                select: {
+                    id: true,
+                    user: {
+                        select: {
+                            fullName: true
+                        }
+                    }
+                }
+            },
             members: {
                 include: {
                     Provider: {
-                        include: {
-                            user: true
+                        select: {
+                            id: true,
+                            email: true,
+                            user: {
+                                select: {
+                                    fullName: true,
+                                    profileImage: true
+                                }
+                            }
                         }
                     }
                 }
@@ -412,7 +487,9 @@ const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
                     id: true,
                     message: true,
                     createdAt: true,
-                    senderId: true
+                    senderId: true,
+                    type: true,
+                    mediaUrl: true
                 }
             });
 
@@ -452,8 +529,6 @@ const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
         new ApiResponse(StatusCodes.OK, { allgroups: enrichedGroups }, 'Fetched all groups.')
     );
 });
-
-
 
 const deleteGroupChannel = asyncHandler(async (req: Request, res: Response) => {
     const { id, createdBy, } = req.body;

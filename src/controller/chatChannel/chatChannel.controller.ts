@@ -78,8 +78,28 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
       OR: [{ providerAId: loginUserId }, { providerBId: loginUserId }],
     },
     include: {
-      providerA: { include: { user: true } },
-      providerB: { include: { user: true } },
+      providerA: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              fullName: true,
+              profileImage: true,
+            },
+          },
+        },
+      },
+      providerB: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              fullName: true,
+              profileImage: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -109,6 +129,15 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
     where: { chatChannelId: { in: channelIds } },
     orderBy: { createdAt: "desc" },
     distinct: ["chatChannelId"],
+    select: {
+      id: true,
+      message: true,
+      createdAt: true,
+      senderId: true,
+      chatChannelId: true,
+      type: true,
+      mediaUrl: true,
+    },
   });
 
   const lastMessageMap = Object.fromEntries(

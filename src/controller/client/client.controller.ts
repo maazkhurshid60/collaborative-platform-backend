@@ -24,6 +24,27 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit;
 
+    // Define safe user selection to reuse
+    const safeUserSelect = {
+        id: true,
+        fullName: true,
+        profileImage: true,
+        gender: true,
+        age: true,
+        contactNo: true,
+        address: true,
+        status: true,
+        licenseNo: true,
+        isLicenseNoValid: true,
+        blockedMembers: true,
+        createdAt: true,
+        updatedAt: true,
+        role: true,
+        isApprove: true,
+        country: true,
+        state: true,
+    };
+
     // 2. Get all clients with user info, documents, and provider list
     const allClients = await prisma.client.findMany({
         skip,
@@ -31,20 +52,53 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
         orderBy: {
             createdAt: 'desc'  // 👈 Get latest first
         },
-        include: {
-            user: true,
+        select: {
+            id: true,
+            isAccountCreatedByOwnClient: true,
+            eSignature: true,
+            email: true,
+            clientShowToOthers: true,
+            createdAt: true,
+            updatedAt: true,
+            userId: true,
+            user: {
+                select: safeUserSelect
+            },
             recievedDocument: {
-                include: {
+                select: {
+                    id: true,
+                    eSignature: true,
+                    isAgree: true,
+                    clientId: true,
+                    providerId: true,
+                    documentId: true,
+                    createdAt: true,
+                    updatedAt: true,
                     provider: {
-                        include: { user: true }
+                        select: {
+                            id: true,
+                            user: {
+                                select: safeUserSelect
+                            }
+                        }
                     },
-                    document: true
+                    document: true // Assuming document model has no sensitive fields
                 }
             },
             providerList: {
-                include: {
+                select: {
+                    id: true,
+                    clientId: true,
+                    providerId: true,
+                    createdAt: true,
+                    updatedAt: true,
                     provider: {
-                        include: { user: true }
+                        select: {
+                            id: true,
+                            user: {
+                                select: safeUserSelect
+                            }
+                        }
                     }
                 }
             }
@@ -53,7 +107,9 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
 
     // 3. Filter out clients that are blocked by the logged-in user
     let filteredClients = allClients.filter(client =>
+        // @ts-ignore
         !loginUser.blockedMembers.includes(client.user.id) &&
+        // @ts-ignore
         !client.user.blockedMembers.includes(loginUser.id)
     );
 
@@ -286,7 +342,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         clientShowToOthers,
         state,
         country,
-        eSignature 
+        eSignature
     } = clientData.data;
 
 
@@ -332,7 +388,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
             prisma.client.update({
                 where: { id: clientId },
                 data: {
-                    eSignature, 
+                    eSignature,
                     clientShowToOthers: clientShowToOthers === "true"
                 },
             })
@@ -354,17 +410,48 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
 
 const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
 
-
     const allClient = await prisma.client.findMany({
         include: {
-            user: true, recievedDocument: { include: { provider: { include: { user: true } }, document: true } }, providerList: {
+            user: true, recievedDocument: {
+                include: {
+
+                    provider: {
+                        include: {
+
+                            user: {
+                                select: {
+                                    address: true,
+                                    contactNo: true,
+                                    fullName: true,
+                                    licenseNo: true,
+                                    profileImage: true,
+                                    role: true,
+                                    status: true,
+                                    id: true,
+                                    age: true,
+                                    gender: true,
+                                    country: true,
+                                    state: true,
+                                    isLicenseNoValid: true,
+                                    blockedMembers: true,
+                                    provider: true,
+                                    client: true,
+                                    receivedNotifications: true,
+                                    sentNotifications: true,
+                                    superAdmin: true,
+                                }
+                            }
+                        }
+                    }, document: true
+                }
+            }, providerList: {
                 include: {
                     provider: {
                         include: { user: true }
                     }
                 }
             }
-        }, 
+        },
     });
 
     res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { totalDocument: allClient.length, clients: allClient }, "All Clients fetched successfully"))
@@ -375,135 +462,135 @@ const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
 
 
 const addClient = asyncHandler(async (req: Request, res: Response) => {
-  if (req.body.age) req.body.age = Number(req.body.age);
-  if (req.body.isAccountCreatedByOwnClient)
-    req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
+    if (req.body.age) req.body.age = Number(req.body.age);
+    if (req.body.isAccountCreatedByOwnClient)
+        req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
 
-  const userParsed = userSchema.safeParse(req.body);
-  if (!userParsed.success) {
-    return res.status(StatusCodes.BAD_REQUEST).json(
-      new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsed.error.errors }, "Validation failed")
-    );
-  }
-
-  const role = req.body.role as Role;
-  if (role !== Role.client) {
-    return res.status(StatusCodes.BAD_REQUEST).json(
-      new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Role must be client." }, "Validation failed")
-    );
-  }
-
-  const clientParsed = clientSchema.safeParse(req.body);
-  if (!clientParsed.success) {
-    return res.status(StatusCodes.BAD_REQUEST).json(
-      new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
-    );
-  }
-
-  const {
-    fullName,
-    gender = "male",
-    age,
-    contactNo,
-    address,
-    status = "active",
-    licenseNo,
-    isApprove,
-    country,
-    state,
-  } = userParsed.data;
-
-  const { email, password, providerId, clientShowToOthers, isAccountCreatedByOwnClient } = req.body;
-
-  const normalizedEmail = String(email).trim().toLowerCase();
-
-  const [existingUser, existingClientEmail] = await Promise.all([
-    prisma.user.findFirst({ where: { licenseNo } }),
-    prisma.client.findFirst({ where: { email: normalizedEmail } }),
-  ]);
-
-  if (existingUser) {
-    return res.status(StatusCodes.CONFLICT).json(
-      new ApiResponse(StatusCodes.CONFLICT, { error: "This license number is already registered." }, "Duplicate Error")
-    );
-  }
-
-  if (existingClientEmail) {
-    return res.status(StatusCodes.CONFLICT).json(
-      new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${normalizedEmail} is already taken.` }, "Duplicate Error")
-    );
-  }
-
-  let profileImageUrl: string | null = null;
-  if (req.file) {
-    const file = req.file as Express.Multer.File & { location?: string };
-    profileImageUrl = file.location ?? null;
-  }
-
-  const hashedPassword = await bcrypt.hash(password ?? "", 10);
-  const clientShowToOthersBool = String(clientShowToOthers) === "true";
-
-  try {
-    const result = await prisma.$transaction(async (tx) => {
-      const userCreated = await tx.user.create({
-        data: {
-          fullName,
-          gender,
-          age,
-          contactNo,
-          address,
-          status,
-          licenseNo,
-          country,
-          state,
-          role: Role.client,
-          isApprove,
-          profileImage: profileImageUrl,
-        },
-      });
-
-      const clientCreated = await tx.client.create({
-        data: {
-          userId: userCreated.id,
-          isAccountCreatedByOwnClient,
-          clientShowToOthers: clientShowToOthersBool,
-          email: normalizedEmail,
-          password: hashedPassword,
-        },
-        include: { user: true },
-      });
-
-      if (providerId) {
-        await tx.providerOnClient.create({
-          data: {
-            providerId,
-            clientId: clientCreated.id,
-          },
-        });
-      }
-
-      return clientCreated;
-    });
-
-    return res.status(StatusCodes.CREATED).json(
-      new ApiResponse(
-        StatusCodes.CREATED,
-        result,
-        "Client Data has been sent to the super admin for verification. Client will receive a verification email once approved."
-      )
-    );
-  } catch (err: any) {
-    if (err?.code === "P2002") {
-      return res.status(StatusCodes.CONFLICT).json(
-        new ApiResponse(StatusCodes.CONFLICT, { error: "Duplicate value. Please use different credentials." }, "Duplicate Error")
-      );
+    const userParsed = userSchema.safeParse(req.body);
+    if (!userParsed.success) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsed.error.errors }, "Validation failed")
+        );
     }
 
-    console.error("addClient transaction error:", err);
-    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-      new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Failed to create client." }, "Internal server error")
-    );
-  }
+    const role = req.body.role as Role;
+    if (role !== Role.client) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Role must be client." }, "Validation failed")
+        );
+    }
+
+    const clientParsed = clientSchema.safeParse(req.body);
+    if (!clientParsed.success) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
+        );
+    }
+
+    const {
+        fullName,
+        gender = "male",
+        age,
+        contactNo,
+        address,
+        status = "active",
+        licenseNo,
+        isApprove,
+        country,
+        state,
+    } = userParsed.data;
+
+    const { email, password, providerId, clientShowToOthers, isAccountCreatedByOwnClient } = req.body;
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    const [existingUser, existingClientEmail] = await Promise.all([
+        prisma.user.findFirst({ where: { licenseNo } }),
+        prisma.client.findFirst({ where: { email: normalizedEmail } }),
+    ]);
+
+    if (existingUser) {
+        return res.status(StatusCodes.CONFLICT).json(
+            new ApiResponse(StatusCodes.CONFLICT, { error: "This license number is already registered." }, "Duplicate Error")
+        );
+    }
+
+    if (existingClientEmail) {
+        return res.status(StatusCodes.CONFLICT).json(
+            new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${normalizedEmail} is already taken.` }, "Duplicate Error")
+        );
+    }
+
+    let profileImageUrl: string | null = null;
+    if (req.file) {
+        const file = req.file as Express.Multer.File & { location?: string };
+        profileImageUrl = file.location ?? null;
+    }
+
+    const hashedPassword = await bcrypt.hash(password ?? "", 10);
+    const clientShowToOthersBool = String(clientShowToOthers) === "true";
+
+    try {
+        const result = await prisma.$transaction(async (tx) => {
+            const userCreated = await tx.user.create({
+                data: {
+                    fullName,
+                    gender,
+                    age,
+                    contactNo,
+                    address,
+                    status,
+                    licenseNo,
+                    country,
+                    state,
+                    role: Role.client,
+                    isApprove,
+                    profileImage: profileImageUrl,
+                },
+            });
+
+            const clientCreated = await tx.client.create({
+                data: {
+                    userId: userCreated.id,
+                    isAccountCreatedByOwnClient,
+                    clientShowToOthers: clientShowToOthersBool,
+                    email: normalizedEmail,
+                    password: hashedPassword,
+                },
+                include: { user: true },
+            });
+
+            if (providerId) {
+                await tx.providerOnClient.create({
+                    data: {
+                        providerId,
+                        clientId: clientCreated.id,
+                    },
+                });
+            }
+
+            return clientCreated;
+        });
+
+        return res.status(StatusCodes.CREATED).json(
+            new ApiResponse(
+                StatusCodes.CREATED,
+                result,
+                "Client Data has been sent to the super admin for verification. Client will receive a verification email once approved."
+            )
+        );
+    } catch (err: any) {
+        if (err?.code === "P2002") {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, { error: "Duplicate value. Please use different credentials." }, "Duplicate Error")
+            );
+        }
+
+        console.error("addClient transaction error:", err);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Failed to create client." }, "Internal server error")
+        );
+    }
 });
 
 const addExistingClientToProvider = asyncHandler(async (req: Request, res: Response) => {
@@ -669,9 +756,9 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
     if (email !== isClientExist.email.trim().toLowerCase()) {
         const isEmailExist = await prisma.client.findFirst({
             where: {
-                email: email, 
+                email: email,
                 id: {
-                    not: clientId, 
+                    not: clientId,
                 },
             },
         });
