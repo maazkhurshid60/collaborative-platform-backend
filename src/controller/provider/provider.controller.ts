@@ -10,7 +10,6 @@ import { providerSchema } from "../../schema/provider/provider.schema";
 const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) => {
     const { loginUserId } = req.body;
 
-    // Get the login user details
     const loginUser = await prisma.user.findUnique({ where: { id: loginUserId } });
 
     if (!loginUser) {
@@ -34,7 +33,6 @@ const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) 
             }
         }
     })
-    //Only those providers will be shown which are not blocked by the login user
     const filteredProviders = allProviders.filter(provider => !loginUser.blockedMembers.includes(provider.user.id) && provider.user.id !== loginUserId)
     const totalDocument = filteredProviders.length
 
@@ -70,7 +68,6 @@ const deletProvider = asyncHandler(async (req: Request, res: Response) => {
 
 const updateProvider = asyncHandler(async (req: Request, res: Response) => {
 
-    // Validate data
     const providerData = providerSchema.safeParse(req.body);
     if (!providerData.success) {
         return res.status(StatusCodes.BAD_REQUEST).json(
@@ -145,8 +142,6 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
         new ApiResponse(StatusCodes.OK, { updatedData }, "Provider updated successfully")
     );
 });
-
-
 
 
 export { getAllUnblockProviders, deletProvider, updateProvider, getTotalProviders }

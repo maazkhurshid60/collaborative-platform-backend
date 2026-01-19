@@ -14,7 +14,6 @@ export const inviteProviderSignupApi = asyncHandler(async (req: Request, res: Re
     );
   }
 
-  // Get inviter name (Provider -> user)
   const inviter = await prisma.provider.findFirst({
     where: { id: invitedByUserId },
     include: { user: true },
@@ -22,7 +21,6 @@ export const inviteProviderSignupApi = asyncHandler(async (req: Request, res: Re
 
   const invitedByName = inviter?.user?.fullName || "A Kolabme user";
 
-  // Optional but recommended: if provider already exists, return conflict
   const existingProvider = await prisma.provider.findFirst({
     where: { email: invitationEmail },
   });

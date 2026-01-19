@@ -163,27 +163,24 @@
 
 
 
-// src/app.ts
+
+
 
 import cors from "cors";
 import dotenv from "dotenv";
 
-// Security middleware imports
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import hpp from "hpp";
 
-// Primary Imports
 import cookieParser from "cookie-parser";
 import express from "express";
 import path from "path";
 
-// Middlewares Imports
 import { ALLOWED_HEADERS, ALLOWED_METHODS } from "./utils/constants";
 import morganMiddleware from "./middlewares/morgan.middleware";
 import { authJWT } from "./middlewares/auth.middleware";
 
-// Routers Imports
 import healthCheckRouter from "./route/healthCheck/healthCheck.route";
 import authRouter from "./route/auth/auth.route";
 import clientRouter from "./route/client/client.route";
@@ -198,16 +195,13 @@ import publicChatRouter from "./route/chat/public.chat.route";
 import superAdminRouter from "./route/admin/superAdmin.route";
 import providerInviteRouter from "./route/invitationEmail/providerInvite.routes"
 
-// Declaration of Express App
 const app = express();
 app.set("trust proxy", 1);
 
 dotenv.config({ path: ".env" });
 
-// Helmet
 app.use(helmet());
 
-// Rate limiter middleware
 const limitter = rateLimit({
   max: 100000,
   windowMs: 60 * 60 * 1000,
@@ -215,7 +209,6 @@ const limitter = rateLimit({
   validate: true,
 });
 
-// ✅ CORS (ONLY ONE) — supports cookies/credentials
 const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
@@ -223,12 +216,12 @@ const allowedOrigins = [
   "https://collaborative-platform-frontend.vercel.app",
   "https://www.collaborateme.com",
   "https://collaborateme.com",
+  "https://app.kolabme.com/"
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (Postman, curl, server-to-server)
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) return callback(null, true);
@@ -241,22 +234,17 @@ app.use(
   })
 );
 
-// Proper preflight handling
 app.options("*", cors());
 
-// Prevent parameter pollution
 app.use(hpp());
 
-// Common middleware
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morganMiddleware);
 
-// Rate limit APIs
 app.use("/api", limitter);
 
-// Serve uploaded documents statically
 app.use("/uploads/docs", express.static(path.join(__dirname, "..", "uploads/docs")));
 
 app.use(
@@ -274,7 +262,6 @@ app.use(
   })
 );
 
-// Routes 
 app.use("/api/v1/health", healthCheckRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/client", clientRouter);
@@ -290,8 +277,10 @@ app.use("/api/v1/invite", authJWT, invitationEmailRouter);
 app.use("/api/v1/individual-invites", authJWT, providerInviteRouter);
 
 
-// ✅ New Super Admin route
-app.use("/api/v1/super-admin", superAdminRouter);
+app.use("/api/v1/super-admin",authJWT, superAdminRouter);
 
 
 export default app;
+
+
+
