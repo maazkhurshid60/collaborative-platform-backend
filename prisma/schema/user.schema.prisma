@@ -26,6 +26,7 @@ model User {
   // Relations
   sentNotifications     Notification[] @relation("SenderRelation")
   receivedNotifications Notification[] @relation("RecipientRelation")
+  subscription          Subscription?
 }
 
 enum Role {

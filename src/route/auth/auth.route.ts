@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { blockUserApi, changePasswordApi, deleteMeAccountApi, getAllValidUsersApi, findByLicenseNo, forgotPasswordApi, getAllUsersApi, getMeApi, logInApi, logoutApi, resetPasswordApi, signupApi, unblockUserApi, updateMeApi, approveValidUser, rejectUser, restoreUser } from "../../controller/auth/auth.controller";
+import { blockUserApi, changePasswordApi, deleteMeAccountApi, getAllValidUsersApi, findByLicenseNo, forgotPasswordApi, getAllUsersApi, getMeApi, logInApi, logoutApi, resetPasswordApi, signupApi, unblockUserApi, updateMeApi, approveValidUser, rejectUser, restoreUser, startTrialApi, verifyInvitationToken } from "../../controller/auth/auth.controller";
 import { authJWT } from "../../middlewares/auth.middleware";
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
 const authRouter = Router()
@@ -28,6 +28,8 @@ authRouter.get("/get-all-valid-users", authJWT, getAllValidUsersApi)
 authRouter.patch("/change-password", authJWT, changePasswordApi)
 authRouter.post("/forgot-password", forgotPasswordApi)
 authRouter.patch("/reset-password/:token", resetPasswordApi)
+authRouter.post("/start-trial", startTrialApi)
+authRouter.post("/verify-invitation", verifyInvitationToken)
 
 
 export default authRouter

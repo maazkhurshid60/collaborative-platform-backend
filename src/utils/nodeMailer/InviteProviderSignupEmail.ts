@@ -4,8 +4,9 @@ import { getFrontendUrl } from "./getFrontendUrl";
 export const sendProviderSignupInviteEmail = async (
   toEmail: string,
   invitedByName: string,
+  token: string,
 ) => {
-  const signupUrl = `${getFrontendUrl()}/provider-signup`;
+  const signupUrl = `${getFrontendUrl()}/provider-signup?token=${encodeURIComponent(token)}`;
 
   const htmlContent = `
     <div style="font-family: sans-serif; padding: 20px;">

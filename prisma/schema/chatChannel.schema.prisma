@@ -4,6 +4,7 @@ model ChatChannel {
   providerBId String
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @default(now())
+  isPinned    Boolean       @default(false)
   providerA   Provider      @relation("chatA", fields: [providerAId], references: [id], onDelete: Cascade)
   providerB   Provider      @relation("chatB", fields: [providerBId], references: [id], onDelete: Cascade)
   messages    ChatMessage[]

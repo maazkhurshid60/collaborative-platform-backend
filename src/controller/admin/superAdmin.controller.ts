@@ -29,7 +29,7 @@ export const getSuperAdminById = asyncHandler(async (req: Request, res: Response
   const { id } = req.params;
 
   const superAdmin = await prisma.superAdmin.findUnique({
-    where: { id },
+    where: { id: id as string },
     include: { user: true },
   });
 
@@ -90,7 +90,7 @@ export const updateSuperAdminById = asyncHandler(async (req: Request, res: Respo
 
   try {
     const superAdmin = await prisma.superAdmin.update({
-      where: { id },
+      where: { id: id as string },
       data: adminData,
       include: { user: true },
     });

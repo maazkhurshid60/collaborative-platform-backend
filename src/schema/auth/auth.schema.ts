@@ -43,8 +43,7 @@ export const providerSchema = userSchema.extend({
 
 
     department: z.string().nonempty("Department is required"),
-
-
+    inviteToken: z.string().optional(),
 })
 // Super Admin Schema (Extends User)
 export const superAdminSchema = userSchema.extend({
@@ -59,19 +58,19 @@ export const loginSchema = z.object({
     email: z.string().nonempty("Email is required").email("Invalid email format"),
     password: z
         .string().nonempty("Password is required")
-        .min(10, { message: "Password not less then 10letters" })
+        .min(5, { message: "Password not less then 5letters" })
         .max(50, "Password not more then 50letters"),
 })
 
 
 export const updateClientSchema = z.object({
     clientId: z.string().uuid(), // To identify which client to update
-    
+
     // Fields for the Client model
     email: z.string().email().optional(),
     eSignature: z.string().optional(),
     clientShowToOthers: z.boolean().optional(),
-    
+
     // Fields for the related User model
     fullName: z.string().min(2).optional(),
     gender: z.string().optional(),

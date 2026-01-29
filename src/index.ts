@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config({ path: ".env" });
+
 import cluster from "cluster";
 import http from "http";
 import { Server } from "http";
@@ -34,12 +37,12 @@ if (shouldUseCluster && cluster.isPrimary) {
 
 } else {
     const server = http.createServer(app);
-    
+
     // Initialize Socket.IO with the created server
     setupSocket(server);
-    
+
     const PORT = process.env.PORT || 3000;
-    
+
     // Start the server
     server.listen(PORT, () => {
         const processInfo = shouldUseCluster ? `Worker ${process.pid}` : `Single process ${process.pid}`;

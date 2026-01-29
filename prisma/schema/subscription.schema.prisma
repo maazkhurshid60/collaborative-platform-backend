@@ -1,0 +1,27 @@
+enum PlanType {
+    STANDARD
+    PRO
+}
+
+enum SubscriptionStatus {
+    TRIALING
+    ACTIVE
+    CANCELED
+    PAST_DUE
+}
+
+model Subscription {
+    id                   String             @id @default(uuid())
+    userId               String             @unique
+    user                 User               @relation(fields: [userId], references: [id])
+    stripeCustomerId     String             @unique // for prevent duplicates
+    stripeSubscriptionId String?            @unique() // for prevent deuplicates
+    plan                 PlanType           @default(STANDARD)
+    status               SubscriptionStatus @default(TRIALING)
+    trailStart           DateTime?
+    trailEnd             DateTime?
+    currentPeriodEnd     DateTime?
+    cancelAtPeriodEnd    Boolean            @default(false)
+    createdAt            DateTime           @default(now())
+    updatedAt            DateTime           @updatedAt
+}

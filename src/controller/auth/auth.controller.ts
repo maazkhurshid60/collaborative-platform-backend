@@ -11,77 +11,62 @@ import { cookiesOptions } from "../../utils/constants";
 import { generateResetToken } from "../../utils/generateResetPasswordToken";
 import { sendResetPasswordEmail } from "../../utils/nodeMailer/ResetPassword";
 import crypto from "crypto";
-import { sendVerificationEmail } from "../../utils/nodeMailer/VerificationEmail";
-
+import { stripe, STRIPE_PRICES } from "../../utils/stripe/stripe";
 import { sendApprovalEmail } from "../../utils/nodeMailer/sendApprovalEmail";
 
 
 
 
 const signupApi = asyncHandler(async (req: Request, res: Response) => {
-    // Validate User Schema
+    // 1. Validate User Schema
     const userParsedData = userSchema.safeParse(req.body);
     if (!userParsedData.success) {
         return res.status(StatusCodes.BAD_REQUEST).json(
             new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
         );
     }
-    //get data for user
-    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state, publicKey,
-        privateKey } = userParsedData.data;
 
-    // Check if User Exists
+    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state, publicKey, privateKey } = userParsedData.data;
+
+    // 2. Check if User (LicenseNo) Exists
     const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
     if (existingUser) {
-
         return res.status(StatusCodes.CONFLICT).json(
             new ApiResponse(StatusCodes.CONFLICT, { error: `License Number ${licenseNo} is already registered.` }, "Validation failed")
         );
     }
-    const clientParsed = clientSchema.safeParse(req.body);
-    if (!clientParsed.success) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
-        );
-    }
-    //get client data
-    const { isAccountCreatedByOwnClient, email, password } = clientParsed.data;
-    //check duplicate client
-    const existingClient = await prisma.client.findFirst({ where: { email } });
-    if (existingClient) {
-        return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-        );
-    }
 
+    // 3. Prepare Role Data & Pre-validate Uniqueness
+    let roleData: any = {};
+    let createRoleCallback: (startTransaction: any, userId: string) => Promise<any>;
 
-    const userData: any = {
-        fullName, gender, age, contactNo, address, status, licenseNo, role, isApprove: "pending", country, state, publicKey, privateKey
-    };
-    if (gender !== undefined) userData.gender = gender;
-    if (age !== undefined) userData.age = age;
-    if (contactNo !== undefined) userData.contactNo = contactNo;
-    if (address !== undefined) userData.address = address;
-    if (status !== undefined) userData.status = status;
-
-    const userCreated = await prisma.user.create({
-        data: userData,
-    });
-
-    // Handle Client Signup
     if (role === Role.client) {
+        const clientParsed = clientSchema.safeParse(req.body);
+        if (!clientParsed.success) {
+            return res.status(StatusCodes.BAD_REQUEST).json(
+                new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
+            );
+        }
+        const { isAccountCreatedByOwnClient, email, password } = clientParsed.data;
 
+        // Check duplicate client email
+        const existingClient = await prisma.client.findFirst({ where: { email } });
+        if (existingClient) {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
+            );
+        }
 
-        //hashing the client's password
         const hashedPassword = await bcrypt.hash(password ?? "", 10);
 
-        const clientCreated = await prisma.client.create({ data: { userId: userCreated.id, isAccountCreatedByOwnClient, email, password: hashedPassword }, include: { user: true } });
-        return res.status(StatusCodes.CREATED).json(
-            new ApiResponse(StatusCodes.CREATED, clientCreated, "Your account has been sent to the super admin for verification. You will receive a verification email once approved, after which you'll be able to log in.")
-        );
-    }
-    // Handle Provider Signup
-    else if (role === Role.provider) {
+        createRoleCallback = async (tx, userId) => {
+            return await tx.client.create({
+                data: { userId, isAccountCreatedByOwnClient, email, password: hashedPassword },
+                include: { user: true }
+            });
+        };
+
+    } else if (role === Role.provider) {
         const providerParsed = providerSchema.safeParse(req.body);
         if (!providerParsed.success) {
             return res.status(StatusCodes.BAD_REQUEST).json(
@@ -89,15 +74,9 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
             );
         }
 
-        const { department, email, password } = providerParsed.data;
-        const existingUserByEmail = await prisma.provider.findFirst({ where: { email } });
-        if (existingUserByEmail) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email ${email} is already registered.` }, "Validation failed")
-            );
-        }
+        const { department, email, password, inviteToken } = providerParsed.data;
 
-        const hashedPassword = await bcrypt.hash(password ?? "", 10);
+        // Check duplicate provider email
         const existingProvider = await prisma.provider.findFirst({ where: { email } });
         if (existingProvider) {
             return res.status(StatusCodes.CONFLICT).json(
@@ -105,13 +84,17 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
             );
         }
 
-        const providerCreated = await prisma.provider.create({ data: { userId: userCreated.id, department, email, password: hashedPassword }, include: { user: true } });
-        return res.status(StatusCodes.CREATED).json(
-            new ApiResponse(StatusCodes.CREATED, providerCreated, "Your account has been sent to the super admin for verification. You will receive a verification email once approved, after which you'll be able to log in.")
-        );
-    }
-    // Handle Super Admin Signup
-    else if (role === Role.superadmin) {
+        const hashedPassword = await bcrypt.hash(password ?? "", 10);
+        roleData = { inviteToken, email }; // Store for post-transaction logic
+
+        createRoleCallback = async (tx, userId) => {
+            return await tx.provider.create({
+                data: { userId, department, email, password: hashedPassword },
+                include: { user: true }
+            });
+        };
+
+    } else if (role === Role.superadmin) {
         const superAdminParsed = superAdminSchema.safeParse(req.body);
         if (!superAdminParsed.success) {
             return res.status(StatusCodes.BAD_REQUEST).json(
@@ -120,28 +103,105 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
         }
 
         const { email, password } = superAdminParsed.data;
-        const existingUserByEmail = await prisma.superAdmin.findFirst({ where: { email } });
-        if (existingUserByEmail) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email ${email} is already registered.` }, "Validation failed")
-            );
-        }
 
-        const hashedPassword = await bcrypt.hash(password ?? "", 10);
-        const existingProvider = await prisma.superAdmin.findFirst({ where: { email } });
-        if (existingProvider) {
+        // Check duplicate superadmin email
+        const existingSuperAdmin = await prisma.superAdmin.findFirst({ where: { email } });
+        if (existingSuperAdmin) {
             return res.status(StatusCodes.CONFLICT).json(
                 new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
             );
         }
 
-        const providerCreated = await prisma.superAdmin.create({ data: { userId: userCreated.id, email, password: hashedPassword }, include: { user: true } });
-        return res.status(StatusCodes.CREATED).json(
-            new ApiResponse(StatusCodes.CREATED, providerCreated, "Your account has been sent to the super admin for verification. You will receive a verification email once approved, after which you'll be able to log in.")
+        const hashedPassword = await bcrypt.hash(password ?? "", 10);
+
+        createRoleCallback = async (tx, userId) => {
+            return await tx.superAdmin.create({
+                data: { userId, email, password: hashedPassword },
+                include: { user: true }
+            });
+        };
+    } else {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Invalid Role" }, "Validation failed")
         );
     }
 
+    // 4. Atomic Creation Transaction
+    const result = await prisma.$transaction(async (tx) => {
+        const userData: any = {
+            fullName, gender, age, contactNo, address, status, licenseNo, role, isApprove: "pending", country, state, publicKey, privateKey
+        };
 
+        // Optional fields
+        if (gender !== undefined) userData.gender = gender;
+        if (age !== undefined) userData.age = age;
+        if (contactNo !== undefined) userData.contactNo = contactNo;
+        if (address !== undefined) userData.address = address;
+        if (status !== undefined) userData.status = status;
+
+        const userCreated = await tx.user.create({ data: userData });
+
+        const roleCreated = await createRoleCallback(tx, userCreated.id);
+
+        return roleCreated;
+    });
+
+    // 5. Post-Transaction Logic (e.g., Invitations for Providers)
+    if (role === Role.provider && roleData.inviteToken) {
+        try {
+            const invitation = await prisma.invitation.findUnique({
+                where: { token: roleData.inviteToken, status: "PENDING" }
+            });
+
+            if (invitation && invitation.email === roleData.email) {
+                const inviterId = invitation.invitedById;
+                const newProviderId = result.id;
+
+                const inviter = await prisma.provider.findUnique({ where: { id: inviterId } });
+
+                if (inviter && inviterId !== newProviderId) {
+                    const [a, b] = [newProviderId, inviterId].sort();
+                    await prisma.chatChannel.upsert({
+                        where: {
+                            providerAId_providerBId: {
+                                providerAId: a,
+                                providerBId: b
+                            }
+                        },
+                        update: {},
+                        create: {
+                            providerAId: a,
+                            providerBId: b
+                        }
+                    });
+
+                    await prisma.invitation.update({
+                        where: { id: invitation.id },
+                        data: { status: "ACCEPTED" }
+                    });
+
+                    console.log(`✅ Automatic chat channel created and invitation accepted for token: ${roleData.inviteToken}`);
+                }
+            } else {
+                console.warn(`⚠️ Invalid, mismatched or already accepted invitation token: ${roleData.inviteToken}`);
+            }
+        } catch (chatError) {
+            console.error("❌ Error during invitation processing:", chatError);
+        }
+    }
+
+    // 6. Response
+    const message = role === Role.client
+        ? "Your account has been sent to the super admin for verification. You will receive a verification email once approved, after which you'll be able to log in."
+        : "Your account has been created successfully. Please log in to continue.";
+
+    if (result && (result as any).password) {
+        delete (result as any).password;
+    }
+
+    return res.status(StatusCodes.CREATED).json(
+        new ApiResponse(StatusCodes.CREATED, result, message)
+    );
 });
 const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
     const { loginUserId } = req.body;
@@ -267,6 +327,10 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         });
 
 
+        if (clientUpdate && (clientUpdate as any).password) {
+            delete (clientUpdate as any).password;
+        }
+
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, clientUpdate, "User updated successfully")
         );
@@ -308,6 +372,10 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
             include: { user: true }
         });
 
+        if (providerUpdate && (providerUpdate as any).password) {
+            delete (providerUpdate as any).password;
+        }
+
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, providerUpdate, "User updated successfully")
         );
@@ -346,6 +414,10 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
             { expiresIn: "45m" }
         );
 
+        if (superAdmin && (superAdmin as any).password) {
+            delete (superAdmin as any).password;
+        }
+
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, { token, user: superAdmin }, "Login successful")
         );
@@ -358,7 +430,6 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
             user: true,
             clientList: {
                 select: {
-
                     client: {
                         select: {
                             user: {
@@ -406,6 +477,10 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
         jwtSecret,
         { expiresIn: "45m" }
     );
+
+    if (user && (user as any).password) {
+        delete (user as any).password;
+    }
 
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, { token, user }, "Login successful")
@@ -638,8 +713,6 @@ const logoutApi = asyncHandler(async (req: Request, res: Response) => {
         .json(new ApiResponse(StatusCodes.OK, {}, "Logout successful"));
 });
 
-
-
 const deleteMeAccountApi = asyncHandler(async (req: Request, res: Response) => {
     const { loginUserId } = req.body
 
@@ -657,9 +730,6 @@ const deleteMeAccountApi = asyncHandler(async (req: Request, res: Response) => {
     );
 
 })
-
-
-
 const getMeApi = asyncHandler(async (req: Request, res: Response) => {
     const { loginUserId, role } = req.body
 
@@ -671,6 +741,10 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
         //     where: { userId: loginUserId },
         //     include: { user: true }
         // });
+
+        if (getMeDetails && (getMeDetails as any).password) {
+            delete (getMeDetails as any).password;
+        }
 
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, { data: getMeDetails }, "OK")
@@ -699,13 +773,15 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
             }
         })
 
+        if (getMeDetails && (getMeDetails as any).password) {
+            delete (getMeDetails as any).password;
+        }
+
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, { data: getMeDetails }, "OK")
         );
     }
 });
-
-
 const findByLicenseNo = asyncHandler(async (req: Request, res: Response) => {
     const { licenseNo } = req.body
     if (licenseNo === "") {
@@ -717,13 +793,17 @@ const findByLicenseNo = asyncHandler(async (req: Request, res: Response) => {
     const licenseNoFound = await prisma.user.findFirst({
         where: { licenseNo }, include: { client: true }
     })
+
+    if (licenseNoFound && licenseNoFound.client && (licenseNoFound.client as any).password) {
+        delete (licenseNoFound.client as any).password;
+    }
+
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, { data: licenseNoFound }, "Record found.")
     );
 
 
 })
-
 
 const changePasswordApi = asyncHandler(async (req: Request, res: Response) => {
     const { oldPassword,
@@ -884,7 +964,7 @@ const resetPasswordApi = asyncHandler(async (req: Request, res: Response) => {
     const { token } = req.params;
     const { newPassword } = req.body;
 
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const hashedToken = crypto.createHash("sha256").update(token as string).digest("hex");
 
     const user = await prisma.user.findFirst({
         where: {
@@ -937,10 +1017,136 @@ const resetPasswordApi = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
+const startTrialApi = asyncHandler(async (req: Request, res: Response) => {
+    const { newProviderId, invitedById } = req.body;
 
+    if (!newProviderId) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, null, "newProviderId is required.")
+        );
+    }
+
+    try {
+        const provider = await prisma.provider.findUnique({
+            where: { id: newProviderId },
+            include: { user: true }
+        });
+
+        if (!provider) {
+            return res.status(StatusCodes.NOT_FOUND).json(
+                new ApiResponse(StatusCodes.NOT_FOUND, null, "Provider not found.")
+            );
+        }
+
+        // 1. Create or retrieve Stripe Customer
+        let stripeCustomerId: string;
+        const customer = await stripe.customers.create({
+            email: provider.email,
+            name: provider.user.fullName,
+            metadata: { userId: provider.user.id }
+        });
+        stripeCustomerId = customer.id;
+
+        // 2. Create Stripe trial subscription
+        const stripeSubscription = await stripe.subscriptions.create({
+            customer: stripeCustomerId,
+            items: [{ price: STRIPE_PRICES.STANDARD.MONTHLY }],
+            trial_period_days: 14,
+            metadata: { userId: provider.user.id }
+        });
+
+        // 3. Create Subscription in DB
+        await prisma.subscription.create({
+            data: {
+                userId: provider.user.id,
+                stripeCustomerId: stripeCustomerId,
+                stripeSubscriptionId: stripeSubscription.id,
+                plan: "STANDARD",
+                status: "TRIALING",
+                trailStart: new Date(),
+                // trailEnd: new Date(stripeSubscription.current_period_end * 1000),
+                // currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
+            }
+        });
+
+        // 4. Handle Invited Chat Initialization
+        if (invitedById) {
+            const [a, b] = [newProviderId, invitedById].sort();
+            const existingChannel = await prisma.chatChannel.findFirst({
+                where: { providerAId: a, providerBId: b }
+            });
+
+            if (!existingChannel) {
+                await prisma.chatChannel.create({
+                    data: {
+                        providerAId: a,
+                        providerBId: b,
+                        isPinned: true
+                    }
+                });
+            } else {
+                await prisma.chatChannel.update({
+                    where: { id: existingChannel.id },
+                    data: { isPinned: true }
+                });
+            }
+        }
+
+        return res.status(StatusCodes.OK).json(
+            new ApiResponse(StatusCodes.OK, { message: "Trial started successfully." }, "OK")
+        );
+    } catch (error) {
+        console.error("Start trial error:", error);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, null, "Failed to start trial.")
+        );
+    }
+});
+
+const verifyInvitationToken = asyncHandler(async (req: Request, res: Response) => {
+    const { token } = req.body;
+    if (!token) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, null, "Token is required.")
+        );
+    }
+    const invitation = await prisma.invitation.findUnique({
+        where: {
+            token: token
+        },
+        include: {
+            invitedBy: {
+                select: {
+                    user: {
+                        select: {
+                            fullName: true,
+                            address: true,
+                            country: true,
+                            state: true,
+                            licenseNo: true
+                        }
+                    }
+                }
+            }
+        }
+    })
+
+    if (!invitation || invitation.status !== "PENDING") {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, null, "Invalid or expired token.")
+        )
+    }
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, {
+            email: invitation.email,
+            invitedByName: invitation.invitedBy.user.fullName,
+        }, "OK")
+    )
+})
 
 
 export {
     signupApi, logInApi, blockUserApi, unblockUserApi, logoutApi, updateMeApi, deleteMeAccountApi, approveValidUser, rejectUser, restoreUser,
-    getMeApi, getAllUsersApi, findByLicenseNo, changePasswordApi, forgotPasswordApi, resetPasswordApi, getAllValidUsersApi
+    getMeApi, getAllUsersApi, findByLicenseNo, changePasswordApi, forgotPasswordApi, resetPasswordApi, getAllValidUsersApi, startTrialApi, verifyInvitationToken
 };

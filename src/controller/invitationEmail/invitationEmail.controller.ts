@@ -6,6 +6,7 @@ import { ApiResponse } from "../../utils/apiResponse";
 
 const sendInvitationEmailApi = asyncHandler(async (req: Request, res: Response) => {
     const { invitationEmail, providerName, invitationChatLink } = req.body;
+    console.log(invitationEmail, providerName, invitationChatLink);
 
     if (!invitationEmail || !providerName) {
         return res.status(400).json({ success: false, message: "Missing email or provider name." });

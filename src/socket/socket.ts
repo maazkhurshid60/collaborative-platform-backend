@@ -1,8 +1,5 @@
-
-
 import { Server } from 'socket.io';
 import prisma from '../db/db.config';
-import { decryptText } from '../utils/encryptedMessage/EncryptedMessage';
 
 let io: Server;
 
@@ -143,4 +140,5 @@ export function setupSocket(server: any) {
 }
 
 export { io };
+
 
