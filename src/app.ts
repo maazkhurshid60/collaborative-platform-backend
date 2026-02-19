@@ -33,7 +33,7 @@ app.set("trust proxy", 1);
 app.use(helmet());
 
 const limitter = rateLimit({
-  max: 100000,
+  max: 1000, // Reduced from 100,000 for better security
   windowMs: 60 * 60 * 1000,
   message: "Too many requests from this IP please try again in an hour",
   validate: true,
@@ -69,28 +69,26 @@ app.options("*", cors());
 app.use(hpp());
 
 app.use(cookieParser());
-app.use(express.json());
+import subscriptionRouter from "./route/subscription/subscription.route";
+
+// ... previous imports
+
+// Capture raw body for Stripe Webhooks
+app.use(express.json({
+  verify: (req: any, res, buf) => {
+    if (req.originalUrl.includes('/webhook')) {
+      req.rawBody = buf;
+    }
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(morganMiddleware);
 
 app.use("/api", limitter);
 
-app.use("/uploads/docs", express.static(path.join(__dirname, "..", "uploads/docs")));
+app.use("/uploads/docs", authJWT, express.static(path.join(__dirname, "..", "uploads/docs")));
 
-app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "..", "uploads"), {
-    setHeaders: (res) => {
-      res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-
-      const origin = res.req.headers.origin as string | undefined;
-      if (origin && allowedOrigins.includes(origin)) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-        res.setHeader("Access-Control-Allow-Credentials", "true");
-      }
-    },
-  })
-);
+// ... static files
 
 app.use("/api/v1/health", healthCheckRouter);
 app.use("/api/v1/auth", authRouter);
@@ -105,7 +103,20 @@ app.use("/api/v1/document", authJWT, documentRouter);
 app.use("/api/v1/notification", authJWT, notificationRouter);
 app.use("/api/v1/invite", authJWT, invitationEmailRouter);
 app.use("/api/v1/individual-invites", authJWT, providerInviteRouter);
+app.use("/api/v1/subscription", subscriptionRouter); // Added Subscription Router
 
 app.use("/api/v1/super-admin", authJWT, superAdminRouter);
+
+// Global Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+
+  res.status(statusCode).json({
+    success: false,
+    message,
+    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+  });
+});
 
 export default app;

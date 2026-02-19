@@ -4,7 +4,7 @@ import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { clientSchema } from "../../schema/client/client.schema";
-import { Role } from "@prisma/client";
+import { Role, Gender, Approve } from "@prisma/client";
 import { userSchema } from "../../schema/auth/auth.schema";
 import bcrypt from "bcrypt";
 
@@ -35,7 +35,7 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
         address: true,
         status: true,
         licenseNo: true,
-        isLicenseNoValid: true,
+        isLicenseValid: true,
         blockedMembers: true,
         createdAt: true,
         updatedAt: true,
@@ -43,6 +43,7 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
         isApprove: true,
         country: true,
         state: true,
+        email: true,
     };
 
     // 2. Get all clients with user info, documents, and provider list
@@ -56,15 +57,15 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
             id: true,
             isAccountCreatedByOwnClient: true,
             eSignature: true,
-            email: true,
             clientShowToOthers: true,
+            createdByProviderId: true,
             createdAt: true,
             updatedAt: true,
             userId: true,
             user: {
                 select: safeUserSelect
             },
-            recievedDocument: {
+            receivedDocument: {
                 select: {
                     id: true,
                     eSignature: true,
@@ -124,7 +125,10 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
 
 
 const deletClient = asyncHandler(async (req: Request, res: Response) => {
-    const { clientId, providerId } = req.body;
+    const { clientId } = req.body;
+
+    // 0. Ensure user is authenticated and is a provider
+    const user = (req as any).user;
 
     // 1. Check if client exists
     const client = await prisma.client.findUnique({ where: { id: clientId } });
@@ -134,11 +138,27 @@ const deletClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    // 2. Check if the provider-client relation exists
+    // 2. Get the Provider ID associated with the current User
+    // The frontend sends the Token, which gives us the User ID.
+    // We must resolve the actual Provider entity ID from the User ID.
+    const provider = await prisma.provider.findUnique({
+        where: { userId: user.id }
+    });
+
+    if (!provider) {
+        // If the user is found but isn't a provider (e.g. strict role check passed but data missing), deny
+        // Or if superAdmin is trying to "unlink", that's a different flow. 
+        // Assuming this endpoint is strict for Providers unlinking their Clients.
+        return res.status(StatusCodes.FORBIDDEN).json(
+            new ApiResponse(StatusCodes.FORBIDDEN, { error: "Action allowed for providers only." }, "")
+        );
+    }
+
+    // 3. Check if the provider-client relation exists using the resolved Provider ID
     const link = await prisma.providerOnClient.findFirst({
         where: {
             clientId,
-            providerId
+            providerId: provider.id
         }
     });
 
@@ -148,7 +168,7 @@ const deletClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    // 3. Delete the link only (not the actual client/user)
+    // 4. Delete the link only (not the actual client/user)
     await prisma.providerOnClient.delete({
         where: {
             id: link.id
@@ -357,6 +377,18 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
+    // -- Ownership Check --
+    // Only the creator (or a superAdmin) should be able to edit this client.
+    const { id: loginUserId, role: loginUserRole } = (req as any).user;
+    const requestorProvider = await prisma.provider.findUnique({ where: { userId: loginUserId } });
+
+    if (loginUserRole !== Role.superAdmin && (!requestorProvider || (isClientExist as any).createdByProviderId !== requestorProvider.id)) {
+        return res.status(StatusCodes.FORBIDDEN).json(
+            new ApiResponse(StatusCodes.FORBIDDEN, {}, "You do not have permission to edit this client. Only the original creator can modify this profile.")
+        );
+    }
+    // -----------------------
+
 
     if (licenseNo) {
     }
@@ -370,7 +402,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
                 where: { id: isClientExist.userId },
                 data: {
                     fullName,
-                    gender,
+                    gender: gender ? gender.toUpperCase() as Gender : undefined,
                     age,
                     contactNo,
                     address,
@@ -412,7 +444,7 @@ const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
 
     const allClient = await prisma.client.findMany({
         include: {
-            user: true, recievedDocument: {
+            user: true, receivedDocument: {
                 include: {
 
                     provider: {
@@ -432,7 +464,7 @@ const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
                                     gender: true,
                                     country: true,
                                     state: true,
-                                    isLicenseNoValid: true,
+                                    isLicenseValid: true,
                                     blockedMembers: true,
                                     provider: true,
                                     client: true,
@@ -504,9 +536,9 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
 
     const normalizedEmail = String(email).trim().toLowerCase();
 
-    const [existingUser, existingClientEmail] = await Promise.all([
+    const [existingUser, existingUserEmail] = await Promise.all([
         prisma.user.findFirst({ where: { licenseNo } }),
-        prisma.client.findFirst({ where: { email: normalizedEmail } }),
+        prisma.user.findFirst({ where: { email: normalizedEmail } }),
     ]);
 
     if (existingUser) {
@@ -515,7 +547,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    if (existingClientEmail) {
+    if (existingUserEmail) {
         return res.status(StatusCodes.CONFLICT).json(
             new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${normalizedEmail} is already taken.` }, "Duplicate Error")
         );
@@ -535,7 +567,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
             const userCreated = await tx.user.create({
                 data: {
                     fullName,
-                    gender,
+                    gender: gender.toUpperCase() as Gender,
                     age,
                     contactNo,
                     address,
@@ -544,8 +576,10 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
                     country,
                     state,
                     role: Role.client,
-                    isApprove,
+                    isApprove: isApprove ? isApprove.toUpperCase() as Approve : Approve.PENDING,
                     profileImage: profileImageUrl,
+                    email: normalizedEmail,
+                    password: hashedPassword,
                 },
             });
 
@@ -554,8 +588,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
                     userId: userCreated.id,
                     isAccountCreatedByOwnClient,
                     clientShowToOthers: clientShowToOthersBool,
-                    email: normalizedEmail,
-                    password: hashedPassword,
+                    createdByProviderId: providerId || null,
                 },
                 include: { user: true },
             });
@@ -598,7 +631,7 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
     if (req.body.isAccountCreatedByOwnClient)
         req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
     // 1. Validate user schema
-    const userParsedData = userSchema.safeParse(req.body);
+    const userParsedData = userSchema.safeParse({ ...req.body, role: "client" });
     if (!userParsedData.success) {
         return res.status(StatusCodes.BAD_REQUEST).json(
             new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
@@ -607,6 +640,9 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
 
     const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state } = userParsedData.data;
     const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const hashedPassword = await bcrypt.hash(password ?? "", 10); // Moved up
 
     let profileImageUrl: string | null = null;
     if (req.file) {
@@ -625,7 +661,8 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
         }
 
         const existingClient = await prisma.client.findUnique({
-            where: { userId: existingUser.id }
+            where: { userId: existingUser.id },
+            include: { user: true }
         });
 
         if (!existingClient) {
@@ -667,15 +704,18 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
     const userCreated = await prisma.user.create({
         data: {
             fullName,
-            gender,
+            gender: gender.toUpperCase() as Gender,
             age,
             contactNo,
             address,
             status,
             licenseNo,
             role,
-            isApprove, country, state,
-            profileImage: profileImageUrl
+            isApprove: isApprove ? isApprove.toUpperCase() as Approve : Approve.PENDING,
+            country, state,
+            profileImage: profileImageUrl,
+            email: normalizedEmail,
+            password: hashedPassword
         }
     });
 
@@ -688,23 +728,32 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
             );
         }
 
-        const existingClientEmail = await prisma.client.findFirst({ where: { email } });
-        if (existingClientEmail) {
+        const existingUserEmail = await prisma.user.findFirst({ where: { email: normalizedEmail } });
+        if (existingUserEmail) {
             return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
+                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${normalizedEmail} is already taken.` }, "Validation failed")
             );
         }
 
-        const hashedPassword = await bcrypt.hash(password ?? "", 10);
         const clientShowToOthersBool = clientShowToOthers === "true";
+
+        // We need to update user with email/password now because it was optional in schema but required for client login
+        // if (userCreated) {
+        //     await prisma.user.update({
+        //         where: { id: userCreated.id },
+        //         data: {
+        //             email: normalizedEmail,
+        //             password: hashedPassword
+        //         }
+        //     })
+        // }
 
         const clientCreated = await prisma.client.create({
             data: {
                 userId: userCreated.id,
                 isAccountCreatedByOwnClient,
                 clientShowToOthers: clientShowToOthersBool,
-                email,
-                password: hashedPassword
+                createdByProviderId: providerId || null,
             },
             include: {
                 user: true
@@ -746,19 +795,22 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
 
     const hashedPassword = await bcrypt.hash(password ?? "", 10);
 
-    const isClientExist = await prisma.client.findFirst({ where: { id: clientId } });
+    const isClientExist = await prisma.client.findFirst({
+        where: { id: clientId },
+        include: { user: true }
+    });
     if (!isClientExist) {
         return res.status(StatusCodes.NOT_FOUND).json(
             new ApiResponse(StatusCodes.NOT_FOUND, { error: "Client not found" }, "Not found")
         );
     }
 
-    if (email !== isClientExist.email.trim().toLowerCase()) {
-        const isEmailExist = await prisma.client.findFirst({
+    if (email !== isClientExist.user.email?.trim().toLowerCase()) { // Check user email
+        const isEmailExist = await prisma.user.findFirst({ // Check User model
             where: {
                 email: email,
                 id: {
-                    not: clientId,
+                    not: isClientExist.userId,
                 },
             },
         });
@@ -802,45 +854,29 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
         );
     }
 
-    const updatedClientData = {
-        email,
-        password: hashedPassword,
-    };
-
-    const updatedUserData = {
-        fullName,
-        gender,
-        age,
-        contactNo,
-        address,
-        status,
-        licenseNo,
-        role: Role.client,
-    };
-    const isUserUpdated = await prisma.user.update({
+    // Update USER
+    await prisma.user.update({
         where: { id: isClientExist.userId },
-        data: updatedUserData,
+        data: {
+            fullName,
+            gender: gender ? gender.toUpperCase() as Gender : undefined,
+            age,
+            contactNo,
+            address,
+            status,
+            licenseNo,
+            email,
+            password: hashedPassword
+        }
     });
 
-    const isClientUpdated = await prisma.client.update({
-        where: { id: clientId },
-        data: updatedClientData,
-    });
-
-    if (!isClientUpdated) {
-        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Something went wrong. Try later" }, "")
-        );
-    }
-
-    const updatedData = {
-        ...isUserUpdated,
-        ...isClientUpdated,
-    };
+    // No Client update needed for email/password. 
 
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { updatedData }, "Client updated successfully")
+        new ApiResponse(StatusCodes.OK, null, "Client updated successfully")
     );
+
+
 });
 
 

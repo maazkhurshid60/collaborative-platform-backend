@@ -20,7 +20,11 @@ const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
     }
 
 
-    const membersRoleCheck = await prisma.provider.findMany({ where: { id: { in: membersId } } })
+    const membersRoleCheck = await prisma.provider.findMany({
+        where: { id: { in: membersId } },
+        select: { userId: true }
+    });
+
     if (membersRoleCheck.length !== membersId.length) {
         return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, { message: `Only providers can be added to groups.` }, "Duplicate Error."));
     }
@@ -29,8 +33,8 @@ const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
             name: groupName,
             providerId: createdBy,
             members: {
-                create: membersId.map((id: string) => ({
-                    Provider: { connect: { id } }
+                create: membersRoleCheck.map((member) => ({
+                    user: { connect: { id: member.userId } }
                 }))
             }
         },
@@ -119,19 +123,19 @@ const updateGroupApi = asyncHandler(async (req: Request, res: Response) => {
     }
 
     // Find member by email and get their ID
-    const member = await prisma.provider.findFirst({ where: { email: memberEmail } });
+    const member = await prisma.provider.findFirst({ where: { user: { email: memberEmail } } });
 
 
     if (!member) {
         return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { message: `Member not found with email: ${memberEmail}. Please create an account. Once verified, you can join the group using this link.` }, "Member Error."));
     }
 
-    const memberId = member.id; // Get member's ID
+    const memberId = member.userId; // Get member's User ID
 
     // Get current members of the group
     const currentMembers = await prisma.groupChat.findUnique({
         where: { id: groupId },
-        include: { members: { select: { id: true, providerId: true } } } // Include both id and providerId from GroupMembers
+        include: { members: { select: { id: true, userId: true } } } // Include both id and userId from GroupMembers
     });
 
     if (!currentMembers) {
@@ -139,7 +143,7 @@ const updateGroupApi = asyncHandler(async (req: Request, res: Response) => {
     }
 
     // Check if the member is already in the group
-    const isMemberAlreadyInGroup = currentMembers.members.some(existingMember => existingMember.providerId === memberId);
+    const isMemberAlreadyInGroup = currentMembers.members.some(existingMember => existingMember.userId === memberId);
 
     if (isMemberAlreadyInGroup) {
         return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, { message: `Member is already part of this group.` }, "Duplicate Member Error."));
@@ -148,7 +152,7 @@ const updateGroupApi = asyncHandler(async (req: Request, res: Response) => {
     // Create a new GroupMembers entry for the member
     const createGroupMember = await prisma.groupMembers.create({
         data: {
-            providerId: memberId,
+            userId: memberId,
             groupChatId: groupId
         }
     });
@@ -203,13 +207,9 @@ const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) =
             },
             include: {
                 sender: {
-                    include: {
-                        user: {
-                            select: {
-                                fullName: true,
-                                profileImage: true,
-                            },
-                        },
+                    select: {
+                        fullName: true,
+                        profileImage: true,
                     },
                 },
             },
@@ -219,7 +219,7 @@ const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) =
         // Create read receipts for all group members except the sender
         const groupMembers = await prisma.groupChat.findUnique({
             where: { id: groupId },
-            select: { members: { select: { id: true } } },
+            select: { members: { select: { userId: true } } },
         });
 
         if (!groupMembers) {
@@ -229,10 +229,10 @@ const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) =
         }
 
         const readReceipts = groupMembers.members
-            .filter(member => member.id !== senderId)
+            .filter(member => member.userId !== senderId)
             .map(member => ({
                 messageId: chatMessage.id,
-                providerId: member.id,
+                userId: member.userId,
             }));
 
         await prisma.groupReadReceipt.createMany({ data: readReceipts });
@@ -343,18 +343,14 @@ const getGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
         include: {
             sender: {
                 select: {
-                    user: {
-                        select: {
-                            fullName: true,
-                            profileImage: true
-                        }
-                    }
+                    fullName: true,
+                    profileImage: true
                 }
             },
             // If the frontend doesn't use the per-message read status effectively, 
             // you might even be able to remove this include, but keeping it for logic is fine.
             groupReadReceipts: {
-                where: { providerId: loginUserId },
+                where: { userId: loginUserId },
             },
         },
     });
@@ -407,7 +403,7 @@ const getPublicGroupMessageApi = asyncHandler(async (req: Request, res: Response
         skip,
         take: limit,
         include: {
-            sender: { include: { user: true } },
+            sender: true,
             groupReadReceipts: true
         },
     });
@@ -445,7 +441,7 @@ const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
     const allgroups = await prisma.groupChat.findMany({
         where: {
             members: {
-                some: { providerId: loginUserId }
+                some: { userId: loginUserId }
             }
         },
         include: {
@@ -461,14 +457,15 @@ const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
             },
             members: {
                 include: {
-                    Provider: {
+                    user: {
                         select: {
                             id: true,
                             email: true,
-                            user: {
+                            fullName: true,
+                            profileImage: true,
+                            provider: {
                                 select: {
-                                    fullName: true,
-                                    profileImage: true
+                                    id: true
                                 }
                             }
                         }
@@ -477,6 +474,19 @@ const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
             }
         }
     });
+
+    // Resolve userId if loginUserId is a Provider ID
+    const provider = await prisma.provider.findFirst({
+        where: {
+            OR: [
+                { id: loginUserId },
+                { userId: loginUserId }
+            ]
+        },
+        select: { userId: true }
+    });
+
+    const userIdToSearch = provider ? provider.userId : loginUserId;
 
     const enrichedGroups = await Promise.all(
         allgroups.map(async (group) => {
@@ -496,10 +506,10 @@ const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
             const unreadCount = await prisma.chatMessage.count({
                 where: {
                     groupId: group.id,
-                    senderId: { not: loginUserId },
-                    readReceipts: {
+                    senderId: { not: userIdToSearch },
+                    groupReadReceipts: {
                         none: {
-                            providerId: loginUserId
+                            userId: userIdToSearch
                         }
                     }
                 }

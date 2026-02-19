@@ -4,7 +4,7 @@ import { clientSchema, loginSchema, providerSchema, superAdminSchema, userSchema
 import { ApiResponse } from "../../utils/apiResponse";
 import { StatusCodes } from "http-status-codes";
 import prisma from "../../db/db.config";
-import { Role } from "@prisma/client";
+import { Role, Gender, Approve } from "../../generated/prisma/enums";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { cookiesOptions } from "../../utils/constants";
@@ -18,7 +18,7 @@ import { sendApprovalEmail } from "../../utils/nodeMailer/sendApprovalEmail";
 
 
 const signupApi = asyncHandler(async (req: Request, res: Response) => {
-    // 1. Validate User Schema
+    // 1. Validate User Schema (includes email/password now)
     const userParsedData = userSchema.safeParse(req.body);
     if (!userParsedData.success) {
         return res.status(StatusCodes.BAD_REQUEST).json(
@@ -26,19 +26,36 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state, publicKey, privateKey } = userParsedData.data;
+    const { fullName, gender: genderInput = "male", age, contactNo, address, status = "active", licenseNo, role, email, password, country, state, publicKey, privateKey } = userParsedData.data;
 
-    // 2. Check if User (LicenseNo) Exists
-    const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
+    // Convert gender string to Enum
+    let genderEnum: Gender = Gender.MALE;
+    if (genderInput === "female") genderEnum = Gender.FEMALE;
+
+    // 2. Check for duplicate email or licenseNo (at User level)
+    // Build OR condition dynamically to avoid undefined licenseNo issues
+    const orConditions: any[] = [{ email }];
+    if (licenseNo) {
+        orConditions.push({ licenseNo });
+    }
+
+    const existingUser = await prisma.user.findFirst({
+        where: {
+            OR: orConditions
+        }
+    });
+
     if (existingUser) {
+        const field = existingUser.licenseNo === licenseNo ? "License Number" : "Email";
+        const value = existingUser.licenseNo === licenseNo ? licenseNo : email;
         return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `License Number ${licenseNo} is already registered.` }, "Validation failed")
+            new ApiResponse(StatusCodes.CONFLICT, { error: `${field} ${value} is already registered.` }, "Validation failed")
         );
     }
 
-    // 3. Prepare Role Data & Pre-validate Uniqueness
+    // 3. Prepare Role Data & Validate role-specific fields
     let roleData: any = {};
-    let createRoleCallback: (startTransaction: any, userId: string) => Promise<any>;
+    let createRoleCallback: (tx: any, userId: string) => Promise<any>;
 
     if (role === Role.client) {
         const clientParsed = clientSchema.safeParse(req.body);
@@ -47,21 +64,11 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
                 new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
             );
         }
-        const { isAccountCreatedByOwnClient, email, password } = clientParsed.data;
-
-        // Check duplicate client email
-        const existingClient = await prisma.client.findFirst({ where: { email } });
-        if (existingClient) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-            );
-        }
-
-        const hashedPassword = await bcrypt.hash(password ?? "", 10);
+        const { isAccountCreatedByOwnClient } = clientParsed.data;
 
         createRoleCallback = async (tx, userId) => {
             return await tx.client.create({
-                data: { userId, isAccountCreatedByOwnClient, email, password: hashedPassword },
+                data: { userId, isAccountCreatedByOwnClient },
                 include: { user: true }
             });
         };
@@ -73,94 +80,158 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
                 new ApiResponse(StatusCodes.BAD_REQUEST, { error: providerParsed.error.errors }, "Validation failed")
             );
         }
-
-        const { department, email, password, inviteToken } = providerParsed.data;
-
-        // Check duplicate provider email
-        const existingProvider = await prisma.provider.findFirst({ where: { email } });
-        if (existingProvider) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-            );
-        }
-
-        const hashedPassword = await bcrypt.hash(password ?? "", 10);
-        roleData = { inviteToken, email }; // Store for post-transaction logic
-
+        const { department, inviteToken } = providerParsed.data;
+        roleData = { inviteToken, email }; // Store email for invitation matching
         createRoleCallback = async (tx, userId) => {
             return await tx.provider.create({
-                data: { userId, department, email, password: hashedPassword },
+                data: { userId, department },
                 include: { user: true }
             });
         };
 
-    } else if (role === Role.superadmin) {
+    } else if (role === Role.superAdmin) {
         const superAdminParsed = superAdminSchema.safeParse(req.body);
         if (!superAdminParsed.success) {
             return res.status(StatusCodes.BAD_REQUEST).json(
                 new ApiResponse(StatusCodes.BAD_REQUEST, { error: superAdminParsed.error.errors }, "Validation failed")
             );
         }
-
-        const { email, password } = superAdminParsed.data;
-
-        // Check duplicate superadmin email
-        const existingSuperAdmin = await prisma.superAdmin.findFirst({ where: { email } });
-        if (existingSuperAdmin) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-            );
-        }
-
-        const hashedPassword = await bcrypt.hash(password ?? "", 10);
-
         createRoleCallback = async (tx, userId) => {
             return await tx.superAdmin.create({
-                data: { userId, email, password: hashedPassword },
+                data: { userId },
                 include: { user: true }
             });
         };
     } else {
-        return res.status(StatusCodes.BAD_REQUEST).json(
+        return res.status(StatusCodes.CONFLICT).json(
             new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Invalid Role" }, "Validation failed")
         );
     }
+    if (!password) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Password is required for signup" }, "Validation failed")
+        );
+    }
+    // Hash password once
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // 3.5 Create Stripe customer and trial subscription for FREE plan (Standard Trial)
+    let stripeData: { stripeCustomerId: string; stripeSubscriptionId: string; trialEnd: Date } | null = null;
+    let mappedPlanType = req.body.planType;
 
+    // Map FREE plan to STANDARD for database and processing
+    if (req.body.planType === 'FREE') {
+        mappedPlanType = 'STANDARD';
+    }
+
+    if (req.body.planType === 'FREE') {
+        try {
+            // Create Stripe customer
+            const customer = await stripe.customers.create({
+                email: email,
+                name: fullName,
+                metadata: {
+                    role: role
+                }
+            });
+
+            // Create trial subscription with 14-day trial period
+            const subscription = await stripe.subscriptions.create({
+                customer: customer.id,
+                items: [{ price: STRIPE_PRICES.STANDARD.MONTHLY }],
+                trial_period_days: 14,
+                payment_behavior: 'default_incomplete',
+                metadata: {
+                    role: role,
+                    email: email,
+                    planType: 'STANDARD',
+                    userId: 'temp'
+                }
+            });
+
+            stripeData = {
+                stripeCustomerId: customer.id,
+                stripeSubscriptionId: subscription.id,
+                trialEnd: new Date(subscription.trial_end! * 1000)
+            };
+        } catch (error: any) {
+            console.error("❌ Stripe trial creation failed:", error);
+            return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+                new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: error.message }, "Failed to create trial subscription")
+            );
+        }
+    }
     // 4. Atomic Creation Transaction
     const result = await prisma.$transaction(async (tx) => {
-        const userData: any = {
-            fullName, gender, age, contactNo, address, status, licenseNo, role, isApprove: "pending", country, state, publicKey, privateKey
-        };
+        // Create User with email and password
+        const userCreated = await tx.user.create({
+            data: {
+                fullName,
+                email,
+                password: hashedPassword,
+                gender: genderEnum,
+                age: age ?? null,
+                contactNo: contactNo ?? null,
+                address: address ?? null,
+                status: status || "active",
+                licenseNo: licenseNo ?? null,
+                role,
+                isApprove: Approve.PENDING,
+                country,
+                state,
+                publicKey: publicKey ?? null,
+                privateKey: privateKey ?? null,
+                isLicenseValid: false, // Explicitly set default
+                stripeCustomerId: stripeData?.stripeCustomerId || (req.body.stripeCustomerId as string) || (req.body.customerId as string) || null,
 
-        // Optional fields
-        if (gender !== undefined) userData.gender = gender;
-        if (age !== undefined) userData.age = age;
-        if (contactNo !== undefined) userData.contactNo = contactNo;
-        if (address !== undefined) userData.address = address;
-        if (status !== undefined) userData.status = status;
+                hasUsedFreeTrial: Boolean(req.body.subscriptionId || (req.body.planType === 'FREE' && stripeData)),
 
-        const userCreated = await tx.user.create({ data: userData });
+                ...(req.body.subscriptionId && {
+                    subscription: {
+                        create: {
+                            stripeSubscriptionId: req.body.subscriptionId,
+                            plan: mappedPlanType || 'STANDARD',
+                            status: 'ACTIVE'
+                        }
+                    }
+                }),
+                ...(req.body.planType && !req.body.subscriptionId && {
+                    subscription: {
+                        create: {
+                            stripeSubscriptionId: stripeData?.stripeSubscriptionId,
+                            plan: mappedPlanType,
+                            status: (req.body.planType === 'FREE' && stripeData) ? 'TRIALING' : 'ACTIVE',
+                            ...(req.body.planType === 'FREE' && stripeData && {
+                                trialStart: new Date(),
+                                trialEnd: stripeData.trialEnd
+                            })
+                        }
+                    }
+                })
+            }
+        });
 
+        // Create role-s    pecific record
         const roleCreated = await createRoleCallback(tx, userCreated.id);
 
         return roleCreated;
     });
-
-    // 5. Post-Transaction Logic (e.g., Invitations for Providers)
+    // 5. Post-Transaction Logic (Invitations for Providers)
     if (role === Role.provider && roleData.inviteToken) {
         try {
-            const invitation = await prisma.invitation.findUnique({
-                where: { token: roleData.inviteToken, status: "PENDING" }
+            const invitation = await prisma.invitation.findFirst({
+                where: { token: roleData.inviteToken, status: "PENDING" },
+                include: { invitedBy: true }
             });
 
             if (invitation && invitation.email === roleData.email) {
-                const inviterId = invitation.invitedById;
-                const newProviderId = result.id;
+                const inviterProvider = invitation.invitedBy;
+                const newProviderUserId = (result as any).userId || (result as any).user?.id; // Robust access to User ID
+                const inviterUserId = inviterProvider.userId; // Get User ID of inviter
 
-                const inviter = await prisma.provider.findUnique({ where: { id: inviterId } });
+                if (newProviderUserId && inviterUserId && inviterUserId !== newProviderUserId) {
+                    // Sort User IDs for consistent compound key
+                    const [a, b] = [newProviderUserId, inviterUserId].sort();
 
-                if (inviter && inviterId !== newProviderId) {
-                    const [a, b] = [newProviderId, inviterId].sort();
                     await prisma.chatChannel.upsert({
                         where: {
                             providerAId_providerBId: {
@@ -189,22 +260,225 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
             console.error("❌ Error during invitation processing:", chatError);
         }
     }
+    // 6. Fetch complete user data with subscription (like login does)
+    let completeUserData: any = null;
+    if (role === Role.provider) {
+        completeUserData = await prisma.provider.findUnique({
+            where: { id: result.id },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true,
+                        profileImage: true,
+                        role: true,
+                        status: true,
+                        isApprove: true,
+                        hasUsedFreeTrial: true,
+                        subscription: {
+                            select: {
+                                id: true,
+                                plan: true,
+                                status: true,
+                                trialStart: true,
+                                trialEnd: true,
+                                currentPeriodEnd: true,
+                                cancelAtPeriodEnd: true,
+                                stripePriceId: true
+                            }
+                        },
+                        address: true
+                    }
+                },
+                clientList: true
+            }
+        });
+    } else if (role === Role.client) {
+        completeUserData = await prisma.client.findUnique({
+            where: { id: result.id },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true,
+                        profileImage: true,
+                        role: true,
+                        status: true,
+                        isApprove: true,
+                        hasUsedFreeTrial: true,
+                        subscription: {
+                            select: {
+                                id: true,
+                                plan: true,
+                                status: true,
+                                trialStart: true,
+                                trialEnd: true,
+                                currentPeriodEnd: true,
+                                cancelAtPeriodEnd: true
+                            }
+                        }
+                    }
+                },
+                providerList: true
+            }
+        });
+    } else if (role === Role.superAdmin) {
+        completeUserData = await prisma.superAdmin.findUnique({
+            where: { id: result.id },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true,
+                        profileImage: true,
+                        role: true,
+                        status: true,
+                        isApprove: true,
+                        hasUsedFreeTrial: true,
+                        address: true,
+                        subscription: {
+                            select: {
+                                id: true,
+                                plan: true,
+                                status: true,
+                                trialStart: true,
+                                trialEnd: true,
+                                currentPeriodEnd: true,
+                                cancelAtPeriodEnd: true
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
 
-    // 6. Response
+    // 7. Response
     const message = role === Role.client
         ? "Your account has been sent to the super admin for verification. You will receive a verification email once approved, after which you'll be able to log in."
         : "Your account has been created successfully. Please log in to continue.";
 
-    if (result && (result as any).password) {
-        delete (result as any).password;
+    const userData = completeUserData || result;
+    // Remove password from response
+    if (userData.user && (userData.user as any).password) {
+        delete (userData.user as any).password;
     }
 
-    return res.status(StatusCodes.CREATED).json(
-        new ApiResponse(StatusCodes.CREATED, result, message)
+    console.log('🔍 [SIGNUP] Sending response with subscription:', userData.user?.subscription);
+
+    // 🔧 FIX RACE CONDITION: Create initial payment record if paid subscription
+    // Webhook might fire BEFORE user creation completes, so we handle it here
+    if (req.body.subscriptionId && userData.user?.id) {
+        try {
+            const { stripe } = await import('../../utils/stripe/stripe');
+
+            // Retrieve the subscription to get invoice details
+            const stripeSub = await stripe.subscriptions.retrieve(req.body.subscriptionId as string, {
+                expand: ['latest_invoice']
+            });
+
+            const latestInvoice: any = stripeSub.latest_invoice;
+
+            // Update subscription with billing period and price details
+            const subscriptionUpdateData: any = {
+                currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
+                stripePriceId: stripeSub.items.data[0]?.price?.id || null
+            };
+
+            // Determine billing cycle from price metadata or recurring interval
+            const priceInterval = stripeSub.items.data[0]?.price?.recurring?.interval;
+            if (priceInterval === 'month') {
+                subscriptionUpdateData.billingCycle = 'MONTHLY';
+            } else if (priceInterval === 'year') {
+                subscriptionUpdateData.billingCycle = 'YEARLY';
+            }
+
+            await prisma.subscription.update({
+                where: { userId: userData.user.id },
+                data: subscriptionUpdateData
+            });
+
+            // Update the response object so frontend gets the latest data
+            if (userData.user.subscription) {
+                userData.user.subscription.currentPeriodEnd = subscriptionUpdateData.currentPeriodEnd;
+                userData.user.subscription.stripePriceId = subscriptionUpdateData.stripePriceId;
+                if (subscriptionUpdateData.billingCycle) {
+                    userData.user.subscription.billingCycle = subscriptionUpdateData.billingCycle;
+                }
+            }
+            console.log(`✅ Subscription updated with billing details for user ${userData.user.id}`);
+
+            if (latestInvoice && latestInvoice.amount_paid > 0) {
+                // Check if payment already exists (webhook might have created it)
+                const existingPayment = await prisma.payment.findFirst({
+                    where: { stripeInvoiceId: latestInvoice.id }
+                });
+
+                if (!existingPayment) {
+                    let last4 = null;
+                    try {
+                        // Retrieve payment method details for last4
+                        if (latestInvoice.payment_intent) {
+                            const pi: any = await stripe.paymentIntents.retrieve(latestInvoice.payment_intent as string, {
+                                expand: ['payment_method']
+                            });
+                            last4 = pi.payment_method?.card?.last4 || pi.metadata?.last4;
+                        }
+
+                        // Fallback to charge if needed
+                        if (!last4 && latestInvoice.charge) {
+                            const charge = await stripe.charges.retrieve(latestInvoice.charge as string);
+                            last4 = (charge.payment_method_details as any)?.card?.last4;
+                        }
+                    } catch (err) {
+                        console.error("⚠️ Failed to retrieve payment method details for last4 in signup:", err);
+                    }
+
+                    await prisma.payment.create({
+                        data: {
+                            userId: userData.user.id,
+                            amount: latestInvoice.amount_paid,
+                            currency: latestInvoice.currency,
+                            status: 'SUCCEEDED',
+                            plan: req.body.planType || 'STANDARD', // Store plan at time of payment
+                            stripePaymentIntentId: latestInvoice.payment_intent || "signup_payment",
+                            stripeInvoiceId: latestInvoice.id,
+                            invoiceUrl: latestInvoice.hosted_invoice_url,
+                            paymentMethodLast4: last4
+                        }
+                    });
+                    console.log(`✅ Initial payment record created for user ${userData.user.id} with last4: ${last4}`);
+                } else {
+                    console.log(`ℹ️ Payment already exists (created by webhook)`);
+                }
+            }
+        } catch (paymentErr) {
+            console.error('⚠️ Failed to create initial payment record:', paymentErr);
+            // Don't fail the signup if payment record creation fails
+        }
+    }
+
+    // Auto-Login JWT
+    const jwtSecret = process.env.JWT_SECRET || "default_secret";
+    const token = jwt.sign(
+        { userId: userData.user.id, email: userData.user.email, role },
+        jwtSecret,
+        { expiresIn: "45m" }
     );
+
+    return res
+        .status(StatusCodes.CREATED)
+        .cookie("accessToken", token, cookiesOptions)
+        .cookie("token", token, cookiesOptions)
+        .json(
+            new ApiResponse(StatusCodes.CREATED, { token, user: userData }, message)
+        );
 });
 const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
-    const { loginUserId } = req.body;
+    const loginUserId = (req as any).user.id;
 
     if (req.body.age) {
         req.body.age = Number(req.body.age);
@@ -225,10 +499,8 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
 
     const existingUser = await prisma.user.findFirst({
         where: { id: loginUserId },
-        select: { profileImage: true, role: true }
+        select: { profileImage: true, role: true, email: true, password: true }
     });
-
-
 
     if (!existingUser) {
         return res.status(StatusCodes.NOT_FOUND).json(
@@ -236,13 +508,11 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    // let profileImageUpdate: string = "null";
     let profileImageUpdate: string | undefined = undefined;
 
     if (profileImage) {
         profileImageUpdate = profileImage.location;
     }
-
 
     const userParsedData = userSchema.safeParse({
         ...req.body,
@@ -255,22 +525,47 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const { fullName, gender, age, contactNo, address, status, licenseNo, role, country, state } = userParsedData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, role, country, state, email, password } = userParsedData.data;
+
+    // Check email uniqueness if email is changing
+    if (email && email !== existingUser.email) {
+        const emailExists = await prisma.user.findUnique({
+            where: { email }
+        });
+        if (emailExists) {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
+            );
+        }
+    }
+
+    let newPassword = undefined;
+    if (password && password.trim() !== "") {
+        newPassword = await bcrypt.hash(password, 10);
+    }
+
+    // Convert gender string to Enum
+    let genderEnum: Gender = Gender.MALE;
+    if (gender === "female") genderEnum = Gender.FEMALE;
 
     const updatedUser = await prisma.user.update({
         where: { id: loginUserId },
         data: {
             fullName,
-            gender,
+            gender: genderEnum,
             age,
             contactNo,
             address,
             status,
             licenseNo,
-            role, isApprove: "approve"
-            , country, state,
+            role,
+            country, state,
             // Only update profileImage if it was explicitly changed
-            ...(profileImageUpdate !== undefined && { profileImage: profileImageUpdate })
+            ...(profileImageUpdate !== undefined && { profileImage: profileImageUpdate }),
+            // Update email if provided
+            ...(email && { email }),
+            // Update password if provided
+            ...(newPassword && { password: newPassword })
         }
     });
 
@@ -284,51 +579,34 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
             );
         }
 
-        const { email, password } = clientParsed.data;
+        // Removed email/password extraction from clientParsed as they are now on User
 
-        const existingClient = await prisma.client.findFirst({
-            where: { email, NOT: { userId: loginUserId } }
-        });
+        const updateData: any = {};
 
-        if (existingClient) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-            );
-        }
-
-        const updateData: any = {
-            email,
-        };
-
-        const oldClient = await prisma.client.findFirst({
-            where: { userId: loginUserId },
-            select: { password: true }
-        });
-
-        // if (password && password.trim() !== "") {
-        //     updateData.password = await bcrypt.hash(password, 10);
-        // } else {
-        //     updateData.password = oldClient?.password;
-        // }
         // Handle eSignature updates
         const wantsRemove = String(req.body.eSignature).toLowerCase() === "null";
-
         if (eSignature) {
             updateData.eSignature = eSignature.location;
         } else if (wantsRemove) {
             updateData.eSignature = "null";
         }
+
         const userId = String(loginUserId);
 
         const clientUpdate = await prisma.client.update({
             where: { userId },
             data: updateData,
-            include: { user: true }
+            include: {
+                user: {
+                    include: {
+                        subscription: true
+                    }
+                }
+            }
         });
 
-
-        if (clientUpdate && (clientUpdate as any).password) {
-            delete (clientUpdate as any).password;
+        if (clientUpdate && clientUpdate.user && (clientUpdate.user as any).password) {
+            delete (clientUpdate.user as any).password;
         }
 
         return res.status(StatusCodes.OK).json(
@@ -345,35 +623,26 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
             );
         }
 
-        const { email, password, department } = providerParsed.data;
-
-        const existingProvider = await prisma.provider.findFirst({
-            where: { email, NOT: { userId: loginUserId } }
-        });
-
-        if (existingProvider) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-            );
-        }
+        const { department } = providerParsed.data;
 
         const updateData: any = {
-            email,
             department,
         };
-
-        if (password && password.trim() !== "") {
-            updateData.password = await bcrypt.hash(password, 10);
-        }
 
         const providerUpdate = await prisma.provider.update({
             where: { userId: loginUserId },
             data: updateData,
-            include: { user: true }
+            include: {
+                user: {
+                    include: {
+                        subscription: true
+                    }
+                }
+            }
         });
 
-        if (providerUpdate && (providerUpdate as any).password) {
-            delete (providerUpdate as any).password;
+        if (providerUpdate && providerUpdate.user && (providerUpdate.user as any).password) {
+            delete (providerUpdate.user as any).password;
         }
 
         return res.status(StatusCodes.OK).json(
@@ -393,60 +662,13 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
 
     const { email, password } = parsedLoginData.data;
 
-    // Check in superadmin table first
-    const superAdmin = await prisma.superAdmin.findFirst({
-        where: { email },
-        include: { user: true },
-    });
-
-    if (superAdmin) {
-        const isPasswordValid = await bcrypt.compare(password, superAdmin.password);
-        if (!isPasswordValid) {
-            return res.status(StatusCodes.UNAUTHORIZED).json(
-                new ApiResponse(StatusCodes.UNAUTHORIZED, { error: "Incorrect password" }, "Authentication failed")
-            );
-        }
-
-        const jwtSecret = process.env.JWT_SECRET || "default_secret";
-        const token = jwt.sign(
-            { userId: superAdmin.user.id, email: superAdmin.email, role: "superadmin" },
-            jwtSecret,
-            { expiresIn: "45m" }
-        );
-
-        if (superAdmin && (superAdmin as any).password) {
-            delete (superAdmin as any).password;
-        }
-
-        return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, { token, user: superAdmin }, "Login successful")
-        );
-    }
-
-    // Fallback: Check in provider or client
-    const user = await prisma.provider.findFirst({
+    // 1. Find User by email
+    const user = await prisma.user.findUnique({
         where: { email },
         include: {
-            user: true,
-            clientList: {
-                select: {
-                    client: {
-                        select: {
-                            user: {
-                                select: {
-                                    fullName: true
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }) || await prisma.client.findFirst({
-        where: { email },
-        include: {
-            user: true,
-            providerList: true
+            client: true,
+            provider: true,
+            superAdmin: true
         }
     });
 
@@ -465,11 +687,89 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
         return res.status(StatusCodes.UNAUTHORIZED).json(
-            new ApiResponse(StatusCodes.UNAUTHORIZED, { error: "Password is wrong" }, "Authentication failed")
+            new ApiResponse(StatusCodes.UNAUTHORIZED, { error: "Incorrect password" }, "Authentication failed")
         );
     }
 
-    const role = user?.user?.role;
+    const role = user.role;
+    let loggedInUser: any = null;
+
+    if (role === Role.superAdmin) {
+        loggedInUser = await prisma.superAdmin.findUnique({
+            where: { userId: user.id },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true,
+                        profileImage: true,
+                        role: true,
+                        status: true,
+                        isApprove: true,
+                        address: true,
+                        subscription: true
+                    }
+                }
+            }
+        });
+    } else if (role === Role.client) {
+        loggedInUser = await prisma.client.findUnique({
+            where: { userId: user.id },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true,
+                        profileImage: true,
+                        role: true,
+                        status: true,
+                        isApprove: true,
+                        address: true,
+                    }
+                }, providerList: true
+            }
+        });
+    } else if (role === Role.provider) {
+        loggedInUser = await prisma.provider.findUnique({
+            where: { userId: user.id },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true,
+                        profileImage: true,
+                        role: true,
+                        status: true,
+                        isApprove: true,
+                        licenseNo: true,
+                        hasUsedFreeTrial: true,
+                        subscription: {
+                            select: {
+                                id: true,
+                                plan: true,
+                                status: true,
+                                trialStart: true,
+                                trialEnd: true,
+                                currentPeriodEnd: true,
+                                cancelAtPeriodEnd: true
+                            }
+                        }
+                    }
+                },
+
+            }
+        });
+    }
+
+    if (!loggedInUser) {
+        // Fallback if role record is missing but user exists (should not happen in consistent DB)
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "User role data missing" }, "Login failed")
+        );
+    }
 
     const jwtSecret = process.env.JWT_SECRET || "default_secret";
     const token = jwt.sign(
@@ -478,12 +778,18 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
         { expiresIn: "45m" }
     );
 
-    if (user && (user as any).password) {
-        delete (user as any).password;
+    // Remove password from response
+    if (loggedInUser.user && (loggedInUser.user as any).password) {
+        delete (loggedInUser.user as any).password;
     }
 
+    // DEBUG: Log what we're sending
+    console.log('🔍 [LOGIN] Sending response for user:', loggedInUser.user?.email);
+    console.log('🔍 [LOGIN] User object keys:', Object.keys(loggedInUser.user || {}));
+    console.log('🔍 [LOGIN] Subscription data:', loggedInUser.user?.subscription);
+
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { token, user }, "Login successful")
+        new ApiResponse(StatusCodes.OK, { token, user: loggedInUser }, "Login successful")
     );
 });
 
@@ -534,6 +840,7 @@ const getAllUsersApi = asyncHandler(async (req: Request, res: Response) => {
         select: {
             id: true,
             fullName: true,
+            email: true,
             licenseNo: true,
             age: true,
             contactNo: true,
@@ -544,16 +851,8 @@ const getAllUsersApi = asyncHandler(async (req: Request, res: Response) => {
             isApprove: true,
             role: true,
             createdAt: true,
-            client: {
-                select: {
-                    email: true
-                }
-            },
-            provider: {
-                select: {
-                    email: true
-                }
-            }
+            client: true,
+            provider: true
         }
     })
     return res.status(StatusCodes.OK).json(
@@ -594,23 +893,20 @@ const approveValidUser = asyncHandler(async (req: Request, res: Response) => {
 
     if (!user) {
         return res.status(StatusCodes.NOT_FOUND).json(
-            new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error")
+            new ApiResponse(StatusCodes.NOT_FOUND, { message: "User does not exist." }, "Not Found Error")
         );
     }
 
     await prisma.user.update({
         where: { id },
-        data: { isApprove: "approve" },
+        data: { isApprove: Approve.APPROVED },
     });
 
-    const email =
-        user.client?.email ||
-        user.provider?.email ||
-        user.superAdmin?.email;
+    const email = user.email;
 
     if (email) {
         try {
-            await sendApprovalEmail(email, user.fullName, user.licenseNo);
+            await sendApprovalEmail(email, user.fullName, user.licenseNo ?? "");
         } catch (err) {
             console.error("Approval email failed:", err);
             // Do not fail approval just because email failed
@@ -623,20 +919,21 @@ const approveValidUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const rejectUser = asyncHandler(async (req: Request, res: Response) => {
-    const { id, name, email } = req.body
+    const { id, name } = req.body // removed email from destructuring as we get it from DB if needed, or unused.
 
-    const isUserExist = await prisma.user.findFirst({ where: { id } })
-    if (!isUserExist) {
+    const user = await prisma.user.findFirst({ where: { id } })
+    if (!user) {
         return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"))
     }
 
     const isUserApproved = await prisma.user.update({
         where: { id }, data: {
-            isApprove: "reject"
+            isApprove: Approve.REJECTED
         }
     })
-    // await sendVerificationEmail(email, name);
 
+    // If we need to send email, use user.email
+    // await sendVerificationEmail(user.email, name);
 
     if (isUserApproved) {
         return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { message: "User rejected successfully." }, "reject"))
@@ -644,19 +941,21 @@ const rejectUser = asyncHandler(async (req: Request, res: Response) => {
 
 })
 const restoreUser = asyncHandler(async (req: Request, res: Response) => {
-    const { id, name, email } = req.body
+    const { id, name } = req.body
 
-    const isUserExist = await prisma.user.findFirst({ where: { id } })
-    if (!isUserExist) {
+    const user = await prisma.user.findFirst({ where: { id } })
+    if (!user) {
         return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"))
     }
 
     const isUserApproved = await prisma.user.update({
         where: { id }, data: {
-            isApprove: "pending"
+            isApprove: Approve.PENDING
         }
     })
-    // await sendVerificationEmail(email, name);
+
+    // if email needed, use user.email
+    // await sendVerificationEmail(user.email, name);
 
 
     if (isUserApproved) {
@@ -666,7 +965,14 @@ const restoreUser = asyncHandler(async (req: Request, res: Response) => {
 })
 
 const getAllValidUsersApi = asyncHandler(async (req: Request, res: Response) => {
-    const allUsers = await prisma.user.findMany({ where: { isApprove: "approve" } })
+    const allUsers = await prisma.user.findMany({
+        where: {
+            isApprove: Approve.APPROVED,
+            NOT: {
+                role: Role.superAdmin
+            }
+        }
+    })
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, { totalDocument: allUsers.length, user: allUsers }, "User fetched successfully")
     );
@@ -731,16 +1037,40 @@ const deleteMeAccountApi = asyncHandler(async (req: Request, res: Response) => {
 
 })
 const getMeApi = asyncHandler(async (req: Request, res: Response) => {
-    const { loginUserId, role } = req.body
+    const loginUserId = (req as any).user.id;
+    const role = (req as any).user.role;
 
     let getMeDetails
     // Handle Clients
     if (role === Role.client) {
-        getMeDetails = await prisma.client.findFirst({ where: { id: loginUserId }, include: { user: true } })
-        // getMeDetails = await prisma.client.findFirst({
-        //     where: { userId: loginUserId },
-        //     include: { user: true }
-        // });
+        getMeDetails = await prisma.client.findFirst({
+            where: { userId: loginUserId },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true,
+                        address: true,
+                        role: true,
+                        status: true,
+                        isApprove: true,
+                        hasUsedFreeTrial: true,
+                        subscription: {
+                            select: {
+                                id: true,
+                                plan: true,
+                                status: true,
+                                trialStart: true,
+                                trialEnd: true,
+                                currentPeriodEnd: true,
+                                cancelAtPeriodEnd: true
+                            }
+                        }
+                    }
+                }
+            }
+        })
 
         if (getMeDetails && (getMeDetails as any).password) {
             delete (getMeDetails as any).password;
@@ -755,8 +1085,36 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
     // Handle Provider
     else if (role === Role.provider) {
         getMeDetails = await prisma.provider.findFirst({
-            where: { id: loginUserId }, include: {
-                user: true,
+            where: { userId: loginUserId },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        email: true,
+                        address: true,
+                        role: true,
+                        status: true,
+                        licenseNo: true,
+                        country: true,
+                        state: true,
+                        isApprove: true,
+                        contactNo: true,
+                        hasUsedFreeTrial: true,
+                        subscription: {
+                            select: {
+                                id: true,
+                                plan: true,
+                                status: true,
+                                trialStart: true,
+                                trialEnd: true,
+                                currentPeriodEnd: true,
+                                cancelAtPeriodEnd: true,
+                                billingCycle: true
+                            }
+                        }
+                    }
+                },
                 clientList: {
                     select: {
                         client: {
@@ -784,142 +1142,87 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
 });
 const findByLicenseNo = asyncHandler(async (req: Request, res: Response) => {
     const { licenseNo } = req.body
-    if (licenseNo === "") {
+    if (!licenseNo) {
         return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { message: " licenseNo isrequired" }, "Validation failed")
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "License number is required" }, "Validation failed")
         );
     }
 
     const licenseNoFound = await prisma.user.findFirst({
-        where: { licenseNo }, include: { client: true }
+        where: { licenseNo },
+        include: { client: true }
     })
 
-    if (licenseNoFound && licenseNoFound.client && (licenseNoFound.client as any).password) {
+    if (!licenseNoFound) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, { error: "License number not found" }, "Record not found")
+        );
+    }
+
+    // Remove passwords before returning
+    if (licenseNoFound.client && (licenseNoFound.client as any).password) {
         delete (licenseNoFound.client as any).password;
+    }
+    if ((licenseNoFound as any).password) {
+        delete (licenseNoFound as any).password;
     }
 
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, { data: licenseNoFound }, "Record found.")
     );
-
-
 })
 
 const changePasswordApi = asyncHandler(async (req: Request, res: Response) => {
-    const { oldPassword,
-        newPassword,
-        loginUserId, confirmPassword, role } = req.body
+    const { oldPassword, newPassword, loginUserId, confirmPassword, role } = req.body;
 
-    if (oldPassword === "" ||
-        newPassword === "") {
+    if (!oldPassword || !newPassword) {
         return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { message: "All fields are isrequired" }, "Validation failed")
+            new ApiResponse(StatusCodes.BAD_REQUEST, { message: "All fields are required" }, "Validation failed")
         );
     }
-
 
     if (newPassword !== confirmPassword) {
         return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { message: "Confirm and New Password should be matched" }, "Validation failed")
+            new ApiResponse(StatusCodes.CONFLICT, { message: "Confirm and New Password should match" }, "Validation failed")
         );
     }
 
+    // Find User (source of truth for password)
+    const user = await prisma.user.findUnique({
+        where: { id: loginUserId }
+    });
 
-    if (role === Role.provider) {
-        const findUser = await prisma.provider.findFirst({ where: { id: loginUserId }, include: { user: true } })
-
-        if (!findUser) {
-
-            return res.status(StatusCodes.BAD_REQUEST).json(
-                new ApiResponse(StatusCodes.BAD_REQUEST, { message: " User does not exist." }, "Validation failed")
-            );
-        }
-
-        const isPasswordMatch = await bcrypt.compare(oldPassword, findUser?.password)
-        if (isPasswordMatch) {
-            const hashedPassword = await bcrypt.hash(newPassword ?? "", 10);
-            const updatePassword = await prisma.provider.update({
-                where: { id: loginUserId }, data: {
-                    password: hashedPassword
-
-                }
-            })
-
-            if (updatePassword) {
-
-                return res.status(StatusCodes.OK).json(
-                    new ApiResponse(StatusCodes.OK, { message: "Password has updated successfully" }, "Password has updated successfully")
-                );
-            }
-            else {
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-                    new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { message: "Internal Server Error" }, "Internal Server Error")
-                );
-            }
-        }
-        else {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { message: "Password not Matched" }, "Password not Match")
-            );
-        }
-
-
+    if (!user) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { message: "User does not exist." }, "Validation failed")
+        );
     }
 
-    if (role === Role.client) {
-        const findUser = await prisma.client.findFirst({ where: { id: loginUserId }, include: { user: true } })
+    const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
 
-        if (!findUser) {
+    if (isPasswordMatch) {
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await prisma.user.update({
+            where: { id: loginUserId },
+            data: { password: hashedPassword }
+        });
 
-            return res.status(StatusCodes.BAD_REQUEST).json(
-                new ApiResponse(StatusCodes.BAD_REQUEST, { message: " User does not exist." }, "Validation failed")
-            );
-        }
-
-        const isPasswordMatch = await bcrypt.compare(
-            oldPassword ?? "",
-            findUser?.password ?? ""
-        ); if (isPasswordMatch) {
-            const hashedPassword = await bcrypt.hash(newPassword ?? "", 10);
-            const updatePassword = await prisma.client.update({
-                where: { id: loginUserId }, data: {
-                    password: hashedPassword
-
-                }
-            })
-
-            if (updatePassword) {
-
-                return res.status(StatusCodes.OK).json(
-                    new ApiResponse(StatusCodes.OK, { message: "Password has updated successfully" }, "Password has updated successfully")
-                );
-            }
-            else {
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-                    new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { message: "Internal Server Error" }, "Internal Server Error")
-                );
-            }
-        }
-        else {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { message: "Password not Matched" }, "Password not Match")
-            );
-        }
-
-
+        return res.status(StatusCodes.OK).json(
+            new ApiResponse(StatusCodes.OK, { message: "Password has updated successfully" }, "Password has updated successfully")
+        );
+    } else {
+        return res.status(StatusCodes.CONFLICT).json(
+            new ApiResponse(StatusCodes.CONFLICT, { message: "Password not Matched" }, "Password not Match")
+        );
     }
-
-})
+});
 
 const forgotPasswordApi = asyncHandler(async (req: Request, res: Response) => {
     const { email } = req.body;
 
-    const isProvider = await prisma.provider.findFirst({ where: { email }, include: { user: true } });
-    const isClient = await prisma.client.findFirst({ where: { email }, include: { user: true } });
+    const user = await prisma.user.findFirst({ where: { email } });
 
-    const account = isProvider || isClient;
-
-    if (!account) {
+    if (!user) {
         return res.status(StatusCodes.CONFLICT).json(
             new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is not found.` }, "Validation failed")
         );
@@ -928,31 +1231,19 @@ const forgotPasswordApi = asyncHandler(async (req: Request, res: Response) => {
     const { token, hashedToken } = generateResetToken();
 
     const updatedUser = await prisma.user.update({
-        where: { id: account.user.id },
+        where: { id: user.id },
         data: {
-            resetPasswordToken: hashedToken,
-            resetPasswordExpires: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
+            // NOTE: Fields missing in schema
+            // resetPasswordToken: hashedToken,
+            // resetPasswordExpires: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
         },
     });
 
-    const respnse = await sendResetPasswordEmail(email, account.user.fullName, token);
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------response", respnse);
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------");
-    console.log("_--------------------------");
+    try {
+        await sendResetPasswordEmail(email, user.fullName, token);
+    } catch (err) {
+        console.error("Failed to send reset email");
+    }
 
     return res.status(200).json(
         new ApiResponse(200, { success: true, user: updatedUser }, "Reset link sent successfully")
@@ -964,16 +1255,19 @@ const resetPasswordApi = asyncHandler(async (req: Request, res: Response) => {
     const { token } = req.params;
     const { newPassword } = req.body;
 
+    return res.status(StatusCodes.NOT_IMPLEMENTED).json(
+        new ApiResponse(StatusCodes.NOT_IMPLEMENTED, null, "Password reset is currently disabled as the database schema does not support reset tokens.")
+    );
+
+    /*
+    // ORIGINAL LOGIC DISABLED DUE TO MISSING SCHEMA FIELDS (resetPasswordToken, resetPasswordExpires)
     const hashedToken = crypto.createHash("sha256").update(token as string).digest("hex");
 
     const user = await prisma.user.findFirst({
         where: {
-            resetPasswordToken: hashedToken,
-            resetPasswordExpires: {
-                gt: new Date(),
-            },
+            // resetPasswordToken: hashedToken,
+            // resetPasswordExpires: { gt: new Date() },
         },
-        include: { provider: true, client: true },
     });
 
     if (!user) {
@@ -984,38 +1278,21 @@ const resetPasswordApi = asyncHandler(async (req: Request, res: Response) => {
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 12);
 
-    if (user.provider) {
-        await prisma.provider.update({
-            where: { id: user.provider.id },
-            data: {
-                password: hashedNewPassword,
-                user: {
-                    update: {
-                        resetPasswordToken: null,
-                        resetPasswordExpires: null,
-                    },
-                },
-            },
-        });
-    } else if (user.client) {
-        await prisma.client.update({
-            where: { id: user.client.id },
-            data: {
-                password: hashedNewPassword,
-                user: {
-                    update: {
-                        resetPasswordToken: null,
-                        resetPasswordExpires: null,
-                    },
-                },
-            },
-        });
-    }
+    await prisma.user.update({
+        where: { id: user.id },
+        data: {
+            password: hashedNewPassword,
+            // resetPasswordToken: null,
+            // resetPasswordExpires: null,
+        },
+    });
 
-    return res.status(200).json(
-        new ApiResponse(200, { success: true }, "Password has been reset successfully")
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, { message: "Password reset successful" }, "Success")
     );
+    */
 });
+
 
 const startTrialApi = asyncHandler(async (req: Request, res: Response) => {
     const { newProviderId, invitedById } = req.body;
@@ -1041,7 +1318,7 @@ const startTrialApi = asyncHandler(async (req: Request, res: Response) => {
         // 1. Create or retrieve Stripe Customer
         let stripeCustomerId: string;
         const customer = await stripe.customers.create({
-            email: provider.email,
+            email: provider.user.email,
             name: provider.user.fullName,
             metadata: { userId: provider.user.id }
         });
@@ -1063,7 +1340,7 @@ const startTrialApi = asyncHandler(async (req: Request, res: Response) => {
                 stripeSubscriptionId: stripeSubscription.id,
                 plan: "STANDARD",
                 status: "TRIALING",
-                trailStart: new Date(),
+                trialStart: new Date(),
                 // trailEnd: new Date(stripeSubscription.current_period_end * 1000),
                 // currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
             }
@@ -1081,13 +1358,7 @@ const startTrialApi = asyncHandler(async (req: Request, res: Response) => {
                     data: {
                         providerAId: a,
                         providerBId: b,
-                        isPinned: true
                     }
-                });
-            } else {
-                await prisma.chatChannel.update({
-                    where: { id: existingChannel.id },
-                    data: { isPinned: true }
                 });
             }
         }
@@ -1145,8 +1416,46 @@ const verifyInvitationToken = asyncHandler(async (req: Request, res: Response) =
     )
 })
 
+// Check if email or license number already exists (called before navigating to plan selection)
+const checkEmailExistsApi = asyncHandler(async (req: Request, res: Response) => {
+    const { email, licenseNo } = req.body;
+
+    if (!email) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Email is required" }, "Validation failed")
+        );
+    }
+
+    const existingEmail = await prisma.user.findUnique({
+        where: { email }
+    });
+
+    if (existingEmail) {
+        return res.status(StatusCodes.CONFLICT).json(
+            new ApiResponse(StatusCodes.CONFLICT, { exists: true, field: 'Email' }, "Email already registered")
+        );
+    }
+
+    if (licenseNo) {
+        const existingLicense = await prisma.user.findFirst({
+            where: { licenseNo }
+        });
+
+        if (existingLicense) {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, { exists: true, field: 'License Number' }, "License Number already registered")
+            );
+        }
+    }
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, { exists: false }, "Available")
+    );
+});
+
 
 export {
     signupApi, logInApi, blockUserApi, unblockUserApi, logoutApi, updateMeApi, deleteMeAccountApi, approveValidUser, rejectUser, restoreUser,
-    getMeApi, getAllUsersApi, findByLicenseNo, changePasswordApi, forgotPasswordApi, resetPasswordApi, getAllValidUsersApi, startTrialApi, verifyInvitationToken
+    getMeApi, getAllUsersApi, findByLicenseNo, changePasswordApi, forgotPasswordApi, resetPasswordApi, getAllValidUsersApi, startTrialApi, verifyInvitationToken,
+    checkEmailExistsApi
 };

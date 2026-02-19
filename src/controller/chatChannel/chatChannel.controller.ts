@@ -17,17 +17,35 @@ const createChatChannel = asyncHandler(async (req: Request, res: Response) => {
       .json({ message: "Both providerId and toProviderId are required." });
   }
 
-  const [a, b] = [providerId, toProviderId].sort();
-
   try {
-    const providerA = await prisma.provider.findUnique({ where: { id: a } });
-    const providerB = await prisma.provider.findUnique({ where: { id: b } });
+    // Find the providers to get their userId
+    const providerA = await prisma.provider.findFirst({
+      where: {
+        OR: [
+          { id: providerId },
+          { userId: providerId }
+        ]
+      },
+      select: { userId: true }
+    });
+    const providerB = await prisma.provider.findFirst({
+      where: {
+        OR: [
+          { id: toProviderId },
+          { userId: toProviderId }
+        ]
+      },
+      select: { userId: true }
+    });
 
     if (!providerA || !providerB) {
       return res
         .status(400)
         .json({ message: "One or both providers do not exist." });
     }
+
+    // Sort User IDs for consistent compound key
+    const [a, b] = [providerA.userId, providerB.userId].sort();
 
     // Check if channel exists
     let channel = await prisma.chatChannel.findFirst({
@@ -44,10 +62,23 @@ const createChatChannel = asyncHandler(async (req: Request, res: Response) => {
         .json(
           new ApiResponse(
             StatusCodes.CREATED,
-            { channel },
+            { newChatChannel: channel },
             "Chat Channel created",
           ),
         );
+    }
+
+    // If the channel exists, make sure it's unhidden for the person reaching out
+    if (channel.providerAId === providerA.userId) {
+      await prisma.chatChannel.update({
+        where: { id: channel.id },
+        data: { deletedByA: false }
+      });
+    } else if (channel.providerBId === providerA.userId) {
+      await prisma.chatChannel.update({
+        where: { id: channel.id },
+        data: { deletedByB: false }
+      });
     }
 
     return res
@@ -55,7 +86,7 @@ const createChatChannel = asyncHandler(async (req: Request, res: Response) => {
       .json(
         new ApiResponse(
           StatusCodes.OK,
-          { channel },
+          { newChatChannel: channel },
           "Chat Channel already exists",
         ),
       );
@@ -72,32 +103,52 @@ const createChatChannel = asyncHandler(async (req: Request, res: Response) => {
 const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
   const { loginUserId } = req.body;
 
-  // Fetch all channels for user
+  // Get the user ID from the provider ID
+  const provider = await prisma.provider.findFirst({
+    where: {
+      OR: [
+        { id: loginUserId },
+        { userId: loginUserId }
+      ]
+    },
+    select: { userId: true }
+  });
+
+  if (!provider) {
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .json(
+        new ApiResponse(
+          StatusCodes.NOT_FOUND,
+          null,
+          "Provider not found",
+        ),
+      );
+  }
+
+  const userIdToSearch = provider.userId;
+
+  // Fetch all channels for user that are not deleted by them
   const findAllChatChannel = await prisma.chatChannel.findMany({
     where: {
-      OR: [{ providerAId: loginUserId }, { providerBId: loginUserId }],
+      OR: [
+        { providerAId: userIdToSearch, deletedByA: false },
+        { providerBId: userIdToSearch, deletedByB: false }
+      ],
     },
     include: {
       providerA: {
         select: {
           id: true,
-          user: {
-            select: {
-              fullName: true,
-              profileImage: true,
-            },
-          },
+          fullName: true,
+          profileImage: true,
         },
       },
       providerB: {
         select: {
           id: true,
-          user: {
-            select: {
-              fullName: true,
-              profileImage: true,
-            },
-          },
+          fullName: true,
+          profileImage: true,
         },
       },
     },
@@ -112,8 +163,8 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
     by: ["chatChannelId"],
     where: {
       chatChannelId: { in: channelIds },
-      senderId: { not: loginUserId },
-      readReceipts: { none: { providerId: loginUserId } },
+      senderId: { not: userIdToSearch },
+      readReceipts: { none: { userId: userIdToSearch } },
     },
     _count: { id: true },
   });

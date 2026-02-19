@@ -1,104 +1,470 @@
-import { stripe, STRIPE_PRICES } from "../../utils/stripe/stripe";
+import { NextFunction, Request, Response } from "express";
 import prisma from "../../db/db.config";
+import { stripe, STRIPE_PRICES } from "../../utils/stripe/stripe";
+import { io } from "../../socket/socket";
 
-export const startTrialOnApprove = async (userId: string) => {
-    const user = await prisma.user.findUnique({
-        where: {
-            id: userId,
+// Create Checkout Session (Legacy - for existing users)
+export const createCheckoutSessionApi = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as any).user.id;
+        const { planType, period } = req.body; // planType: 'STANDARD' | 'PRO', period: 'MONTHLY' | 'YEARLY'
 
-        },
-        include: {
-            subscription: true,
+        if (!planType || !period) {
+            return res.status(400).json({ message: "Plan type and period are required" });
+        }
 
-            provider: {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { subscription: true }
+        });
 
-                select: {
-                    email: true,
-                    user: {
-                        select: {
-                            id: true,
-                            role: true,
-                            fullName: true,
-                            subscription: true,
+        if (!user) return res.status(404).json({ message: "User not found" });
 
-                        }
+        // Get Price ID
+        const priceId = STRIPE_PRICES[planType as keyof typeof STRIPE_PRICES]?.[period as keyof typeof STRIPE_PRICES.STANDARD];
+        if (!priceId) return res.status(400).json({ message: "Invalid plan or period" });
+
+        // Create or Get Stripe Customer
+        let customerId = user.stripeCustomerId || user.subscription?.stripeCustomerId;
+
+        if (!customerId) {
+            const customer = await stripe.customers.create({
+                email: user.email,
+                name: user.fullName,
+                metadata: { userId: user.id }
+            });
+            customerId = customer.id;
+        }
+
+        // Checkout Session Config
+        const sessionConfig: any = {
+            customer: customerId,
+            mode: 'subscription',
+            payment_method_types: ['card'],
+            line_items: [{ price: priceId, quantity: 1 }],
+            success_url: `${process.env.FRONTEND_URL}/payment-success`,
+            cancel_url: `${process.env.FRONTEND_URL}/payment-failure`,
+            metadata: { userId: user.id, planType }
+        };
+
+        // Add Trial for Standard Plan ONLY if user hasn't used it yet
+        if (planType === 'STANDARD' && !user.hasUsedFreeTrial) {
+            sessionConfig.subscription_data = {
+                trial_period_days: 14, // 14-day trial
+                metadata: { planType, userId: user.id, email: user.email }
+            };
+            console.log(`✅ Granting STANDARD trial to user ${user.id}`);
+        } else if (planType === 'STANDARD' && user.hasUsedFreeTrial) {
+            console.log(`⚠️ User ${user.id} already used free trial - no trial granted`);
+            // No trial, they'll be charged immediately
+            sessionConfig.subscription_data = {
+                metadata: { planType, userId: user.id, email: user.email }
+            };
+        } else {
+            // PRO plan or any other plan - always include user identity in subscription metadata
+            sessionConfig.subscription_data = {
+                metadata: { planType, userId: user.id, email: user.email }
+            };
+        }
+
+        const session = await stripe.checkout.sessions.create(sessionConfig);
+
+        res.status(200).json({ url: session.url });
+    } catch (error) {
+        next(error);
+    }
+};
+export const createSubscriptionIntentApi = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email, name, planType, period } = req.body;
+
+        if (!email || !planType || !period) {
+            return res.status(400).json({ message: "Email, Plan type, and Period are required" });
+        }
+
+        // Get Price ID
+        const priceId = STRIPE_PRICES[planType as keyof typeof STRIPE_PRICES]?.[period as keyof typeof STRIPE_PRICES.STANDARD];
+        console.log('📊 Debug - planType:', planType, 'period:', period, 'priceId:', priceId);
+        if (!priceId) return res.status(400).json({ message: "Invalid plan or period" });
+
+        // 1. Create or Get Customer
+        let user = await prisma.user.findUnique({ where: { email } });
+        let customerId = user?.stripeCustomerId;
+
+        if (!customerId) {
+            const customer = await stripe.customers.create({
+                email,
+                name,
+                metadata: {
+                    userId: user?.id || "temp",
+                    tempUser: user ? "false" : "true"
+                }
+            });
+            customerId = customer.id;
+
+            // SAVE IMMEDIATELY if user exists
+            if (user) {
+                await prisma.user.update({
+                    where: { id: user.id },
+                    data: { stripeCustomerId: customerId }
+                });
+            }
+        }
+
+        // 2. Check Trial Eligibility (Standard Plan activation skips trial as requested)
+        // We will mark the trial as used immediately for existing users below.
+        const shouldGrantTrial = false;
+
+        console.log('🔍 Plan Selection:', { planType, userId: user?.id || 'new_user' });
+
+        // 3. Create Subscription
+        const subscriptionConfig: any = {
+            customer: customerId,
+            items: [{ price: priceId }],
+            // FORCE automatic charging to ensure payment intent creation
+            collection_method: 'charge_automatically',
+            payment_behavior: 'default_incomplete',
+            payment_settings: {
+                save_default_payment_method: 'on_subscription',
+                payment_method_types: ['card']
+            },
+            expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
+            metadata: {
+                planType: planType || "STANDARD",
+                email: email,
+                userId: user?.id || "temp"
+            }
+        };
+
+        const subscription = await stripe.subscriptions.create(subscriptionConfig);
+
+        // SAVE IMMEDIATELY: Ensure the subscription ID is linked even if payment is incomplete
+        if (user) {
+            await prisma.subscription.upsert({
+                where: { userId: user.id },
+                create: {
+                    userId: user.id,
+                    stripeCustomerId: customerId,
+                    stripeSubscriptionId: subscription.id,
+                    plan: (planType || "STANDARD") as any,
+                    status: (subscription.status.toUpperCase()) as any,
+                    currentPeriodEnd: new Date(subscription.current_period_end * 1000)
+                },
+                update: {
+                    stripeSubscriptionId: subscription.id,
+                    plan: (planType || "STANDARD") as any,
+                    status: (subscription.status.toUpperCase()) as any,
+                    currentPeriodEnd: new Date(subscription.current_period_end * 1000)
+                }
+            });
+            console.log(`✅ Linked subscription ${subscription.id} to user ${user.id} (Status: ${subscription.status})`);
+        }
+
+        // Restore "mark trial as used" for this user immediately
+        if (user) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { hasUsedFreeTrial: true }
+            });
+            console.log(`✅ Marked trial as used for user ${user.id}`);
+        }
+
+        let latestInvoice = subscription.latest_invoice as any;
+        let clientSecret = latestInvoice?.payment_intent?.client_secret;
+
+        // RETRY MECHANISM: If client_secret is missing, Stripe might be slow to finalize the invoice
+        if (!clientSecret && latestInvoice?.id) {
+            console.log("⚠️ clientSecret missing, retrying invoice retrieval...");
+            for (let i = 0; i < 3; i++) {
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
+                try {
+                    const refreshedInvoice = await stripe.invoices.retrieve(latestInvoice.id, {
+                        expand: ['payment_intent']
+                    });
+                    if (refreshedInvoice.payment_intent?.client_secret) {
+                        clientSecret = refreshedInvoice.payment_intent.client_secret;
+                        latestInvoice = refreshedInvoice;
+                        console.log("✅ Retrieved clientSecret on retry", i + 1);
+                        break;
                     }
+                } catch (err) {
+                    console.error(`Retry ${i + 1} failed:`, err);
                 }
             }
         }
-    })
 
-    const email = user?.provider?.email;
-
-    // // 1. Create Stripe Customer if not exists
-    // let stripeCustomerId = user?.subscription?.stripeSubscriptionId;
-    // if (!stripeCustomerId) {
-    //     const customer = await stripe.customers.create({
-    //         email,
-    //         name: user?.provider?.user.fullName,
-    //         metadata: {
-    //             userId: user?.id
-    //         }
-    //     });
-    //     stripeCustomerId = customer.id;
-    // }
-
-    // //2. Create a stripe subscription with 14-day trail 
-    // const stripeSubscription = await stripe.subscriptions.create({
-    //     customer: stripeCustomerId,
-    //     items: [
-    //         {
-    //             price: STRIPE_PRICES.STANDARD.MONTHLY,
-    //         },
-    //     ],
-    //     trial_period_days: 14,
-    //     metadata: {
-    //         userId: user?.id,
-    //     }
-    // });
-
-    //3. update DB for trailing
-    // await prisma.subscription.update({
-    //     where: { userId: user?.id },
-    //     data: {
-    //         stripeCustomerId: stripeCustomerId,
-    //         stripeSubscriptionId: stripeSubscription.id,
-    //         status: "TRIALING",
-    //         trailStart: new Date(),
-    //         // trailEnd: new Date(stripeSubscription.current_period_end * 1000),
-    //         // currentPeriodEnd: new Date(stripeSubscription.current_period_end * 1000)
-    //     }
-    // })
-
-    // 4. update user status to approved
-    await prisma.user.update({
-        where: {
-            id: user?.id,
-        },
-        data: {
-            isApprove: "approved",
+        // FALLBACK: Check pending_setup_intent
+        if (!clientSecret && subscription.pending_setup_intent) {
+            clientSecret = (subscription.pending_setup_intent as any).client_secret;
+            if (clientSecret) console.log("⚠️ Using pending_setup_intent client_secret");
         }
-    })
-}
 
-export const createStripeCustomer = async (userId: string) => {
+        if (!clientSecret) {
+            console.error("❌ ERROR: clientSecret is missing after all attempts.");
+            console.log("📊 Debug State:", {
+                subscription_status: subscription.status,
+                invoice_status: latestInvoice?.status,
+                invoice_amount: latestInvoice?.amount_due,
+                payment_intent_type: typeof latestInvoice?.payment_intent
+            });
+
+            return res.status(500).json({
+                message: "Failed to initialize payment. Please try again.",
+                debug: `Missing client_secret. Invoice status: ${latestInvoice?.status}, Amount: ${latestInvoice?.amount_due}`
+            });
+        }
+
+        res.status(200).json({
+            subscriptionId: subscription.id,
+            clientSecret: clientSecret,
+            customerId: customerId
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+export const activateFreePlanApi = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
+        const userId = (req as any).user.id;
+        const { planType } = req.body;
+
+        const existingSub = await prisma.subscription.findUnique({ where: { userId } });
+        if (existingSub) {
+            return res.status(400).json({ message: "Subscription already exists" });
+        }
+
+        const isStandardTrial = planType === 'STANDARD';
+        const endDate = isStandardTrial
+            ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+            : null;
+
+        await prisma.subscription.create({
+            data: {
+                userId,
+                stripeCustomerId: isStandardTrial ? `trial_${userId}` : `free_${userId}`,
+                plan: (planType || "FREE") as any,
+                status: "ACTIVE",
+                ...(endDate && { trialEnd: endDate })
+            }
+        });
+
+        const message = isStandardTrial
+            ? "14-day free trial activated successfully"
+            : "Free plan activated successfully";
+
+        res.status(200).json({ message });
+    } catch (error) {
+        next(error);
+    }
+};
+export const cancelSubscriptionApi = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as any).user.id;
+        const { reason } = req.body;
+
+        const sub = await prisma.subscription.findUnique({ where: { userId } });
+
+        if (!sub) {
+            return res.status(404).json({ message: "No active subscription found" });
+        }
+
+        // 1. If it's a Stripe subscription, cancel immediately (to revoke access)
+        // User requested immediate UI restriction upon cancellation
+        if (sub.stripeSubscriptionId) {
+            await stripe.subscriptions.cancel(sub.stripeSubscriptionId);
+
+            await prisma.subscription.update({
+                where: { userId },
+                data: {
+                    status: "CANCELED",
+                    cancelAtPeriodEnd: false,
+                    cancelReason: reason
+                }
+            });
+
+            // Emit update to frontend IMMEDIATELY
+            io.to(userId).emit("subscription_updated");
+
+            return res.status(200).json({ message: "Subscription canceled successfully." });
+        }
+
+        // 2. If it's a trial/free plan (no Stripe subscription), cancel immediately in DB
+        await prisma.subscription.update({
+            where: { userId },
+            data: {
+                status: "CANCELED",
+                cancelReason: reason
+            }
+        });
+
+        // Emit update to frontend IMMEDIATELY
+        io.to(userId).emit("subscription_updated");
+
+        res.status(200).json({ message: "Subscription canceled successfully." });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getAllPaymentsApi = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as any).user.id;
+        console.log("userId", userId);
+        const payments = await prisma.payment.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
             include: {
-                provider: {
+                user: {
                     select: {
+                        fullName: true,
                         email: true,
-                        user: {
+                        address: true,
+                        country: true,
+                        state: true,
+                        subscription: {
                             select: {
+                                billingCycle: true,
+                                currentPeriodEnd: true,
+                                plan: true,
+                                status: true,
 
                             }
                         }
                     }
                 }
             }
-        })
-    } catch (error) {
+        });
+        console.log(`[getAllPaymentsApi] User: ${userId} | Found: ${payments.length} payments`);
+        payments.forEach(p => console.log(`- P: ${p.id} | Status: ${p.status}`));
 
+        // Transform to include all billing details
+        const paymentsWithDetails = payments.map(payment => {
+            const planName = payment.plan || payment.user.subscription?.plan || 'Standard';
+            const billingCycle = payment.user.subscription?.billingCycle || 'Monthly';
+
+            // Format Amount (Cents to Dollar String)
+            const amountFormatted = `$${(payment.amount / 100).toFixed(2)}`;
+
+            // Map Invoice Number (Fallback if Stripe ID is missing)
+            const invoiceNo = payment.stripeInvoiceId || `INV-${new Date(payment.createdAt).getFullYear()}-${payment.id.split('-')[0].toUpperCase()}`;
+
+            // Map Status to Frontend requirements ("paid", "pending", "overdue", "canceled")
+            let status = payment.status.toLowerCase();
+            if (status === 'succeeded') status = 'paid';
+            if (status === 'failed') status = 'overdue'; // Or canceled depending on logic
+
+            return {
+                id: payment.id,
+                invoiceNo: invoiceNo,
+                date: payment.createdAt.toISOString().split('T')[0], // YYYY-MM-DD
+                dueDate: payment.user.subscription?.currentPeriodEnd
+                    ? payment.user.subscription.currentPeriodEnd.toISOString().split('T')[0]
+                    : payment.createdAt.toISOString().split('T')[0], // Fallback to created date
+
+                amount: amountFormatted,
+                status: status,
+                plan: planName,
+                last4: payment.paymentMethodLast4 || '4242',
+
+                // RAW DATA for frontend calculations/formatting
+                rawAmount: payment.amount / 100,
+                createdAt: payment.createdAt,
+
+                // Billing Details for Invoice Modal
+                billTo: {
+                    name: payment.user.fullName,
+                    email: payment.user.email,
+                    address: payment.user.address || "-", // Fallback
+                    city: `${payment.user.state || ''}, ${payment.user.country || ''}`.replace(/^, /, '') || "-"
+                },
+                items: [
+                    {
+                        description: `${planName} Plan`,
+                        subtext: `${billingCycle} subscription`,
+                        qty: "01",
+                        price: amountFormatted,
+                        amount: amountFormatted,
+                        status: status === 'paid' ? 'Paid' : 'Pending'
+                    }
+                ],
+                subtotal: amountFormatted,
+                tax: "$0.00",
+                total: amountFormatted,
+                notes: `Thank you for your business! ${billingCycle === 'MONTHLY' ? 'Monthly' : 'Annual'} subscription payment.`
+            };
+        });
+
+        res.status(200).json(paymentsWithDetails);
+    } catch (error) {
+        next(error);
     }
-}
+};
+
+// Force Sync local DB with Stripe status
+export const syncSubscriptionApi = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = (req as any).user.id;
+        const sub = await prisma.subscription.findUnique({
+            where: { userId }
+        });
+
+        if (!sub || !sub.stripeSubscriptionId) {
+            return res.status(404).json({ message: "No stripe subscription found to sync" });
+        }
+
+
+        const stripeSub = await stripe.subscriptions.retrieve(sub.stripeSubscriptionId);
+
+        const statusMap: Record<string, string> = {
+            'active': "ACTIVE",
+            'past_due': "PAST_DUE",
+            'canceled': "CANCELED",
+            'unpaid': "UNPAID",
+            'trialing': "TRIALING",
+            'incomplete': "INCOMPLETE",
+            'incomplete_expired': "INCOMPLETE_EXPIRED"
+        };
+
+        const mappedStatus = statusMap[stripeSub.status] || "ACTIVE";
+
+        const updatedSub = await prisma.subscription.update({
+            where: { userId },
+            data: {
+                status: mappedStatus as any,
+                currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
+                plan: (stripeSub.metadata?.planType || sub.plan) as any,
+                cancelAtPeriodEnd: stripeSub.cancel_at_period_end
+            }
+        });
+        res.status(200).json({
+            message: "Subscription synced successfully",
+            status: updatedSub.status,
+            subscription: updatedSub
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+// Admin: Get All Invoices
+export const getAllInvoicesApi = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { providerId } = req.query;
+
+        const whereClause = providerId ? { userId: String(providerId) } : {};
+
+        const payments = await prisma.payment.findMany({
+            where: whereClause,
+            include: {
+                user: {
+                    select: { fullName: true, email: true, role: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.status(200).json(payments);
+    } catch (error) {
+        next(error);
+    }
+};

@@ -9,32 +9,38 @@ export const authJWT = asyncHandler(
             // Get the token from cookies or Authorization header
             const token =
                 req.cookies?.accessToken ||
+                req.cookies?.token ||
                 req.header("Authorization")?.replace("Bearer ", "");
 
             if (!token) {
-                return res.status(401).json({ message: "Unauthorized Request" });
+                return res.status(401).json({ message: "Unauthorized Request. Token not found." });
             }
 
-            if (!process.env.ACCESS_TOKEN_SECRET) {
-                return res.status(500).json({ message: "Access token secret not set in environment variables" });
+            const jwtSecret = process.env.JWT_SECRET || process.env.ACCESS_TOKEN_SECRET;
+            if (!jwtSecret) {
+                return res.status(500).json({ message: "JWT secret not set in environment variables" });
             }
 
-            const decodedToken = jwt.decode(token);
+            // FIX: Using jwt.verify to cryptographically validate the signature
+            const decodedToken = jwt.verify(token, jwtSecret);
 
             if (typeof decodedToken === 'object' && decodedToken !== null) {
-                const { id, email, exp, role } = decodedToken as { id: string; email: string; exp: number; role: string };
+                const { userId, id, email, role } = decodedToken as { userId?: string, id?: string; email: string; role: string };
 
-                const currentTime = Math.floor(Date.now() / 1000);
-                if (exp < currentTime) {
-                    return res.status(401).json({ message: "Token has expired" });
-                }
-                req.user = { id, email, role };
-                next(); // Proceed to the next middleware or route handler
+                // Normalize identity fields
+                req.user = {
+                    id: id || userId,
+                    email,
+                    role
+                };
+                next();
             } else {
-                return res.status(401).json({ message: "Invalid token" });
+                return res.status(401).json({ message: "Invalid token structure" });
             }
-        } catch (error) {
-            return res.status(401).json({ message: error || "Invalid Access Token" });
+        } catch (error: any) {
+            console.error("Auth Middleware Error:", error.message);
+            const message = error.name === "TokenExpiredError" ? "Token has expired" : "Invalid Access Token";
+            return res.status(401).json({ message });
         }
     }
 );

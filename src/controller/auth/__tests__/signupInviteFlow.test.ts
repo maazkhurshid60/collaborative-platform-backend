@@ -18,7 +18,7 @@ jest.mock("../../../db/db.config", () => {
             create: jest.fn(),
         },
         invitation: {
-            findUnique: jest.fn(),
+            findFirst: jest.fn(),
             update: jest.fn(),
         },
         chatChannel: {
@@ -67,7 +67,7 @@ describe("Signup with Invitation Flow", () => {
         });
 
         // 3. Mock invitation lookup (Post-Transaction)
-        (prisma.invitation.findUnique as jest.Mock).mockResolvedValue({
+        (prisma.invitation.findFirst as jest.Mock).mockResolvedValue({
             id: "invite-id",
             token: "valid-invite-token",
             email: "invited@test.com",
@@ -88,10 +88,13 @@ describe("Signup with Invitation Flow", () => {
             .post("/api/v1/auth/signup")
             .send(validSignupData);
 
+        if (response.status !== StatusCodes.CREATED) {
+            console.log("Signup Failure Body:", JSON.stringify(response.body, null, 2));
+        }
         expect(response.status).toBe(StatusCodes.CREATED);
 
         // Check if invitation was searched for
-        expect(prisma.invitation.findUnique).toHaveBeenCalledWith({
+        expect(prisma.invitation.findFirst).toHaveBeenCalledWith({
             where: { token: "valid-invite-token", status: "PENDING" }
         });
 
@@ -118,7 +121,7 @@ describe("Signup with Invitation Flow", () => {
         });
 
         // Mock invitation lookup returning null (invalid token)
-        (prisma.invitation.findUnique as jest.Mock).mockResolvedValue(null);
+        (prisma.invitation.findFirst as jest.Mock).mockResolvedValue(null);
 
         const response = await request(app)
             .post("/api/v1/auth/signup")

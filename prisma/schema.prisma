@@ -1,0 +1,356 @@
+// This is your Prisma schema file
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client"
+    output   = "../src/generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+// ============= MODELS =============
+
+model User {
+    id               String   @id @default(uuid())
+    fullName         String
+    email            String   @unique
+    password         String
+    profileImage     String?
+    gender           Gender   @default(MALE)
+    age              Int?
+    contactNo        String?
+    address          String?
+    status           String
+    role             Role
+    stripeCustomerId String?  @unique // Shared stripe customer ID
+    isApprove        Approve  @default(PENDING)
+    licenseNo        String?  @unique
+    isLicenseValid   Boolean  @default(false)
+    country          String
+    state            String
+    blockedMembers   String[] @default([])
+    privateKey       String?
+    publicKey        String?
+    hasUsedFreeTrial Boolean  @default(false) // Track if user already had their one free trial
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relations
+    client       Client?
+    provider     Provider?
+    superAdmin   SuperAdmin?
+    subscription Subscription?
+
+    sentNotifications     Notification[] @relation("SenderRelation")
+    receivedNotifications Notification[] @relation("RecipientRelation")
+
+    chatChannelsA ChatChannel[] @relation("ChatA")
+    chatChannelsB ChatChannel[] @relation("ChatB")
+
+    messages          ChatMessage[]
+    groupMemberships  GroupMembers[]
+    readReceipts      ReadReceipt[]
+    groupReadReceipts GroupReadReceipt[]
+    payments          Payment[]
+}
+
+model Client {
+    id     String @id @default(uuid())
+    userId String @unique
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    eSignature                  String?
+    isAccountCreatedByOwnClient Boolean @default(false)
+    clientShowToOthers          Boolean @default(true)
+    createdByProviderId         String?
+
+    // Relationships
+    receivedDocument DocumentShareWith[]
+    providerList     ProviderOnClient[]
+    createdBy        Provider?           @relation("ClientCreator", fields: [createdByProviderId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Provider {
+    id         String @id @default(uuid())
+    userId     String @unique
+    user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    department String
+
+    // Relationships
+    sharedDocument DocumentShareWith[]
+    clientList     ProviderOnClient[]
+    invitations    Invitation[]
+    groupChats     GroupChat[]
+    createdClients Client[]            @relation("ClientCreator")
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model SuperAdmin {
+    id     String @id @default(uuid())
+    userId String @unique
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model ChatChannel {
+    id          String @id @default(uuid())
+    providerAId String
+    providerBId String
+
+    deletedByA Boolean @default(false)
+    deletedByB Boolean @default(false)
+
+    providerA User @relation("ChatA", fields: [providerAId], references: [id], onDelete: Cascade)
+    providerB User @relation("ChatB", fields: [providerBId], references: [id], onDelete: Cascade)
+
+    messages ChatMessage[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([providerAId, providerBId])
+}
+
+model ChatMessage {
+    id            String  @id @default(uuid())
+    chatChannelId String?
+    groupId       String?
+    senderId      String
+    message       String
+    mediaUrl      String?
+    type          String
+
+    chatChannel ChatChannel? @relation(fields: [chatChannelId], references: [id])
+    group       GroupChat?   @relation(fields: [groupId], references: [id])
+    sender      User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+    groupReadReceipts GroupReadReceipt[]
+    readReceipts      ReadReceipt[]
+
+    createdAt DateTime @default(now())
+}
+
+model Document {
+    id   String  @id @default(uuid())
+    url  String
+    name String
+    type String? @default("Questionnaire")
+
+    sharedWith DocumentShareWith[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model DocumentShareWith {
+    id         String  @id @default(uuid())
+    documentId String
+    clientId   String?
+    providerId String?
+    eSignature String?
+    isAgree    Boolean @default(false)
+
+    client   Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+    document Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+    provider Provider? @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([documentId, clientId, providerId])
+}
+
+model GroupChat {
+    id         String @id @default(uuid())
+    name       String
+    providerId String
+
+    provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+    messages ChatMessage[]
+    members  GroupMembers[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model GroupMembers {
+    id          String @id @default(uuid())
+    groupChatId String
+    userId      String
+
+    groupChat GroupChat @relation(fields: [groupChatId], references: [id], onDelete: Cascade)
+    user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+}
+
+model GroupReadReceipt {
+    id        String @id @default(uuid())
+    messageId String
+    userId    String
+
+    message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+    user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    readAt DateTime @default(now())
+
+    @@unique([messageId, userId])
+}
+
+model Invitation {
+    id          String           @id @default(uuid())
+    token       String           @unique
+    email       String
+    invitedById String
+    status      InvitationStatus @default(PENDING)
+
+    invitedBy Provider @relation(fields: [invitedById], references: [id])
+
+    createdAt DateTime @default(now())
+}
+
+model Notification {
+    id                 String           @id @default(uuid())
+    title              String
+    message            String
+    type               NotificationType
+    recipientId        String
+    senderId           String?
+    seen               Boolean          @default(false)
+    deletedBySender    Boolean          @default(false)
+    deletedByRecipient Boolean          @default(false)
+
+    recipient User  @relation("RecipientRelation", fields: [recipientId], references: [id], onDelete: Cascade)
+    sender    User? @relation("SenderRelation", fields: [senderId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+}
+
+model ProviderOnClient {
+    id         String @id @default(uuid())
+    clientId   String
+    providerId String
+
+    client   Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+    provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model ReadReceipt {
+    id        String @id @default(uuid())
+    messageId String
+    userId    String
+
+    message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+    user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    readAt DateTime @default(now())
+
+    @@unique([messageId, userId])
+}
+
+model Subscription {
+    id                   String             @id @default(uuid())
+    userId               String             @unique
+    stripeCustomerId     String?
+    stripeSubscriptionId String?            @unique
+    stripePriceId        String?
+    plan                 PlanType           @default(STANDARD)
+    status               SubscriptionStatus @default(TRIALING)
+    trialStart           DateTime?
+    trialEnd             DateTime?
+    currentPeriodEnd     DateTime?
+    billingCycle         String?
+    cancelAtPeriodEnd    Boolean            @default(false)
+    cancelReason         String?
+
+    user      User     @relation(fields: [userId], references: [id])
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model Payment {
+    id                    String        @id @default(uuid())
+    userId                String
+    stripePaymentIntentId String?
+    stripeInvoiceId       String? // Added invoice ID
+    amount                Int // Changed to Int (cents)
+    currency              String
+    status                PaymentStatus @default(PENDING)
+    invoiceUrl            String?
+    createdAt             DateTime      @default(now())
+    updatedAt             DateTime      @updatedAt
+    plan                  String? // Store plan at time of payment
+    paymentMethodLast4    String? // Store last 4 digits of payment method
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============= ENUMS =============
+
+enum PaymentStatus {
+    PENDING
+    SUCCEEDED
+    FAILED
+    REFUNDED
+    OVERDUE
+}
+
+enum Gender {
+    MALE
+    FEMALE
+}
+
+enum Role {
+    superAdmin
+    client
+    provider
+}
+
+enum Approve {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+enum InvitationStatus {
+    PENDING
+    ACCEPTED
+    EXPIRED
+}
+
+enum NotificationType {
+    PROFILE_UPDATE
+    PASSWORD_UPDATE
+    DOCUMENT_SHARED
+    DOCUMENT_SIGNED
+}
+
+enum PlanType {
+    STANDARD
+    PRO
+}
+
+enum SubscriptionStatus {
+    TRIALING
+    ACTIVE
+    CANCELED
+    PAST_DUE
+    UNPAID
+    INCOMPLETE
+    INCOMPLETE_EXPIRED
+    PAUSED
+}

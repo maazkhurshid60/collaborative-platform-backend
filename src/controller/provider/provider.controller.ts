@@ -3,7 +3,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
-import { Role } from "@prisma/client";
+import { Role } from "../../generated/prisma/enums";
 import { providerSchema } from "../../schema/provider/provider.schema";
 
 
@@ -28,13 +28,13 @@ const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) 
         },
         select: {
             id: true,
-            email: true,
             department: true,
             createdAt: true,
             updatedAt: true,
             user: {
                 select: {
                     id: true,
+                    email: true,
                     fullName: true,
                     profileImage: true,
                     gender: true,
@@ -84,13 +84,13 @@ const getTotalProviders = asyncHandler(async (req: Request, res: Response) => {
         take: limit,
         select: {
             id: true,
-            email: true,
             department: true,
             createdAt: true,
             updatedAt: true,
             user: {
                 select: {
                     id: true,
+                    email: true,
                     fullName: true,
                     profileImage: true,
                     gender: true,
@@ -130,7 +130,10 @@ const getTotalProviders = asyncHandler(async (req: Request, res: Response) => {
 
 const deletProvider = asyncHandler(async (req: Request, res: Response) => {
     const { providerId } = req.body
-    const isProviderExist = await prisma.provider.findFirst({ where: { id: providerId } })
+    const isProviderExist = await prisma.provider.findFirst({
+        where: { id: providerId },
+        include: { user: true }
+    })
     if (!isProviderExist) {
         return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { error: "Provider does not exist." }, ""))
     }
@@ -138,7 +141,7 @@ const deletProvider = asyncHandler(async (req: Request, res: Response) => {
     if (!isProviderDeleted) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Internal Server Error." }, ""))
     }
-    return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { isProviderDeleted }, `${isProviderDeleted.email} deleted successfully`))
+    return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { isProviderDeleted }, `${isProviderExist.user.email} deleted successfully`))
 })
 
 const updateProvider = asyncHandler(async (req: Request, res: Response) => {
@@ -159,11 +162,11 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const isEmailExist = await prisma.provider.findFirst({
+    const isEmailExist = await prisma.user.findFirst({
         where: {
             email,
             id: {
-                not: providerId
+                not: isProviderExist.userId
             }
         }
     });
@@ -194,8 +197,8 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const updatedproviderData = { email, department };
-    const updatedUserData = { fullName, gender, age, contactNo, address, status, licenseNo, role: Role.provider };
+    const updatedproviderData = { department };
+    const updatedUserData = { fullName, email, gender, age, contactNo, address, status, licenseNo, role: Role.provider };
 
 
     const isUserUpdated = await prisma.user.update({

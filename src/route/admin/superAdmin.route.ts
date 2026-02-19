@@ -3,6 +3,13 @@ import {
   getSuperAdminFirst,
   getSuperAdminById,
   updateSuperAdminById,
+  getAllPayments,
+  getAllSubscriptions,
+  updateSubscription,
+  deleteSubscription,
+  getProviderContactInfo,
+  getProviderSubscriptionInfo,
+  getProviderPaymentHistory,
 } from "../../controller/admin/superAdmin.controller";
 
 const router = Router();
@@ -14,5 +21,15 @@ router.get("/:id", getSuperAdminById);
 
 
 router.patch("/:id", updateSuperAdminById);
+
+router.get("/payments/all", getAllPayments);
+
+router.get("/subscriptions/all", getAllSubscriptions);
+router.put("/subscriptions/:id", updateSubscription);
+router.delete("/subscriptions/:id", deleteSubscription);
+
+router.get("/provider/:userId/contact-info", getProviderContactInfo);
+router.get("/provider/:userId/subscription-info", getProviderSubscriptionInfo);
+router.get("/provider/:userId/payment-history", getProviderPaymentHistory);
 
 export default router;

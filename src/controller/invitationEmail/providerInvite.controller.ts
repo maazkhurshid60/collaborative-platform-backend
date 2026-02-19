@@ -30,7 +30,7 @@ export const inviteProviderSignupApi = asyncHandler(async (req: Request, res: Re
   // Check if already a provider 
   const existingProvider = await prisma.provider.findFirst({
     where: {
-      AND: {
+      user: {
         email: invitationEmail,
       }
     }
@@ -40,37 +40,46 @@ export const inviteProviderSignupApi = asyncHandler(async (req: Request, res: Re
     return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, null, `This user is already registered on the platform`))
   }
 
-  // 2.   Generate a secure token 
+  // 1. Find the inviter provider record to get the correct Provider ID
+  const inviter = await prisma.provider.findFirst({
+    where: {
+      OR: [
+        { id: invitedByUserId },
+        { userId: invitedByUserId }
+      ]
+    },
+    include: {
+      user: {
+        select: {
+          fullName: true,
+          address: true,
+          country: true,
+          state: true,
+          licenseNo: true,
+        }
+      }
+    }
+  });
+
+  if (!inviter) {
+    return res.status(StatusCodes.NOT_FOUND).json(
+      new ApiResponse(StatusCodes.NOT_FOUND, null, "Inviter provider record not found.")
+    );
+  }
+
+  // 2. Generate a secure token 
   const token = crypto.randomBytes(32).toString("hex");
 
   await prisma.invitation.create({
     data: {
       token,
       email: invitationEmail,
-      invitedById: invitedByUserId,
+      invitedById: inviter.id,
     }
   });
 
-  // 4. Send invite email
-  const inviter = await prisma.provider.findFirst(
-    {
-      where: {
-        id: invitedByUserId
-      },
-      include: {
-        user: {
-          select: {
-            fullName: true,
-            address: true,
-            country: true,
-            state: true,
-            licenseNo: true,
-          }
-        }
-      }
-    }
-  )
-  const invitedByName = inviter?.user.fullName || "A Kolabme User";
+  // 3. Send invite email
+  const invitedByName = inviter.user.fullName || "A Kolabme User";
 
   try {
     await sendProviderSignupInviteEmail(invitationEmail, invitedByName, token);

@@ -40,7 +40,7 @@ const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
 
 const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
-    const { clientId } = req.body;
+    const { clientId, providerId } = req.body;
 
     if (!clientId) {
         return res.status(StatusCodes.BAD_REQUEST).json(
@@ -54,14 +54,14 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
     // Step 1: Fetch all master documents
     const allDocuments = await prisma.document.findMany({
-        include: { sharedRecords: true },
+        include: { sharedWith: true },
         orderBy: { createdAt: 'desc' },
         skip
     });
 
     // Step 2: Fetch shared documents with current client
     const sharedWithClient = await prisma.documentShareWith.findMany({
-        where: { clientId },
+        where: { clientId, ...(providerId && { providerId }) },
         include: { document: true },
     });
 
@@ -112,6 +112,12 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
 const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Response) => {
     const { providerId, clientId, documentId, senderId, clientEmail } = req.body;
+    console.log("--------------- DOCUMENT SHARE DEBUG ---------------");
+    console.log("Body:", req.body);
+    console.log("providerId:", providerId);
+    console.log("clientId:", clientId);
+    console.log("senderId:", senderId);
+    console.log("documentId list:", documentId);
 
     const alreadySharedDocs = await prisma.documentShareWith.findMany({
         where: {
@@ -155,7 +161,7 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
     for (const doc of sharedDocuments) {
         const clientUser = await prisma.user.findUnique({
             where: { id: doc.client.userId },
-            select: { id: true, fullName: true }
+            select: { id: true, fullName: true, email: true }
         });
 
         const providerUser = await prisma.user.findUnique({
@@ -183,7 +189,7 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
         });
 
         await sendDocumentEmail(
-            clientEmail,
+            clientUser.email,
             clientUser.fullName,
             providerUser.fullName
         );

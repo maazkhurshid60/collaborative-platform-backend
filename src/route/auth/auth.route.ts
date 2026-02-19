@@ -1,9 +1,10 @@
 import { Router } from "express";
-import { blockUserApi, changePasswordApi, deleteMeAccountApi, getAllValidUsersApi, findByLicenseNo, forgotPasswordApi, getAllUsersApi, getMeApi, logInApi, logoutApi, resetPasswordApi, signupApi, unblockUserApi, updateMeApi, approveValidUser, rejectUser, restoreUser, startTrialApi, verifyInvitationToken } from "../../controller/auth/auth.controller";
+import { blockUserApi, changePasswordApi, deleteMeAccountApi, getAllValidUsersApi, findByLicenseNo, forgotPasswordApi, getAllUsersApi, getMeApi, logInApi, logoutApi, resetPasswordApi, signupApi, unblockUserApi, updateMeApi, approveValidUser, rejectUser, restoreUser, startTrialApi, verifyInvitationToken, checkEmailExistsApi } from "../../controller/auth/auth.controller";
 import { authJWT } from "../../middlewares/auth.middleware";
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
 const authRouter = Router()
 authRouter.post("/signup", signupApi)
+authRouter.post("/check-email", checkEmailExistsApi)
 authRouter.post("/license-found", findByLicenseNo)
 authRouter.post("/login", logInApi)
 authRouter.post("/block-user", blockUserApi)

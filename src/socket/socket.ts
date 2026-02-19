@@ -21,7 +21,7 @@ export function setupSocket(server: any) {
         const providerId = socket.handshake.query.providerId;
         const userId = socket.handshake.query.userId;
 
-        console.log(`Socket connected  providerId`);
+        console.log(`Socket connected providerId: ${providerId}`);
 
         // Join notification room
         if (userId) {
@@ -47,7 +47,7 @@ export function setupSocket(server: any) {
 
             try {
                 const groups = await prisma.groupMembers.findMany({
-                    where: { providerId: providerId.toString() },
+                    where: { userId: providerId.toString() },
                 });
                 groups.forEach(group => socket.join(group.groupChatId));
             } catch (err) {
@@ -102,7 +102,7 @@ export function setupSocket(server: any) {
 
         // Join direct chat room
         socket.on('join_channel', ({ chatChannelId }: { chatChannelId: string }) => {
-            console.log(`Socket socket.id joining ROOM: chatChannelId`);
+            console.log(`Socket ${socket.id} joining ROOM: ${chatChannelId}`);
             socket.join(chatChannelId);
         });
 
@@ -129,10 +129,29 @@ export function setupSocket(server: any) {
             }
         });
 
+        // Delete direct message
+        socket.on('delete_direct_message', ({ chatChannelId, messageId }: { chatChannelId: string, messageId: string }) => {
+            try {
+                io.to(chatChannelId).emit('message_deleted', { messageId });
+            } catch (err) {
+                console.error('Error in delete_direct_message:', err);
+            }
+        });
+
+        // Delete chat channel (hide for current user)
+        socket.on('delete_chat_channel', ({ chatChannelId, providerId }: { chatChannelId: string, providerId: string }) => {
+            try {
+                // Notify all sessions of the same provider
+                io.to(providerId).emit('chat_channel_deleted', { chatChannelId });
+            } catch (err) {
+                console.error('Error in delete_chat_channel:', err);
+            }
+        });
+
 
         // Disconnect handling
         socket.on('disconnect', () => {
-            console.log(`Disconnected | providerId: `);
+            console.log(`Disconnected | providerId: ${providerId}`);
             if (providerId) socket.leave(providerId);
             // if (userId) socket.leave(userId);
         });

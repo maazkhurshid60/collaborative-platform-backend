@@ -15,7 +15,7 @@ if (!apiKey) {
     try {
         const Stripe = require("stripe");
         const stripeInstance = new Stripe(apiKey, {
-            apiVersion: "2025-12-15.clover",
+            apiVersion: "2024-06-20",
         });
         Object.assign(stripe, stripeInstance);
     } catch (err) {
@@ -25,13 +25,27 @@ if (!apiKey) {
 
 export const STRIPE_PRICES = {
     STANDARD: {
-        MONTHLY: process.env.STRIPE_PRICE_STANDARD_MONTHLY || "mock_price",
-        YEARLY: process.env.STRIPE_PRICE_STANDARD_YEARLY || "mock_price"
+        MONTHLY: process.env.STRIPE_PRICE_STANDARD_MONTHLY,
+        YEARLY: process.env.STRIPE_PRICE_STANDARD_YEARLY
     },
-    PRO: {
-        MONTHLY: process.env.STRIPE_PRICE_PRO_MONTHLY || "mock_price",
-        YEARLY: process.env.STRIPE_PRICE_PRO_YEARLY || "mock_price",
-    }
+
+    // PRO: {
+    //     MONTHLY: process.env.STRIPE_PRICE_PRO_MONTHLY,
+    // }
 }
+
+
+export const STRIPE_PLANS_IDS = {
+    STANDARD: {
+        MONTHLY: process.env.STRIPE_PLAN_ID_STANDARD_MONTHLY,
+    },
+    // PRO: {
+    //     MONTHLY: process.env.STRIPE_PLAN_ID_PRO_MONTHLY,
+    // }
+}
+
+
+
+
 
 export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "mock_secret";
