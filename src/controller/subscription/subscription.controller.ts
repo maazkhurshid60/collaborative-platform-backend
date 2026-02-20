@@ -131,6 +131,7 @@ export const createSubscriptionIntentApi = async (req: Request, res: Response, n
             expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
             metadata: {
                 planType: planType || "STANDARD",
+                period: period || "MONTHLY",
                 email: email,
                 userId: user?.id || "temp"
             }
@@ -148,13 +149,15 @@ export const createSubscriptionIntentApi = async (req: Request, res: Response, n
                     stripeSubscriptionId: subscription.id,
                     plan: (planType || "STANDARD") as any,
                     status: (subscription.status.toUpperCase()) as any,
-                    currentPeriodEnd: new Date(subscription.current_period_end * 1000)
+                    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                    billingCycle: period
                 },
                 update: {
                     stripeSubscriptionId: subscription.id,
                     plan: (planType || "STANDARD") as any,
                     status: (subscription.status.toUpperCase()) as any,
-                    currentPeriodEnd: new Date(subscription.current_period_end * 1000)
+                    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                    billingCycle: period
                 }
             });
             console.log(`✅ Linked subscription ${subscription.id} to user ${user.id} (Status: ${subscription.status})`);

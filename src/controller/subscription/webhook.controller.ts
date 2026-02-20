@@ -21,8 +21,9 @@ export const stripeWebhookApi = async (req: Request, res: Response) => {
                 const userDataEmail = session.metadata?.email;
                 const subscriptionId = session.subscription as string;
                 const planType = session.metadata?.planType || 'PRO';
+                const period = session.metadata?.period || 'MONTHLY'; // Extract period
 
-                console.log("🔔 [Webhook] checkout.session.completed", { userId, email: userDataEmail, subscriptionId, planType });
+                console.log("🔔 [Webhook] checkout.session.completed", { userId, email: userDataEmail, subscriptionId, planType, period });
 
                 if (subscriptionId) {
                     let targetUserId = userId === 'temp' ? null : userId;
@@ -66,14 +67,16 @@ export const stripeWebhookApi = async (req: Request, res: Response) => {
                                                     stripeSubscriptionId: subscriptionId,
                                                     status: "ACTIVE",
                                                     stripePriceId: session.line_items?.[0]?.price?.id,
-                                                    plan: planType as any
+                                                    plan: planType as any,
+                                                    billingCycle: period
                                                 },
                                                 update: {
                                                     stripeCustomerId: session.customer as string,
                                                     stripeSubscriptionId: subscriptionId,
                                                     status: "ACTIVE",
                                                     stripePriceId: session.line_items?.[0]?.price?.id,
-                                                    plan: planType as any
+                                                    plan: planType as any,
+                                                    billingCycle: period
                                                 }
                                             }
                                         },
@@ -167,10 +170,10 @@ export const stripeWebhookApi = async (req: Request, res: Response) => {
                     console.warn(`⚠️ [Webhook] Subscription ${subscriptionId} not found locally. Attempting recovery...`);
                     try {
                         stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
-                        const { userId, planType } = stripeSub.metadata || {};
+                        const { userId, planType, period } = stripeSub.metadata || {};
                         const subEmail = stripeSub.metadata?.email || email;
 
-                        console.log(`📊 [Webhook] Stripe metadata:`, { userId, planType, email: subEmail });
+                        console.log(`📊 [Webhook] Stripe metadata:`, { userId, planType, email: subEmail, period });
 
                         let targetUserId = userId === 'temp' ? null : userId;
 
@@ -194,6 +197,10 @@ export const stripeWebhookApi = async (req: Request, res: Response) => {
                                 };
                                 const mappedStatus = statusMap[stripeSub.status] || "ACTIVE";
 
+                                // Determine Billing Cycle
+                                const interval = stripeSub.plan?.interval || 'month'; // 'month' or 'year'
+                                const billingCycle = period || (interval === 'year' ? 'YEARLY' : 'MONTHLY');
+
                                 console.log(`🔄 [Webhook] Upserting subscription record...`);
                                 subscription = await prisma.subscription.upsert({
                                     where: { userId: targetUserId },
@@ -203,13 +210,15 @@ export const stripeWebhookApi = async (req: Request, res: Response) => {
                                         stripeSubscriptionId: subscriptionId,
                                         status: mappedStatus as any,
                                         plan: (planType || "STANDARD") as any,
-                                        currentPeriodEnd: new Date(stripeSub.current_period_end * 1000)
+                                        currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
+                                        billingCycle: billingCycle
                                     },
                                     update: {
                                         stripeSubscriptionId: subscriptionId,
                                         status: mappedStatus as any,
                                         plan: (planType || "STANDARD") as any,
-                                        currentPeriodEnd: new Date(stripeSub.current_period_end * 1000)
+                                        currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
+                                        billingCycle: billingCycle
                                     }
                                 });
 
@@ -249,12 +258,16 @@ export const stripeWebhookApi = async (req: Request, res: Response) => {
                         };
                         const mappedStatus = statusMap[stripeSub?.status] || "ACTIVE";
 
+                        const interval = stripeSub?.plan?.interval || 'month';
+                        const billingCycle = (stripeSub?.metadata?.period) || (interval === 'year' ? 'YEARLY' : 'MONTHLY');
+
                         await prisma.subscription.update({
                             where: { id: subscription.id },
                             data: {
                                 status: mappedStatus as any,
                                 currentPeriodEnd: new Date(invoice.lines.data[0].period.end * 1000),
-                                cancelAtPeriodEnd: stripeSub?.cancel_at_period_end ?? false
+                                cancelAtPeriodEnd: stripeSub?.cancel_at_period_end ?? false,
+                                billingCycle: billingCycle
                             }
                         });
 

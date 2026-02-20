@@ -285,7 +285,8 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
                                 trialEnd: true,
                                 currentPeriodEnd: true,
                                 cancelAtPeriodEnd: true,
-                                stripePriceId: true
+                                stripePriceId: true,
+                                billingCycle: true
                             }
                         },
                         address: true
@@ -316,7 +317,8 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
                                 trialStart: true,
                                 trialEnd: true,
                                 currentPeriodEnd: true,
-                                cancelAtPeriodEnd: true
+                                cancelAtPeriodEnd: true,
+                                billingCycle: true
                             }
                         }
                     }
@@ -347,7 +349,8 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
                                 trialStart: true,
                                 trialEnd: true,
                                 currentPeriodEnd: true,
-                                cancelAtPeriodEnd: true
+                                cancelAtPeriodEnd: true,
+                                billingCycle: true
                             }
                         }
                     }
@@ -708,7 +711,18 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
                         status: true,
                         isApprove: true,
                         address: true,
-                        subscription: true
+                        subscription: {
+                            select: {
+                                id: true,
+                                plan: true,
+                                status: true,
+                                trialStart: true,
+                                trialEnd: true,
+                                currentPeriodEnd: true,
+                                cancelAtPeriodEnd: true,
+                                billingCycle: true
+                            }
+                        }
                     }
                 }
             }
@@ -754,7 +768,8 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
                                 trialStart: true,
                                 trialEnd: true,
                                 currentPeriodEnd: true,
-                                cancelAtPeriodEnd: true
+                                cancelAtPeriodEnd: true,
+                                billingCycle: true
                             }
                         }
                     }
@@ -1055,6 +1070,9 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
                         role: true,
                         status: true,
                         isApprove: true,
+                        licenseNo: true,
+                        country: true,
+                        state: true,
                         hasUsedFreeTrial: true,
                         subscription: {
                             select: {
@@ -1064,7 +1082,8 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
                                 trialStart: true,
                                 trialEnd: true,
                                 currentPeriodEnd: true,
-                                cancelAtPeriodEnd: true
+                                cancelAtPeriodEnd: true,
+                                billingCycle: true
                             }
                         }
                     }
