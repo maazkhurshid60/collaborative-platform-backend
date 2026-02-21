@@ -137,6 +137,23 @@ export const createSubscriptionIntentApi = async (req: Request, res: Response, n
             }
         };
 
+        // 3. Cancel any existing active/trialing subscription in Stripe BEFORE creating a new one
+        const existingSub = await prisma.subscription.findUnique({ where: { userId: user?.id || "" } });
+        if (existingSub?.stripeSubscriptionId) {
+            try {
+                const stripeSub = await stripe.subscriptions.retrieve(existingSub.stripeSubscriptionId);
+                // Cancel immediately if it's trialing, active, or past_due
+                if (['trialing', 'active', 'past_due', 'incomplete'].includes(stripeSub.status)) {
+                    await stripe.subscriptions.cancel(existingSub.stripeSubscriptionId);
+                    console.log(`🗑️ Cancelled existing Stripe subscription ${existingSub.stripeSubscriptionId} (status: ${stripeSub.status}) before upgrade`);
+                }
+            } catch (cancelErr: any) {
+                // If sub doesn't exist in Stripe anymore, that's fine — just log and continue
+                console.warn(`⚠️ Could not cancel old subscription ${existingSub.stripeSubscriptionId}:`, cancelErr?.message);
+            }
+        }
+
+        // 3b. Create new Subscription
         const subscription = await stripe.subscriptions.create(subscriptionConfig);
 
         // SAVE IMMEDIATELY: Ensure the subscription ID is linked even if payment is incomplete

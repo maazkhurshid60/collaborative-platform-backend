@@ -1,4 +1,4 @@
-// middlewares/multer.ts
+// middlewares/multerDocConfig.ts
 import multer from 'multer';
 import path from 'path';
 
@@ -11,15 +11,14 @@ const storage = multer.diskStorage({
     },
 });
 
-// Optional: Add file type filter (PDF/DOC/DOCX)
+// Enforce PDF-only uploads
 const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    const allowedTypes = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ];
-    if (!allowedTypes.includes(file.mimetype)) {
-        return cb(new Error('Only PDF and Word documents are allowed'));
+    const isPdf =
+        file.mimetype === 'application/pdf' ||
+        file.originalname.toLowerCase().endsWith('.pdf');
+
+    if (!isPdf) {
+        return cb(new Error('Only PDF files are allowed'));
     }
     cb(null, true);
 };

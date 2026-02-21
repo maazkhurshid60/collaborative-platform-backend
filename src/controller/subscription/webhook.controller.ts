@@ -370,12 +370,37 @@ export const stripeWebhookApi = async (req: Request, res: Response) => {
             case 'customer.subscription.deleted': {
                 const subscription = event.data.object;
                 console.log(`⚠️ [Webhook] customer.subscription.deleted for ${subscription.id}`);
-                await prisma.subscription.updateMany({
+
+                // Find the sub record for this Stripe subscription
+                const deletedSub = await prisma.subscription.findUnique({
                     where: { stripeSubscriptionId: subscription.id },
-                    data: { status: "CANCELED", cancelAtPeriodEnd: false }
+                    select: { userId: true, id: true }
                 });
-                const sub = await prisma.subscription.findUnique({ where: { stripeSubscriptionId: subscription.id }, select: { userId: true } });
-                if (sub) io.to(sub.userId).emit("subscription_updated");
+
+                if (deletedSub) {
+                    // Check if the user ALREADY has a NEWER subscription (different stripe ID)
+                    // This means the cancellation was triggered by an upgrade — don't overwrite with CANCELED
+                    const currentSub = await prisma.subscription.findUnique({
+                        where: { userId: deletedSub.userId },
+                        select: { stripeSubscriptionId: true, status: true }
+                    });
+
+                    const isUpgradeFlow = currentSub &&
+                        currentSub.stripeSubscriptionId !== subscription.id &&
+                        ['ACTIVE', 'TRIALING', 'INCOMPLETE'].includes(currentSub.status as string);
+
+                    if (isUpgradeFlow) {
+                        console.log(`ℹ️ [Webhook] Skipping CANCELED update for ${subscription.id} — user ${deletedSub.userId} already has a newer subscription (upgrade flow)`);
+                    } else {
+                        // Genuine cancellation — update DB and notify frontend
+                        await prisma.subscription.updateMany({
+                            where: { stripeSubscriptionId: subscription.id },
+                            data: { status: "CANCELED", cancelAtPeriodEnd: false }
+                        });
+                        io.to(deletedSub.userId).emit("subscription_updated");
+                        console.log(`✅ [Webhook] Marked subscription ${subscription.id} as CANCELED for user ${deletedSub.userId}`);
+                    }
+                }
                 break;
             }
             case 'customer.subscription.updated': {
