@@ -60,24 +60,27 @@ export const updateSuperAdminById = asyncHandler(async (req: Request, res: Respo
     email,
     contactNo,
     gender,
-    profileImage,
   } = req.body;
 
   const adminData: Prisma.SuperAdminUpdateInput = {};
-
   const userUpdate: Record<string, any> = {};
 
   if (fullName !== undefined) userUpdate.fullName = fullName;
   if (licenseNumber !== undefined) userUpdate.licenseNo = licenseNumber;
-  if (age !== undefined) userUpdate.age = age;
+  if (age !== undefined) userUpdate.age = Number(age);
   if (address !== undefined) userUpdate.address = address;
   if (country !== undefined) userUpdate.country = country;
   if (state !== undefined) userUpdate.state = state;
   if (contactNo !== undefined) userUpdate.contactNo = contactNo;
-  if (gender !== undefined) userUpdate.gender = gender;
-  if (profileImage !== undefined) userUpdate.profileImage = profileImage;
-
+  if (gender !== undefined) userUpdate.gender = gender.toUpperCase();
   if (email !== undefined) userUpdate.email = email;
+
+  // Handle image upload from multer-s3
+  if (req.file) {
+    userUpdate.profileImage = (req.file as any).location;
+  } else if (req.body.profileImage === "null") {
+    userUpdate.profileImage = null;
+  }
 
   if (Object.keys(adminData).length === 0 && Object.keys(userUpdate).length === 0) {
     return res.status(StatusCodes.BAD_REQUEST).json({
@@ -129,8 +132,6 @@ export const updateSuperAdminById = asyncHandler(async (req: Request, res: Respo
       error: error?.message ?? String(error),
     });
   }
-
-
 });
 
 export const getAllPayments = asyncHandler(async (_req: Request, res: Response) => {

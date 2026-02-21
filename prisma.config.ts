@@ -8,6 +8,7 @@ export default defineConfig({
         url: process.env.DATABASE_URL,
     },
     migrations: {
-        seed: 'ts-node --transpile-only ./prisma/seed.ts'
+        seed: 'ts-node --transpile-only ./prisma/seed.ts',
+
     }
 })

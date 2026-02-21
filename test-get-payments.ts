@@ -29,7 +29,14 @@ async function main() {
                             currentPeriodEnd: true,
                             plan: true,
                             status: true,
+                            createdAt: true,
+                            cancelReason: true,
+                            id: true,
+                            stripeCustomerId: true,
+                            cancelAtPeriodEnd: true,
+                            stripePriceId: true
                         }
+
                     }
                 }
             }
@@ -39,7 +46,7 @@ async function main() {
     console.log(`Query returned ${payments.length} payments.`);
     payments.forEach(p => {
         console.log(`- ID: ${p.id} | Amount: ${p.amount} | Status: ${p.status}`);
-    });
+    })
 }
 
 main()

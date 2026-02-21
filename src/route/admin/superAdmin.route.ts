@@ -12,6 +12,8 @@ import {
   getProviderPaymentHistory,
 } from "../../controller/admin/superAdmin.controller";
 
+import { uploadImg } from "../../utils/multer/s3ImgUploader";
+
 const router = Router();
 
 
@@ -20,7 +22,7 @@ router.get("/first", getSuperAdminFirst);
 router.get("/:id", getSuperAdminById);
 
 
-router.patch("/:id", updateSuperAdminById);
+router.patch("/:id", uploadImg.single('profileImage'), updateSuperAdminById);
 
 router.get("/payments/all", getAllPayments);
 
