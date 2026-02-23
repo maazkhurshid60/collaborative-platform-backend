@@ -741,6 +741,12 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
                         status: true,
                         isApprove: true,
                         address: true,
+                        age: true,
+                        contactNo: true,
+                        gender: true,
+                        country: true,
+                        state: true,
+                        licenseNo: true,
                     }
                 }, providerList: true
             }
@@ -759,6 +765,12 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
                         status: true,
                         isApprove: true,
                         licenseNo: true,
+                        age: true,
+                        contactNo: true,
+                        address: true,
+                        gender: true,
+                        country: true,
+                        state: true,
                         hasUsedFreeTrial: true,
                         subscription: {
                             select: {
@@ -1067,10 +1079,13 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
                         fullName: true,
                         email: true,
                         address: true,
+                        contactNo: true,
+                        gender: true,
                         role: true,
                         status: true,
                         isApprove: true,
                         licenseNo: true,
+                        age: true,
                         country: true,
                         state: true,
                         hasUsedFreeTrial: true,
@@ -1118,6 +1133,7 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
                         country: true,
                         state: true,
                         isApprove: true,
+                        age: true,
                         contactNo: true,
                         hasUsedFreeTrial: true,
                         subscription: {

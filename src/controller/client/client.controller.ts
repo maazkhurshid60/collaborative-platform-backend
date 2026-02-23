@@ -838,21 +838,6 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
         );
     }
 
-    const isFullNameExist = await prisma.user.findFirst({
-        where: {
-            fullName,
-            id: {
-                not: isClientExist.userId
-            }
-        }
-    });
-
-
-    if (isFullNameExist) {
-        return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `Full Name ${fullName} already taken` }, "Duplicate Error")
-        );
-    }
 
     // Update USER
     await prisma.user.update({
