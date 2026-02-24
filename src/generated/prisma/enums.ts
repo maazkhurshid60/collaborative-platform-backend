@@ -14,7 +14,8 @@ export const PaymentStatus = {
   SUCCEEDED: 'SUCCEEDED',
   FAILED: 'FAILED',
   REFUNDED: 'REFUNDED',
-  OVERDUE: 'OVERDUE'
+  OVERDUE: 'OVERDUE',
+  CANCELED: 'CANCELED'
 } as const
 
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]

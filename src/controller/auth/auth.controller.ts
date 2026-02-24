@@ -139,6 +139,7 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
                 customer: customer.id,
                 items: [{ price: STRIPE_PRICES.STANDARD.MONTHLY }],
                 trial_period_days: 14,
+
                 payment_behavior: 'default_incomplete',
                 metadata: {
                     role: role,
@@ -210,7 +211,7 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
             }
         });
 
-        // Create role-s    pecific record
+        // Create role-specific record
         const roleCreated = await createRoleCallback(tx, userCreated.id);
 
         return roleCreated;
@@ -223,13 +224,14 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
                 include: { invitedBy: true }
             });
 
-            if (invitation && invitation.email === roleData.email) {
+            if (invitation && invitation.email.toLowerCase() === roleData.email.toLowerCase()) {
                 const inviterProvider = invitation.invitedBy;
-                const newProviderUserId = (result as any).userId || (result as any).user?.id; // Robust access to User ID
-                const inviterUserId = inviterProvider.userId; // Get User ID of inviter
+                const newProviderUserId = (result as any).userId;
+                const inviterUserId = inviterProvider.userId;
+
+                console.log(`🔗 [CHAT] Invitation matched. Linking new provider ${newProviderUserId} with inviter ${inviterUserId}`);
 
                 if (newProviderUserId && inviterUserId && inviterUserId !== newProviderUserId) {
-                    // Sort User IDs for consistent compound key
                     const [a, b] = [newProviderUserId, inviterUserId].sort();
 
                     await prisma.chatChannel.upsert({
@@ -251,10 +253,14 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
                         data: { status: "ACCEPTED" }
                     });
 
-                    console.log(`✅ Automatic chat channel created and invitation accepted for token: ${roleData.inviteToken}`);
+                    console.log(`✅ Automatic chat channel created and invitation accepted.`);
+                } else {
+                    console.warn(`⚠️ Chat channel skip: IDs mismatch or missing.`);
                 }
-            } else {
+            } else if (!invitation) {
                 console.warn(`⚠️ Invalid, mismatched or already accepted invitation token: ${roleData.inviteToken}`);
+            } else {
+                console.warn(`⚠️ Invitation email mismatch. Invited: ${invitation.email}, Signup: ${roleData.email}`);
             }
         } catch (chatError) {
             console.error("❌ Error during invitation processing:", chatError);
@@ -264,7 +270,7 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
     let completeUserData: any = null;
     if (role === Role.provider) {
         completeUserData = await prisma.provider.findUnique({
-            where: { id: result.id },
+            where: { id: (result as any).id },
             include: {
                 user: {
                     select: {
@@ -297,7 +303,7 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
         });
     } else if (role === Role.client) {
         completeUserData = await prisma.client.findUnique({
-            where: { id: result.id },
+            where: { id: (result as any).id },
             include: {
                 user: {
                     select: {
@@ -328,7 +334,7 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
         });
     } else if (role === Role.superAdmin) {
         completeUserData = await prisma.superAdmin.findUnique({
-            where: { id: result.id },
+            where: { id: (result as any).id },
             include: {
                 user: {
                     select: {
@@ -1038,9 +1044,10 @@ const unblockUserApi = asyncHandler(async (req: Request, res: Response) => {
 })
 
 const logoutApi = asyncHandler(async (req: Request, res: Response) => {
-    // Clearing the cookies by setting them to empty with an expiration time in the past
+    // Clearing all possible token variants
     return res
         .clearCookie("accessToken", cookiesOptions)
+        .clearCookie("token", cookiesOptions)
         .clearCookie("refreshToken", cookiesOptions)
         .status(200)
         .json(new ApiResponse(StatusCodes.OK, {}, "Logout successful"));

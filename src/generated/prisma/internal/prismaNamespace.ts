@@ -1944,6 +1944,8 @@ export const PaymentScalarFieldEnum = {
   currency: 'currency',
   status: 'status',
   invoiceUrl: 'invoiceUrl',
+  periodStart: 'periodStart',
+  periodEnd: 'periodEnd',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   plan: 'plan',

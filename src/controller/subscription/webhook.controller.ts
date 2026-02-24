@@ -117,6 +117,16 @@ export const stripeWebhookApi = async (req: Request, res: Response) => {
                                             console.warn("⚠️ [Webhook] Failed to retrieve last4:", err);
                                         }
 
+                                        let periodStart = null;
+                                        let periodEnd = null;
+                                        try {
+                                            if (session.invoice) {
+                                                const inv = await stripe.invoices.retrieve(session.invoice as string);
+                                                periodStart = new Date(inv.lines.data[0].period.start * 1000);
+                                                periodEnd = new Date(inv.lines.data[0].period.end * 1000);
+                                            }
+                                        } catch (e) { console.warn("⚠️ Failed to get period for session invoice:", e); }
+
                                         await tx.payment.create({
                                             data: {
                                                 userId: targetUserId,
@@ -126,7 +136,9 @@ export const stripeWebhookApi = async (req: Request, res: Response) => {
                                                 plan: planType as string || 'PRO', // Store plan at time of payment
                                                 stripePaymentIntentId: session.payment_intent as string || "checkout_session",
                                                 stripeInvoiceId: session.invoice as string,
-                                                paymentMethodLast4: last4
+                                                paymentMethodLast4: last4,
+                                                periodStart: periodStart,
+                                                periodEnd: periodEnd
                                             }
                                         });
                                     } else {
@@ -301,23 +313,34 @@ export const stripeWebhookApi = async (req: Request, res: Response) => {
                                     stripePaymentIntentId: invoice.payment_intent as string || "trial_invoice",
                                     stripeInvoiceId: invoice.id,
                                     invoiceUrl: invoice.hosted_invoice_url,
-                                    paymentMethodLast4: last4
+                                    paymentMethodLast4: last4,
+                                    periodStart: new Date(invoice.lines.data[0].period.start * 1000),
+                                    periodEnd: new Date(invoice.lines.data[0].period.end * 1000)
                                 }
                             });
-
-                            // Check for renewal
-                            const paymentCount = await prisma.payment.count({ where: { userId: subscription.userId } });
-                            if (paymentCount > 1) {
-                                io.to(subscription.userId).emit("subscription_renewal", {
-                                    type: 'renewal',
-                                    amount: invoice.amount_paid,
-                                    currency: invoice.currency,
-                                    nextBillingDate: new Date(invoice.lines.data[0].period.end * 1000),
-                                    plan: subscription.plan
-                                });
-                            }
+                        } else if (existingPayment && (!existingPayment.periodStart || !existingPayment.periodEnd)) {
+                            console.log(`🔄 [Webhook] Backfilling period data for invoice ${invoice.id}`);
+                            await prisma.payment.update({
+                                where: { id: existingPayment.id },
+                                data: {
+                                    periodStart: new Date(invoice.lines.data[0].period.start * 1000),
+                                    periodEnd: new Date(invoice.lines.data[0].period.end * 1000)
+                                }
+                            });
                         } else {
                             console.log(`ℹ️ [Webhook] Payment skipped (Exists: ${!!existingPayment}, Amount: ${invoice.amount_paid})`);
+                        }
+
+                        // Check for renewal
+                        const paymentCount = await prisma.payment.count({ where: { userId: subscription.userId } });
+                        if (paymentCount > 1) {
+                            io.to(subscription.userId).emit("subscription_renewal", {
+                                type: 'renewal',
+                                amount: invoice.amount_paid,
+                                currency: invoice.currency,
+                                nextBillingDate: new Date(invoice.lines.data[0].period.end * 1000),
+                                plan: subscription.plan
+                            });
                         }
 
                         // Emit update
@@ -393,12 +416,44 @@ export const stripeWebhookApi = async (req: Request, res: Response) => {
                         console.log(`ℹ️ [Webhook] Skipping CANCELED update for ${subscription.id} — user ${deletedSub.userId} already has a newer subscription (upgrade flow)`);
                     } else {
                         // Genuine cancellation — update DB and notify frontend
-                        await prisma.subscription.updateMany({
-                            where: { stripeSubscriptionId: subscription.id },
-                            data: { status: "CANCELED", cancelAtPeriodEnd: false }
+                        const sub = await prisma.subscription.findUnique({ where: { userId: deletedSub.userId } });
+
+                        // Idempotency: Check if we already recorded this cancellation (e.g. from manual API)
+                        const existingCancelRecord = await prisma.payment.findFirst({
+                            where: { stripeInvoiceId: `cancel_${subscription.id}`, status: 'CANCELED' }
                         });
+
+                        if (existingCancelRecord) {
+                            console.log(`ℹ️ [Webhook] Cancellation already recorded for ${subscription.id}, skipping duplicate Payment entry.`);
+                            await prisma.subscription.updateMany({
+                                where: { stripeSubscriptionId: subscription.id },
+                                data: { status: "CANCELED", cancelAtPeriodEnd: false }
+                            });
+                        } else {
+                            // Correct fallback prices: Standard ($29/$278), Pro ($79/$756)
+                            const amountSnapshot = subscription.items?.data[0]?.plan?.amount ||
+                                (sub?.plan === 'PRO' ? (sub?.billingCycle === 'YEARLY' ? 75600 : 7900) : (sub?.billingCycle === 'YEARLY' ? 27800 : 2900));
+
+                            await prisma.$transaction([
+                                prisma.subscription.updateMany({
+                                    where: { stripeSubscriptionId: subscription.id },
+                                    data: { status: "CANCELED", cancelAtPeriodEnd: false }
+                                }),
+                                prisma.payment.create({
+                                    data: {
+                                        userId: deletedSub.userId,
+                                        amount: amountSnapshot,
+                                        currency: subscription.items?.data[0]?.plan?.currency || 'usd',
+                                        status: 'CANCELED',
+                                        plan: sub?.plan || "STANDARD",
+                                        stripePaymentIntentId: `stripe_cancel_${subscription.id}`,
+                                        stripeInvoiceId: `cancel_${subscription.id}`
+                                    }
+                                })
+                            ]);
+                            console.log(`✅ [Webhook] Marked subscription ${subscription.id} as CANCELED for user ${deletedSub.userId} (Price: ${amountSnapshot / 100})`);
+                        }
                         io.to(deletedSub.userId).emit("subscription_updated");
-                        console.log(`✅ [Webhook] Marked subscription ${subscription.id} as CANCELED for user ${deletedSub.userId}`);
                     }
                 }
                 break;

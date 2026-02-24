@@ -292,16 +292,40 @@ export const cancelSubscriptionApi = async (req: Request, res: Response, next: N
         // 1. If it's a Stripe subscription, cancel immediately (to revoke access)
         // User requested immediate UI restriction upon cancellation
         if (sub.stripeSubscriptionId) {
+            // 1. Retrieve the subscription from Stripe to get current plan details
+            const stripeSub = await stripe.subscriptions.retrieve(sub.stripeSubscriptionId);
+
+            // 2. Actually cancel in Stripe
             await stripe.subscriptions.cancel(sub.stripeSubscriptionId);
 
-            await prisma.subscription.update({
-                where: { userId },
-                data: {
-                    status: "CANCELED",
-                    cancelAtPeriodEnd: false,
-                    cancelReason: reason
-                }
-            });
+            // Correct fallback prices based on frontend: Standard ($29/$278), Pro ($79/$756)
+            const amountSnapshot = stripeSub.items.data[0].plan.amount ||
+                (sub.plan === 'PRO' ? (sub.billingCycle === 'YEARLY' ? 75600 : 7900) : (sub.billingCycle === 'YEARLY' ? 27800 : 2900));
+
+            await prisma.$transaction([
+                prisma.subscription.update({
+                    where: { userId },
+                    data: {
+                        status: "CANCELED",
+                        cancelAtPeriodEnd: false,
+                        cancelReason: reason
+                    }
+                }),
+                prisma.payment.create({
+                    data: {
+                        userId,
+                        amount: amountSnapshot,
+                        currency: stripeSub.items.data[0].plan.currency || 'usd',
+                        status: 'CANCELED',
+                        plan: sub.plan,
+                        stripePaymentIntentId: `manual_cancel_${Date.now()}`,
+                        stripeInvoiceId: `cancel_${sub.stripeSubscriptionId}`,
+                        periodStart: new Date(stripeSub.current_period_start * 1000),
+                        periodEnd: new Date(stripeSub.current_period_end * 1000)
+                    }
+                })
+            ]);
+            console.log(`✅ [Manual Cancel] Recorded history for user ${userId} (Price: ${amountSnapshot / 100})`);
 
             // Emit update to frontend IMMEDIATELY
             io.to(userId).emit("subscription_updated");
@@ -371,16 +395,15 @@ export const getAllPaymentsApi = async (req: Request, res: Response, next: NextF
 
             // Map Status to Frontend requirements ("paid", "pending", "overdue", "canceled")
             let status = payment.status.toLowerCase();
-            if (status === 'succeeded') status = 'paid';
-            if (status === 'failed') status = 'overdue'; // Or canceled depending on logic
+            if (status === 'succeeded' || status === 'paid') status = 'paid';
+            if (status === 'failed') status = 'overdue';
+            if (status === 'canceled') status = 'canceled';
 
             return {
                 id: payment.id,
                 invoiceNo: invoiceNo,
-                date: payment.createdAt.toISOString().split('T')[0], // YYYY-MM-DD
-                dueDate: payment.user.subscription?.currentPeriodEnd
-                    ? payment.user.subscription.currentPeriodEnd.toISOString().split('T')[0]
-                    : payment.createdAt.toISOString().split('T')[0], // Fallback to created date
+                date: (payment.periodStart || payment.createdAt).toISOString().split('T')[0],
+                dueDate: (payment.periodEnd || payment.createdAt).toISOString().split('T')[0],
 
                 amount: amountFormatted,
                 status: status,
@@ -405,13 +428,15 @@ export const getAllPaymentsApi = async (req: Request, res: Response, next: NextF
                         qty: "01",
                         price: amountFormatted,
                         amount: amountFormatted,
-                        status: status === 'paid' ? 'Paid' : 'Pending'
+                        status: status === 'paid' ? 'Paid' : (status === 'overdue' ? 'Overdue' : (status === 'canceled' ? 'Canceled' : 'Pending'))
                     }
                 ],
                 subtotal: amountFormatted,
                 tax: "$0.00",
                 total: amountFormatted,
-                notes: `Thank you for your business! ${billingCycle === 'MONTHLY' ? 'Monthly' : 'Annual'} subscription payment.`
+                notes: payment.status === 'CANCELED'
+                    ? `Thank you for your business! This reflects your subscription cancellation for the ${billingCycle === 'YEARLY' ? 'Annual' : 'Monthly'} term.`
+                    : `Thank you for your business! ${billingCycle === 'YEARLY' ? 'Annual' : 'Monthly'} subscription payment.`
             };
         });
 
@@ -454,9 +479,61 @@ export const syncSubscriptionApi = async (req: Request, res: Response, next: Nex
                 status: mappedStatus as any,
                 currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
                 plan: (stripeSub.metadata?.planType || sub.plan) as any,
-                cancelAtPeriodEnd: stripeSub.cancel_at_period_end
+                cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
+                billingCycle: (stripeSub.metadata?.period) || (stripeSub.plan?.interval === 'year' ? 'YEARLY' : 'MONTHLY')
             }
         });
+
+        // 2. Fetch Latest Invoices to sync payments (solves race condition with webhook)
+        console.log(`🔍 [Sync] Checking latest invoices for subscription ${sub.stripeSubscriptionId}`);
+        const invoices = await stripe.invoices.list({
+            subscription: sub.stripeSubscriptionId,
+            limit: 5
+        });
+
+        for (const invoice of invoices.data) {
+            if (invoice.status === 'paid' && invoice.amount_paid > 0) {
+                const existingPayment = await prisma.payment.findFirst({
+                    where: { stripeInvoiceId: invoice.id }
+                });
+
+                if (!existingPayment) {
+                    console.log(`💰 [Sync] Recording missing payment for invoice ${invoice.id}`);
+                    let last4 = null;
+                    try {
+                        if (invoice.charge) {
+                            const charge = await stripe.charges.retrieve(invoice.charge as string);
+                            last4 = (charge.payment_method_details as any)?.card?.last4;
+                        }
+                    } catch (e) { /* ignore */ }
+
+                    await prisma.payment.create({
+                        data: {
+                            userId: userId,
+                            amount: invoice.amount_paid,
+                            currency: invoice.currency,
+                            status: 'SUCCEEDED',
+                            plan: updatedSub.plan,
+                            stripePaymentIntentId: invoice.payment_intent as string || "synced_invoice",
+                            stripeInvoiceId: invoice.id,
+                            invoiceUrl: invoice.hosted_invoice_url,
+                            paymentMethodLast4: last4,
+                            periodStart: new Date(invoice.lines.data[0].period.start * 1000),
+                            periodEnd: new Date(invoice.lines.data[0].period.end * 1000)
+                        }
+                    });
+                } else if (!existingPayment.periodStart || !existingPayment.periodEnd) {
+                    console.log(`🔄 [Sync] Backfilling missing period data for invoice ${invoice.id}`);
+                    await prisma.payment.update({
+                        where: { id: existingPayment.id },
+                        data: {
+                            periodStart: new Date(invoice.lines.data[0].period.start * 1000),
+                            periodEnd: new Date(invoice.lines.data[0].period.end * 1000)
+                        }
+                    });
+                }
+            }
+        }
         res.status(200).json({
             message: "Subscription synced successfully",
             status: updatedSub.status,

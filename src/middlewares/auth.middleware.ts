@@ -6,11 +6,12 @@ import { asyncHandler } from "../utils/asyncHandler";
 export const authJWT = asyncHandler(
     async (req: any, res: Response, next: NextFunction) => {
         try {
-            // Get the token from cookies or Authorization header
+            // Get the token from Authorization header (prioritized) or cookies
             const token =
+                req.header("Authorization")?.replace("Bearer ", "") ||
                 req.cookies?.accessToken ||
                 req.cookies?.token ||
-                req.header("Authorization")?.replace("Bearer ", "");
+                req.cookies?.refreshToken;
 
             if (!token) {
                 return res.status(401).json({ message: "Unauthorized Request. Token not found." });

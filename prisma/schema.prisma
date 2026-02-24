@@ -286,15 +286,17 @@ model Payment {
     id                    String        @id @default(uuid())
     userId                String
     stripePaymentIntentId String?
-    stripeInvoiceId       String? // Added invoice ID
-    amount                Int // Changed to Int (cents)
+    stripeInvoiceId       String?
+    amount                Int
     currency              String
     status                PaymentStatus @default(PENDING)
     invoiceUrl            String?
+    periodStart           DateTime?
+    periodEnd             DateTime?
     createdAt             DateTime      @default(now())
     updatedAt             DateTime      @updatedAt
-    plan                  String? // Store plan at time of payment
-    paymentMethodLast4    String? // Store last 4 digits of payment method
+    plan                  String?
+    paymentMethodLast4    String?
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -307,6 +309,7 @@ enum PaymentStatus {
     FAILED
     REFUNDED
     OVERDUE
+    CANCELED
 }
 
 enum Gender {
