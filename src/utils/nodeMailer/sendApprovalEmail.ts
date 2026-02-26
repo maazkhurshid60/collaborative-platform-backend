@@ -1,14 +1,21 @@
 import { transporter } from "./NodeMailer";
 import { getFrontendUrl } from "./getFrontendUrl";
 
-export const sendApprovalEmail = async (toEmail: string, name: string, licenseNo: string) => {
+export const sendApprovalEmail = async (toEmail: string, name: string, clientId: string | null, licenseNo?: string) => {
   const signupUrl = `${getFrontendUrl()}/signup-with-license`;
+
+  // Determine what identifier to show based on whether this is a client or provider
+  const identifierLine = clientId
+    ? `<p><strong>Your Client ID:</strong> ${clientId}</p>`
+    : licenseNo
+      ? `<p><strong>Your License Number:</strong> ${licenseNo}</p>`
+      : "";
 
   const htmlContent = `
     <div style="font-family: sans-serif; padding: 20px;">
       <h2>Hello ${name},</h2>
       <p>Your account has been approved by the Kolabme team.</p>
-      <p><strong>Your License Number:</strong> ${licenseNo}</p>
+      ${identifierLine}
       <p>Please click the button below to set your password:</p>
       <a href="${signupUrl}"
          style="display:inline-block; padding:10px 20px; background-color:#0F766E; color:white; border-radius:4px; text-decoration:none; font-weight:bold;">

@@ -55,6 +55,8 @@ export type UserMinAggregateOutputType = {
   privateKey: string | null
   publicKey: string | null
   hasUsedFreeTrial: boolean | null
+  resetPasswordToken: string | null
+  resetPasswordExpires: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -80,6 +82,8 @@ export type UserMaxAggregateOutputType = {
   privateKey: string | null
   publicKey: string | null
   hasUsedFreeTrial: boolean | null
+  resetPasswordToken: string | null
+  resetPasswordExpires: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -106,6 +110,8 @@ export type UserCountAggregateOutputType = {
   privateKey: number
   publicKey: number
   hasUsedFreeTrial: number
+  resetPasswordToken: number
+  resetPasswordExpires: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -141,6 +147,8 @@ export type UserMinAggregateInputType = {
   privateKey?: true
   publicKey?: true
   hasUsedFreeTrial?: true
+  resetPasswordToken?: true
+  resetPasswordExpires?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -166,6 +174,8 @@ export type UserMaxAggregateInputType = {
   privateKey?: true
   publicKey?: true
   hasUsedFreeTrial?: true
+  resetPasswordToken?: true
+  resetPasswordExpires?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -192,6 +202,8 @@ export type UserCountAggregateInputType = {
   privateKey?: true
   publicKey?: true
   hasUsedFreeTrial?: true
+  resetPasswordToken?: true
+  resetPasswordExpires?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -305,6 +317,8 @@ export type UserGroupByOutputType = {
   privateKey: string | null
   publicKey: string | null
   hasUsedFreeTrial: boolean
+  resetPasswordToken: string | null
+  resetPasswordExpires: Date | null
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -354,6 +368,8 @@ export type UserWhereInput = {
   privateKey?: Prisma.StringNullableFilter<"User"> | string | null
   publicKey?: Prisma.StringNullableFilter<"User"> | string | null
   hasUsedFreeTrial?: Prisma.BoolFilter<"User"> | boolean
+  resetPasswordToken?: Prisma.StringNullableFilter<"User"> | string | null
+  resetPasswordExpires?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   client?: Prisma.XOR<Prisma.ClientNullableScalarRelationFilter, Prisma.ClientWhereInput> | null
@@ -393,6 +409,8 @@ export type UserOrderByWithRelationInput = {
   privateKey?: Prisma.SortOrderInput | Prisma.SortOrder
   publicKey?: Prisma.SortOrderInput | Prisma.SortOrder
   hasUsedFreeTrial?: Prisma.SortOrder
+  resetPasswordToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  resetPasswordExpires?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   client?: Prisma.ClientOrderByWithRelationInput
@@ -435,6 +453,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   privateKey?: Prisma.StringNullableFilter<"User"> | string | null
   publicKey?: Prisma.StringNullableFilter<"User"> | string | null
   hasUsedFreeTrial?: Prisma.BoolFilter<"User"> | boolean
+  resetPasswordToken?: Prisma.StringNullableFilter<"User"> | string | null
+  resetPasswordExpires?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   client?: Prisma.XOR<Prisma.ClientNullableScalarRelationFilter, Prisma.ClientWhereInput> | null
@@ -474,6 +494,8 @@ export type UserOrderByWithAggregationInput = {
   privateKey?: Prisma.SortOrderInput | Prisma.SortOrder
   publicKey?: Prisma.SortOrderInput | Prisma.SortOrder
   hasUsedFreeTrial?: Prisma.SortOrder
+  resetPasswordToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  resetPasswordExpires?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -508,6 +530,8 @@ export type UserScalarWhereWithAggregatesInput = {
   privateKey?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   publicKey?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   hasUsedFreeTrial?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  resetPasswordToken?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  resetPasswordExpires?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -534,6 +558,8 @@ export type UserCreateInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -573,6 +599,8 @@ export type UserUncheckedCreateInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -612,6 +640,8 @@ export type UserUpdateInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -651,6 +681,8 @@ export type UserUncheckedUpdateInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -690,6 +722,8 @@ export type UserCreateManyInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -716,6 +750,8 @@ export type UserUpdateManyMutationInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -742,6 +778,8 @@ export type UserUncheckedUpdateManyInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -776,6 +814,8 @@ export type UserCountOrderByAggregateInput = {
   privateKey?: Prisma.SortOrder
   publicKey?: Prisma.SortOrder
   hasUsedFreeTrial?: Prisma.SortOrder
+  resetPasswordToken?: Prisma.SortOrder
+  resetPasswordExpires?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -805,6 +845,8 @@ export type UserMaxOrderByAggregateInput = {
   privateKey?: Prisma.SortOrder
   publicKey?: Prisma.SortOrder
   hasUsedFreeTrial?: Prisma.SortOrder
+  resetPasswordToken?: Prisma.SortOrder
+  resetPasswordExpires?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -830,6 +872,8 @@ export type UserMinOrderByAggregateInput = {
   privateKey?: Prisma.SortOrder
   publicKey?: Prisma.SortOrder
   hasUsedFreeTrial?: Prisma.SortOrder
+  resetPasswordToken?: Prisma.SortOrder
+  resetPasswordExpires?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -887,6 +931,10 @@ export type BoolFieldUpdateOperationsInput = {
 export type UserUpdateblockedMembersInput = {
   set?: string[]
   push?: string | string[]
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -1099,6 +1147,8 @@ export type UserCreateWithoutClientInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
@@ -1137,6 +1187,8 @@ export type UserUncheckedCreateWithoutClientInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
@@ -1191,6 +1243,8 @@ export type UserUpdateWithoutClientInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
@@ -1229,6 +1283,8 @@ export type UserUncheckedUpdateWithoutClientInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
@@ -1267,6 +1323,8 @@ export type UserCreateWithoutProviderInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -1305,6 +1363,8 @@ export type UserUncheckedCreateWithoutProviderInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -1359,6 +1419,8 @@ export type UserUpdateWithoutProviderInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -1397,6 +1459,8 @@ export type UserUncheckedUpdateWithoutProviderInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -1435,6 +1499,8 @@ export type UserCreateWithoutSuperAdminInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -1473,6 +1539,8 @@ export type UserUncheckedCreateWithoutSuperAdminInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -1527,6 +1595,8 @@ export type UserUpdateWithoutSuperAdminInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -1565,6 +1635,8 @@ export type UserUncheckedUpdateWithoutSuperAdminInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -1603,6 +1675,8 @@ export type UserCreateWithoutChatChannelsAInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -1641,6 +1715,8 @@ export type UserUncheckedCreateWithoutChatChannelsAInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -1684,6 +1760,8 @@ export type UserCreateWithoutChatChannelsBInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -1722,6 +1800,8 @@ export type UserUncheckedCreateWithoutChatChannelsBInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -1776,6 +1856,8 @@ export type UserUpdateWithoutChatChannelsAInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -1814,6 +1896,8 @@ export type UserUncheckedUpdateWithoutChatChannelsAInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -1863,6 +1947,8 @@ export type UserUpdateWithoutChatChannelsBInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -1901,6 +1987,8 @@ export type UserUncheckedUpdateWithoutChatChannelsBInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -1939,6 +2027,8 @@ export type UserCreateWithoutMessagesInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -1977,6 +2067,8 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -2031,6 +2123,8 @@ export type UserUpdateWithoutMessagesInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -2069,6 +2163,8 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -2107,6 +2203,8 @@ export type UserCreateWithoutGroupMembershipsInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -2145,6 +2243,8 @@ export type UserUncheckedCreateWithoutGroupMembershipsInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -2199,6 +2299,8 @@ export type UserUpdateWithoutGroupMembershipsInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -2237,6 +2339,8 @@ export type UserUncheckedUpdateWithoutGroupMembershipsInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -2275,6 +2379,8 @@ export type UserCreateWithoutGroupReadReceiptsInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -2313,6 +2419,8 @@ export type UserUncheckedCreateWithoutGroupReadReceiptsInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -2367,6 +2475,8 @@ export type UserUpdateWithoutGroupReadReceiptsInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -2405,6 +2515,8 @@ export type UserUncheckedUpdateWithoutGroupReadReceiptsInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -2443,6 +2555,8 @@ export type UserCreateWithoutReceivedNotificationsInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -2481,6 +2595,8 @@ export type UserUncheckedCreateWithoutReceivedNotificationsInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -2524,6 +2640,8 @@ export type UserCreateWithoutSentNotificationsInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -2562,6 +2680,8 @@ export type UserUncheckedCreateWithoutSentNotificationsInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -2616,6 +2736,8 @@ export type UserUpdateWithoutReceivedNotificationsInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -2654,6 +2776,8 @@ export type UserUncheckedUpdateWithoutReceivedNotificationsInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -2703,6 +2827,8 @@ export type UserUpdateWithoutSentNotificationsInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -2741,6 +2867,8 @@ export type UserUncheckedUpdateWithoutSentNotificationsInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -2779,6 +2907,8 @@ export type UserCreateWithoutReadReceiptsInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -2817,6 +2947,8 @@ export type UserUncheckedCreateWithoutReadReceiptsInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -2871,6 +3003,8 @@ export type UserUpdateWithoutReadReceiptsInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -2909,6 +3043,8 @@ export type UserUncheckedUpdateWithoutReadReceiptsInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -2947,6 +3083,8 @@ export type UserCreateWithoutSubscriptionInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -2985,6 +3123,8 @@ export type UserUncheckedCreateWithoutSubscriptionInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -3039,6 +3179,8 @@ export type UserUpdateWithoutSubscriptionInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -3077,6 +3219,8 @@ export type UserUncheckedUpdateWithoutSubscriptionInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -3115,6 +3259,8 @@ export type UserCreateWithoutPaymentsInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -3153,6 +3299,8 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   privateKey?: string | null
   publicKey?: string | null
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: string | null
+  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -3207,6 +3355,8 @@ export type UserUpdateWithoutPaymentsInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -3245,6 +3395,8 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -3386,6 +3538,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   privateKey?: boolean
   publicKey?: boolean
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: boolean
+  resetPasswordExpires?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   client?: boolean | Prisma.User$clientArgs<ExtArgs>
@@ -3426,6 +3580,8 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   privateKey?: boolean
   publicKey?: boolean
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: boolean
+  resetPasswordExpires?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -3452,6 +3608,8 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   privateKey?: boolean
   publicKey?: boolean
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: boolean
+  resetPasswordExpires?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -3478,11 +3636,13 @@ export type UserSelectScalar = {
   privateKey?: boolean
   publicKey?: boolean
   hasUsedFreeTrial?: boolean
+  resetPasswordToken?: boolean
+  resetPasswordExpires?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fullName" | "email" | "password" | "profileImage" | "gender" | "age" | "contactNo" | "address" | "status" | "role" | "stripeCustomerId" | "isApprove" | "licenseNo" | "isLicenseValid" | "country" | "state" | "blockedMembers" | "privateKey" | "publicKey" | "hasUsedFreeTrial" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fullName" | "email" | "password" | "profileImage" | "gender" | "age" | "contactNo" | "address" | "status" | "role" | "stripeCustomerId" | "isApprove" | "licenseNo" | "isLicenseValid" | "country" | "state" | "blockedMembers" | "privateKey" | "publicKey" | "hasUsedFreeTrial" | "resetPasswordToken" | "resetPasswordExpires" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   client?: boolean | Prisma.User$clientArgs<ExtArgs>
   provider?: boolean | Prisma.User$providerArgs<ExtArgs>
@@ -3541,6 +3701,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     privateKey: string | null
     publicKey: string | null
     hasUsedFreeTrial: boolean
+    resetPasswordToken: string | null
+    resetPasswordExpires: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -4000,6 +4162,8 @@ export interface UserFieldRefs {
   readonly privateKey: Prisma.FieldRef<"User", 'String'>
   readonly publicKey: Prisma.FieldRef<"User", 'String'>
   readonly hasUsedFreeTrial: Prisma.FieldRef<"User", 'Boolean'>
+  readonly resetPasswordToken: Prisma.FieldRef<"User", 'String'>
+  readonly resetPasswordExpires: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }

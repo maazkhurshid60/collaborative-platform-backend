@@ -108,6 +108,8 @@ export const UserScalarFieldEnum = {
   privateKey: 'privateKey',
   publicKey: 'publicKey',
   hasUsedFreeTrial: 'hasUsedFreeTrial',
+  resetPasswordToken: 'resetPasswordToken',
+  resetPasswordExpires: 'resetPasswordExpires',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -118,6 +120,7 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 export const ClientScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  clientId: 'clientId',
   eSignature: 'eSignature',
   isAccountCreatedByOwnClient: 'isAccountCreatedByOwnClient',
   clientShowToOthers: 'clientShowToOthers',

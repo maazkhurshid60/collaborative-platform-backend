@@ -43,7 +43,7 @@ async function main() {
                 gender: 'MALE',
                 role: 'superAdmin',
                 isApprove: 'APPROVED',
-                status: 'ACTIVE',
+                status: 'active',
                 country: 'USA',
                 state: 'California',
             },

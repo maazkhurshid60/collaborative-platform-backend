@@ -22,7 +22,7 @@ export const clientSchema = z.object({
     contactNo: z.string().nonempty().min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }),
     address: z.string().nonempty().min(1, { message: "Not less then 10letters" }),
     status: z.enum(["active", "disable"], { message: "Status must be either active or disable" }),
-    licenseNo: z.string().nonempty().min(1, { message: "Licsense No is required." }),
+    // clientId is auto-generated on creation, not supplied by the user
     isAccountCreatedByOwnClient: z.boolean().default(false),
     role: z.string().optional(),
     providerId: z.string().optional(),

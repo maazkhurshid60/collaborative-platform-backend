@@ -8,27 +8,29 @@ datasource db {
 }
 
 model User {
-    id               String   @id @default(uuid())
-    fullName         String
-    email            String   @unique
-    password         String
-    profileImage     String?
-    gender           Gender   @default(MALE)
-    age              Int?
-    contactNo        String?
-    address          String?
-    status           String
-    role             Role
-    stripeCustomerId String?  @unique // Shared stripe customer ID
-    isApprove        Approve  @default(PENDING)
-    licenseNo        String?  @unique
-    isLicenseValid   Boolean  @default(false)
-    country          String
-    state            String
-    blockedMembers   String[] @default([])
-    privateKey       String?
-    publicKey        String?
-    hasUsedFreeTrial Boolean  @default(false) // Track if user already had their one free trial
+    id                   String    @id @default(uuid())
+    fullName             String
+    email                String    @unique
+    password             String
+    profileImage         String?
+    gender               Gender    @default(MALE)
+    age                  Int?
+    contactNo            String?
+    address              String?
+    status               String
+    role                 Role
+    stripeCustomerId     String?   @unique // Shared stripe customer ID
+    isApprove            Approve   @default(PENDING)
+    licenseNo            String?   @unique
+    isLicenseValid       Boolean   @default(false)
+    country              String
+    state                String
+    blockedMembers       String[]  @default([])
+    privateKey           String?
+    publicKey            String?
+    hasUsedFreeTrial     Boolean   @default(false) // Track if user already had their one free trial
+    resetPasswordToken   String?
+    resetPasswordExpires DateTime?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -57,6 +59,7 @@ model Client {
     userId String @unique
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+    clientId                    String? @unique // Auto-generated unique client identifier (e.g. CLT-20260224-001234)
     eSignature                  String?
     isAccountCreatedByOwnClient Boolean @default(false)
     clientShowToOthers          Boolean @default(true)

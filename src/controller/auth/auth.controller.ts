@@ -32,25 +32,27 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
     let genderEnum: Gender = Gender.MALE;
     if (genderInput === "female") genderEnum = Gender.FEMALE;
 
-    // 2. Check for duplicate email or licenseNo (at User level)
-    // Build OR condition dynamically to avoid undefined licenseNo issues
-    const orConditions: any[] = [{ email }];
-    if (licenseNo) {
-        orConditions.push({ licenseNo });
-    }
-
-    const existingUser = await prisma.user.findFirst({
-        where: {
-            OR: orConditions
-        }
+    // Check for duplicate email or licenseNo (at User level)
+    const existingEmail = await prisma.user.findFirst({
+        where: { email }
     });
 
-    if (existingUser) {
-        const field = existingUser.licenseNo === licenseNo ? "License Number" : "Email";
-        const value = existingUser.licenseNo === licenseNo ? licenseNo : email;
+    if (existingEmail) {
         return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `${field} ${value} is already registered.` }, "Validation failed")
+            new ApiResponse(StatusCodes.CONFLICT, { error: `Email ${email} is already registered.` }, "Validation failed")
         );
+    }
+
+    if (licenseNo) {
+        const existingLicense = await prisma.user.findFirst({
+            where: { licenseNo }
+        });
+
+        if (existingLicense) {
+            return res.status(StatusCodes.CONFLICT).json(
+                new ApiResponse(StatusCodes.CONFLICT, { error: `License Number ${licenseNo} is already registered.` }, "Validation failed")
+            );
+        }
     }
 
     // 3. Prepare Role Data & Validate role-specific fields
@@ -658,6 +660,31 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
             new ApiResponse(StatusCodes.OK, providerUpdate, "User updated successfully")
         );
     }
+
+    // Handle SuperAdmin Update
+    else if (role === Role.superAdmin) {
+        const superAdminParsed = superAdminSchema.safeParse(req.body);
+        if (!superAdminParsed.success) {
+            return res.status(StatusCodes.BAD_REQUEST).json(
+                new ApiResponse(StatusCodes.BAD_REQUEST, { error: superAdminParsed.error.errors }, "Validation failed")
+            );
+        }
+
+        const superAdminUpdate = await prisma.superAdmin.findFirst({
+            where: { userId: loginUserId },
+            include: {
+                user: true
+            }
+        });
+
+        if (superAdminUpdate && superAdminUpdate.user && (superAdminUpdate.user as any).password) {
+            delete (superAdminUpdate.user as any).password;
+        }
+
+        return res.status(StatusCodes.OK).json(
+            new ApiResponse(StatusCodes.OK, superAdminUpdate, "User updated successfully")
+        );
+    }
 });
 
 const logInApi = asyncHandler(async (req: Request, res: Response) => {
@@ -939,7 +966,13 @@ const approveValidUser = asyncHandler(async (req: Request, res: Response) => {
 
     if (email) {
         try {
-            await sendApprovalEmail(email, user.fullName, user.licenseNo ?? "");
+            // For clients: look up their generated clientId; for providers: use licenseNo
+            let clientId: string | null = null;
+            if (user.role === Role.client) {
+                const clientRecord = await prisma.client.findUnique({ where: { userId: user.id }, select: { clientId: true } });
+                clientId = clientRecord?.clientId ?? null;
+            }
+            await sendApprovalEmail(email, user.fullName, clientId, user.role !== Role.client ? (user.licenseNo ?? undefined) : undefined);
         } catch (err) {
             console.error("Approval email failed:", err);
             // Do not fail approval just because email failed
@@ -1088,6 +1121,7 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
                         address: true,
                         contactNo: true,
                         gender: true,
+                        profileImage: true,
                         role: true,
                         status: true,
                         isApprove: true,
@@ -1136,6 +1170,7 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
                         address: true,
                         role: true,
                         status: true,
+                        profileImage: true,
                         licenseNo: true,
                         country: true,
                         state: true,
@@ -1183,34 +1218,64 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
     }
 });
 const findByLicenseNo = asyncHandler(async (req: Request, res: Response) => {
-    const { licenseNo } = req.body
-    if (!licenseNo) {
+    // Accept either clientId (for clients) or licenseNo (for providers — legacy)
+    let { clientId, licenseNo } = req.body;
+
+    if (clientId) clientId = clientId.trim();
+    if (licenseNo) licenseNo = licenseNo.trim();
+
+    if (!clientId && !licenseNo) {
         return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "License number is required" }, "Validation failed")
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Client ID is required" }, "Validation failed")
         );
     }
 
-    const licenseNoFound = await prisma.user.findFirst({
-        where: { licenseNo },
-        include: { client: true }
-    })
+    let foundUser: any = null;
 
-    if (!licenseNoFound) {
-        return res.status(StatusCodes.NOT_FOUND).json(
-            new ApiResponse(StatusCodes.NOT_FOUND, { error: "License number not found" }, "Record not found")
-        );
+    if (clientId) {
+        // New flow: clients look up by their auto-generated clientId
+        const clientRecord = await prisma.client.findUnique({
+            where: { clientId },
+            include: {
+                user: true
+            }
+        });
+
+        if (!clientRecord) {
+            return res.status(StatusCodes.NOT_FOUND).json(
+                new ApiResponse(StatusCodes.NOT_FOUND, { error: "Client ID not found" }, "Record not found")
+            );
+        }
+
+        // Return in same shape as the old licenseNo response so frontend works
+        foundUser = {
+            ...clientRecord.user,
+            client: { id: clientRecord.id, isAccountCreatedByOwnClient: clientRecord.isAccountCreatedByOwnClient, clientId: clientRecord.clientId }
+        };
+    } else {
+        // Legacy: look up by licenseNo (for providers or old clients)
+        foundUser = await prisma.user.findFirst({
+            where: { licenseNo },
+            include: { client: true }
+        });
+
+        if (!foundUser) {
+            return res.status(StatusCodes.NOT_FOUND).json(
+                new ApiResponse(StatusCodes.NOT_FOUND, { error: "License number not found" }, "Record not found")
+            );
+        }
     }
 
     // Remove passwords before returning
-    if (licenseNoFound.client && (licenseNoFound.client as any).password) {
-        delete (licenseNoFound.client as any).password;
+    if (foundUser.client && (foundUser.client as any).password) {
+        delete (foundUser.client as any).password;
     }
-    if ((licenseNoFound as any).password) {
-        delete (licenseNoFound as any).password;
+    if (foundUser.password) {
+        delete foundUser.password;
     }
 
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { data: licenseNoFound }, "Record found.")
+        new ApiResponse(StatusCodes.OK, { data: foundUser }, "Record found.")
     );
 })
 
@@ -1275,9 +1340,8 @@ const forgotPasswordApi = asyncHandler(async (req: Request, res: Response) => {
     const updatedUser = await prisma.user.update({
         where: { id: user.id },
         data: {
-            // NOTE: Fields missing in schema
-            // resetPasswordToken: hashedToken,
-            // resetPasswordExpires: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
         },
     });
 
@@ -1297,18 +1361,12 @@ const resetPasswordApi = asyncHandler(async (req: Request, res: Response) => {
     const { token } = req.params;
     const { newPassword } = req.body;
 
-    return res.status(StatusCodes.NOT_IMPLEMENTED).json(
-        new ApiResponse(StatusCodes.NOT_IMPLEMENTED, null, "Password reset is currently disabled as the database schema does not support reset tokens.")
-    );
-
-    /*
-    // ORIGINAL LOGIC DISABLED DUE TO MISSING SCHEMA FIELDS (resetPasswordToken, resetPasswordExpires)
     const hashedToken = crypto.createHash("sha256").update(token as string).digest("hex");
 
     const user = await prisma.user.findFirst({
         where: {
-            // resetPasswordToken: hashedToken,
-            // resetPasswordExpires: { gt: new Date() },
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: { gt: new Date() },
         },
     });
 
@@ -1324,15 +1382,14 @@ const resetPasswordApi = asyncHandler(async (req: Request, res: Response) => {
         where: { id: user.id },
         data: {
             password: hashedNewPassword,
-            // resetPasswordToken: null,
-            // resetPasswordExpires: null,
+            resetPasswordToken: null,
+            resetPasswordExpires: null,
         },
     });
 
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, { message: "Password reset successful" }, "Success")
     );
-    */
 });
 
 

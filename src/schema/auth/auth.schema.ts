@@ -18,7 +18,7 @@ export const userSchema = z.object({
     contactNo: z.string().nonempty().min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }).optional(),
     address: z.string().optional(),
     status: z.enum(["active", "disable"], { message: "Status must be either active or disable" }).optional(),
-    licenseNo: z.string().nonempty().min(1, { message: "license number is required." }),
+    licenseNo: z.string().optional(),
     role: z.enum(["client", "provider", "superAdmin"], { message: "Role must be either client or provider" }),
     isApprove: z.string().optional(),
     email: z.string().nonempty("Email is required").email("Invalid email format"),
