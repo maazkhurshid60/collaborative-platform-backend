@@ -4,24 +4,49 @@ export const sendVerificationEmail = async (
   toEmail: string,
   name: string,
 ) => {
-
-
+  const isDevelopment = process.env.NODE_ENV?.toUpperCase() === "DEVELOPMENT";
+  const frontendUrl = isDevelopment
+    ? process.env.FRONTEND_LOCAL_URL
+    : process.env.FRONTEND_AWS_URL;
 
   const htmlContent = `
-    <div style="font-family: sans-serif; padding: 20px;">
-      <h2>Hello ${name},</h2>
-  <p>Your account has been verified successfully.</p>
-    <p>Please click <a href="${process.env.NODE_ENV === "DEVELOPMENT" ? process.env.FRONTEND_LOCAL_URL : process.env.FRONTEND_AWS_URL}/signup-with-license/">here</a> to set your password.</p>
-    <p>Once you've set your password, you can log in using your email and the new password.</p>
-  
-    <p style="margin-top:20px;">Thanks,<br />Kolabme Platform</p>
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; border: 1px solid #e5e7eb; border-radius: 12px; color: #1f2937; background-color: #ffffff;">
+      <div style="text-align: left; margin-bottom: 32px;">
+        <h2 style="font-size: 24px; font-weight: 700; color: #111827; margin: 0;">Account Verified</h2>
+      </div>
+      
+      <p style="font-size: 16px; line-height: 1.6; margin-bottom: 24px;">Hello <strong>${name}</strong>,</p>
+      
+      <p style="font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
+        Great news! Your account has been verified successfully. To get started, please click the button below to set your secure password:
+      </p>
+      
+      <div style="text-align: center; margin-bottom: 32px;">
+        <a href="${frontendUrl}/signup-with-license/" 
+           style="background-color: #0F766E; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          Set Your Password
+        </a>
+      </div>
+      
+      <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin-bottom: 32px;">
+        <p style="font-size: 14px; color: #4b5563; margin: 0; line-height: 1.5;">
+          <strong>Next Steps:</strong> Once you've set your password, you can immediately log in to the Kolabme platform using your email address and your new password.
+        </p>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid #e5e7eb; margin-bottom: 32px;" />
+      
+      <p style="font-size: 15px; color: #6b7280; margin: 0;">
+        Best regards,<br />
+        <strong>The Kolabme Team</strong>
+      </p>
     </div>
   `;
 
   await transporter.sendMail({
     from: `"Kolabme Platform" <${process.env.NODE_MAILER_EMAIL}>`,
     to: toEmail,
-    subject: "Account Verified",
+    subject: "Account Verified - Kolabme",
     html: htmlContent,
   });
 };

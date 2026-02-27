@@ -429,13 +429,6 @@ export type NotificationMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
 }
 
-export type NotificationCreateNestedManyWithoutSenderInput = {
-  create?: Prisma.XOR<Prisma.NotificationCreateWithoutSenderInput, Prisma.NotificationUncheckedCreateWithoutSenderInput> | Prisma.NotificationCreateWithoutSenderInput[] | Prisma.NotificationUncheckedCreateWithoutSenderInput[]
-  connectOrCreate?: Prisma.NotificationCreateOrConnectWithoutSenderInput | Prisma.NotificationCreateOrConnectWithoutSenderInput[]
-  createMany?: Prisma.NotificationCreateManySenderInputEnvelope
-  connect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
-}
-
 export type NotificationCreateNestedManyWithoutRecipientInput = {
   create?: Prisma.XOR<Prisma.NotificationCreateWithoutRecipientInput, Prisma.NotificationUncheckedCreateWithoutRecipientInput> | Prisma.NotificationCreateWithoutRecipientInput[] | Prisma.NotificationUncheckedCreateWithoutRecipientInput[]
   connectOrCreate?: Prisma.NotificationCreateOrConnectWithoutRecipientInput | Prisma.NotificationCreateOrConnectWithoutRecipientInput[]
@@ -443,7 +436,7 @@ export type NotificationCreateNestedManyWithoutRecipientInput = {
   connect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
 }
 
-export type NotificationUncheckedCreateNestedManyWithoutSenderInput = {
+export type NotificationCreateNestedManyWithoutSenderInput = {
   create?: Prisma.XOR<Prisma.NotificationCreateWithoutSenderInput, Prisma.NotificationUncheckedCreateWithoutSenderInput> | Prisma.NotificationCreateWithoutSenderInput[] | Prisma.NotificationUncheckedCreateWithoutSenderInput[]
   connectOrCreate?: Prisma.NotificationCreateOrConnectWithoutSenderInput | Prisma.NotificationCreateOrConnectWithoutSenderInput[]
   createMany?: Prisma.NotificationCreateManySenderInputEnvelope
@@ -457,18 +450,11 @@ export type NotificationUncheckedCreateNestedManyWithoutRecipientInput = {
   connect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
 }
 
-export type NotificationUpdateManyWithoutSenderNestedInput = {
+export type NotificationUncheckedCreateNestedManyWithoutSenderInput = {
   create?: Prisma.XOR<Prisma.NotificationCreateWithoutSenderInput, Prisma.NotificationUncheckedCreateWithoutSenderInput> | Prisma.NotificationCreateWithoutSenderInput[] | Prisma.NotificationUncheckedCreateWithoutSenderInput[]
   connectOrCreate?: Prisma.NotificationCreateOrConnectWithoutSenderInput | Prisma.NotificationCreateOrConnectWithoutSenderInput[]
-  upsert?: Prisma.NotificationUpsertWithWhereUniqueWithoutSenderInput | Prisma.NotificationUpsertWithWhereUniqueWithoutSenderInput[]
   createMany?: Prisma.NotificationCreateManySenderInputEnvelope
-  set?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
-  disconnect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
-  delete?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
   connect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
-  update?: Prisma.NotificationUpdateWithWhereUniqueWithoutSenderInput | Prisma.NotificationUpdateWithWhereUniqueWithoutSenderInput[]
-  updateMany?: Prisma.NotificationUpdateManyWithWhereWithoutSenderInput | Prisma.NotificationUpdateManyWithWhereWithoutSenderInput[]
-  deleteMany?: Prisma.NotificationScalarWhereInput | Prisma.NotificationScalarWhereInput[]
 }
 
 export type NotificationUpdateManyWithoutRecipientNestedInput = {
@@ -485,7 +471,7 @@ export type NotificationUpdateManyWithoutRecipientNestedInput = {
   deleteMany?: Prisma.NotificationScalarWhereInput | Prisma.NotificationScalarWhereInput[]
 }
 
-export type NotificationUncheckedUpdateManyWithoutSenderNestedInput = {
+export type NotificationUpdateManyWithoutSenderNestedInput = {
   create?: Prisma.XOR<Prisma.NotificationCreateWithoutSenderInput, Prisma.NotificationUncheckedCreateWithoutSenderInput> | Prisma.NotificationCreateWithoutSenderInput[] | Prisma.NotificationUncheckedCreateWithoutSenderInput[]
   connectOrCreate?: Prisma.NotificationCreateOrConnectWithoutSenderInput | Prisma.NotificationCreateOrConnectWithoutSenderInput[]
   upsert?: Prisma.NotificationUpsertWithWhereUniqueWithoutSenderInput | Prisma.NotificationUpsertWithWhereUniqueWithoutSenderInput[]
@@ -513,42 +499,22 @@ export type NotificationUncheckedUpdateManyWithoutRecipientNestedInput = {
   deleteMany?: Prisma.NotificationScalarWhereInput | Prisma.NotificationScalarWhereInput[]
 }
 
+export type NotificationUncheckedUpdateManyWithoutSenderNestedInput = {
+  create?: Prisma.XOR<Prisma.NotificationCreateWithoutSenderInput, Prisma.NotificationUncheckedCreateWithoutSenderInput> | Prisma.NotificationCreateWithoutSenderInput[] | Prisma.NotificationUncheckedCreateWithoutSenderInput[]
+  connectOrCreate?: Prisma.NotificationCreateOrConnectWithoutSenderInput | Prisma.NotificationCreateOrConnectWithoutSenderInput[]
+  upsert?: Prisma.NotificationUpsertWithWhereUniqueWithoutSenderInput | Prisma.NotificationUpsertWithWhereUniqueWithoutSenderInput[]
+  createMany?: Prisma.NotificationCreateManySenderInputEnvelope
+  set?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+  disconnect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+  delete?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+  connect?: Prisma.NotificationWhereUniqueInput | Prisma.NotificationWhereUniqueInput[]
+  update?: Prisma.NotificationUpdateWithWhereUniqueWithoutSenderInput | Prisma.NotificationUpdateWithWhereUniqueWithoutSenderInput[]
+  updateMany?: Prisma.NotificationUpdateManyWithWhereWithoutSenderInput | Prisma.NotificationUpdateManyWithWhereWithoutSenderInput[]
+  deleteMany?: Prisma.NotificationScalarWhereInput | Prisma.NotificationScalarWhereInput[]
+}
+
 export type EnumNotificationTypeFieldUpdateOperationsInput = {
   set?: $Enums.NotificationType
-}
-
-export type NotificationCreateWithoutSenderInput = {
-  id?: string
-  title: string
-  message: string
-  type: $Enums.NotificationType
-  seen?: boolean
-  deletedBySender?: boolean
-  deletedByRecipient?: boolean
-  createdAt?: Date | string
-  recipient: Prisma.UserCreateNestedOneWithoutReceivedNotificationsInput
-}
-
-export type NotificationUncheckedCreateWithoutSenderInput = {
-  id?: string
-  title: string
-  message: string
-  type: $Enums.NotificationType
-  recipientId: string
-  seen?: boolean
-  deletedBySender?: boolean
-  deletedByRecipient?: boolean
-  createdAt?: Date | string
-}
-
-export type NotificationCreateOrConnectWithoutSenderInput = {
-  where: Prisma.NotificationWhereUniqueInput
-  create: Prisma.XOR<Prisma.NotificationCreateWithoutSenderInput, Prisma.NotificationUncheckedCreateWithoutSenderInput>
-}
-
-export type NotificationCreateManySenderInputEnvelope = {
-  data: Prisma.NotificationCreateManySenderInput | Prisma.NotificationCreateManySenderInput[]
-  skipDuplicates?: boolean
 }
 
 export type NotificationCreateWithoutRecipientInput = {
@@ -585,36 +551,38 @@ export type NotificationCreateManyRecipientInputEnvelope = {
   skipDuplicates?: boolean
 }
 
-export type NotificationUpsertWithWhereUniqueWithoutSenderInput = {
+export type NotificationCreateWithoutSenderInput = {
+  id?: string
+  title: string
+  message: string
+  type: $Enums.NotificationType
+  seen?: boolean
+  deletedBySender?: boolean
+  deletedByRecipient?: boolean
+  createdAt?: Date | string
+  recipient: Prisma.UserCreateNestedOneWithoutReceivedNotificationsInput
+}
+
+export type NotificationUncheckedCreateWithoutSenderInput = {
+  id?: string
+  title: string
+  message: string
+  type: $Enums.NotificationType
+  recipientId: string
+  seen?: boolean
+  deletedBySender?: boolean
+  deletedByRecipient?: boolean
+  createdAt?: Date | string
+}
+
+export type NotificationCreateOrConnectWithoutSenderInput = {
   where: Prisma.NotificationWhereUniqueInput
-  update: Prisma.XOR<Prisma.NotificationUpdateWithoutSenderInput, Prisma.NotificationUncheckedUpdateWithoutSenderInput>
   create: Prisma.XOR<Prisma.NotificationCreateWithoutSenderInput, Prisma.NotificationUncheckedCreateWithoutSenderInput>
 }
 
-export type NotificationUpdateWithWhereUniqueWithoutSenderInput = {
-  where: Prisma.NotificationWhereUniqueInput
-  data: Prisma.XOR<Prisma.NotificationUpdateWithoutSenderInput, Prisma.NotificationUncheckedUpdateWithoutSenderInput>
-}
-
-export type NotificationUpdateManyWithWhereWithoutSenderInput = {
-  where: Prisma.NotificationScalarWhereInput
-  data: Prisma.XOR<Prisma.NotificationUpdateManyMutationInput, Prisma.NotificationUncheckedUpdateManyWithoutSenderInput>
-}
-
-export type NotificationScalarWhereInput = {
-  AND?: Prisma.NotificationScalarWhereInput | Prisma.NotificationScalarWhereInput[]
-  OR?: Prisma.NotificationScalarWhereInput[]
-  NOT?: Prisma.NotificationScalarWhereInput | Prisma.NotificationScalarWhereInput[]
-  id?: Prisma.StringFilter<"Notification"> | string
-  title?: Prisma.StringFilter<"Notification"> | string
-  message?: Prisma.StringFilter<"Notification"> | string
-  type?: Prisma.EnumNotificationTypeFilter<"Notification"> | $Enums.NotificationType
-  recipientId?: Prisma.StringFilter<"Notification"> | string
-  senderId?: Prisma.StringNullableFilter<"Notification"> | string | null
-  seen?: Prisma.BoolFilter<"Notification"> | boolean
-  deletedBySender?: Prisma.BoolFilter<"Notification"> | boolean
-  deletedByRecipient?: Prisma.BoolFilter<"Notification"> | boolean
-  createdAt?: Prisma.DateTimeFilter<"Notification"> | Date | string
+export type NotificationCreateManySenderInputEnvelope = {
+  data: Prisma.NotificationCreateManySenderInput | Prisma.NotificationCreateManySenderInput[]
+  skipDuplicates?: boolean
 }
 
 export type NotificationUpsertWithWhereUniqueWithoutRecipientInput = {
@@ -633,16 +601,36 @@ export type NotificationUpdateManyWithWhereWithoutRecipientInput = {
   data: Prisma.XOR<Prisma.NotificationUpdateManyMutationInput, Prisma.NotificationUncheckedUpdateManyWithoutRecipientInput>
 }
 
-export type NotificationCreateManySenderInput = {
-  id?: string
-  title: string
-  message: string
-  type: $Enums.NotificationType
-  recipientId: string
-  seen?: boolean
-  deletedBySender?: boolean
-  deletedByRecipient?: boolean
-  createdAt?: Date | string
+export type NotificationScalarWhereInput = {
+  AND?: Prisma.NotificationScalarWhereInput | Prisma.NotificationScalarWhereInput[]
+  OR?: Prisma.NotificationScalarWhereInput[]
+  NOT?: Prisma.NotificationScalarWhereInput | Prisma.NotificationScalarWhereInput[]
+  id?: Prisma.StringFilter<"Notification"> | string
+  title?: Prisma.StringFilter<"Notification"> | string
+  message?: Prisma.StringFilter<"Notification"> | string
+  type?: Prisma.EnumNotificationTypeFilter<"Notification"> | $Enums.NotificationType
+  recipientId?: Prisma.StringFilter<"Notification"> | string
+  senderId?: Prisma.StringNullableFilter<"Notification"> | string | null
+  seen?: Prisma.BoolFilter<"Notification"> | boolean
+  deletedBySender?: Prisma.BoolFilter<"Notification"> | boolean
+  deletedByRecipient?: Prisma.BoolFilter<"Notification"> | boolean
+  createdAt?: Prisma.DateTimeFilter<"Notification"> | Date | string
+}
+
+export type NotificationUpsertWithWhereUniqueWithoutSenderInput = {
+  where: Prisma.NotificationWhereUniqueInput
+  update: Prisma.XOR<Prisma.NotificationUpdateWithoutSenderInput, Prisma.NotificationUncheckedUpdateWithoutSenderInput>
+  create: Prisma.XOR<Prisma.NotificationCreateWithoutSenderInput, Prisma.NotificationUncheckedCreateWithoutSenderInput>
+}
+
+export type NotificationUpdateWithWhereUniqueWithoutSenderInput = {
+  where: Prisma.NotificationWhereUniqueInput
+  data: Prisma.XOR<Prisma.NotificationUpdateWithoutSenderInput, Prisma.NotificationUncheckedUpdateWithoutSenderInput>
+}
+
+export type NotificationUpdateManyWithWhereWithoutSenderInput = {
+  where: Prisma.NotificationScalarWhereInput
+  data: Prisma.XOR<Prisma.NotificationUpdateManyMutationInput, Prisma.NotificationUncheckedUpdateManyWithoutSenderInput>
 }
 
 export type NotificationCreateManyRecipientInput = {
@@ -657,40 +645,16 @@ export type NotificationCreateManyRecipientInput = {
   createdAt?: Date | string
 }
 
-export type NotificationUpdateWithoutSenderInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  message?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.EnumNotificationTypeFieldUpdateOperationsInput | $Enums.NotificationType
-  seen?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedBySender?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByRecipient?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  recipient?: Prisma.UserUpdateOneRequiredWithoutReceivedNotificationsNestedInput
-}
-
-export type NotificationUncheckedUpdateWithoutSenderInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  message?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.EnumNotificationTypeFieldUpdateOperationsInput | $Enums.NotificationType
-  recipientId?: Prisma.StringFieldUpdateOperationsInput | string
-  seen?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedBySender?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByRecipient?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type NotificationUncheckedUpdateManyWithoutSenderInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  title?: Prisma.StringFieldUpdateOperationsInput | string
-  message?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.EnumNotificationTypeFieldUpdateOperationsInput | $Enums.NotificationType
-  recipientId?: Prisma.StringFieldUpdateOperationsInput | string
-  seen?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedBySender?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByRecipient?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+export type NotificationCreateManySenderInput = {
+  id?: string
+  title: string
+  message: string
+  type: $Enums.NotificationType
+  recipientId: string
+  seen?: boolean
+  deletedBySender?: boolean
+  deletedByRecipient?: boolean
+  createdAt?: Date | string
 }
 
 export type NotificationUpdateWithoutRecipientInput = {
@@ -723,6 +687,42 @@ export type NotificationUncheckedUpdateManyWithoutRecipientInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.EnumNotificationTypeFieldUpdateOperationsInput | $Enums.NotificationType
   senderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  seen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedBySender?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByRecipient?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type NotificationUpdateWithoutSenderInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  message?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumNotificationTypeFieldUpdateOperationsInput | $Enums.NotificationType
+  seen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedBySender?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByRecipient?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  recipient?: Prisma.UserUpdateOneRequiredWithoutReceivedNotificationsNestedInput
+}
+
+export type NotificationUncheckedUpdateWithoutSenderInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  message?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumNotificationTypeFieldUpdateOperationsInput | $Enums.NotificationType
+  recipientId?: Prisma.StringFieldUpdateOperationsInput | string
+  seen?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedBySender?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByRecipient?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type NotificationUncheckedUpdateManyWithoutSenderInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  message?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumNotificationTypeFieldUpdateOperationsInput | $Enums.NotificationType
+  recipientId?: Prisma.StringFieldUpdateOperationsInput | string
   seen?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedBySender?: Prisma.BoolFieldUpdateOperationsInput | boolean
   deletedByRecipient?: Prisma.BoolFieldUpdateOperationsInput | boolean

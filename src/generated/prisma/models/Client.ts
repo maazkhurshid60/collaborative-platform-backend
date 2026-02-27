@@ -27,37 +27,37 @@ export type AggregateClient = {
 export type ClientMinAggregateOutputType = {
   id: string | null
   userId: string | null
-  clientId: string | null
   eSignature: string | null
   isAccountCreatedByOwnClient: boolean | null
   clientShowToOthers: boolean | null
   createdByProviderId: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  clientId: string | null
 }
 
 export type ClientMaxAggregateOutputType = {
   id: string | null
   userId: string | null
-  clientId: string | null
   eSignature: string | null
   isAccountCreatedByOwnClient: boolean | null
   clientShowToOthers: boolean | null
   createdByProviderId: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  clientId: string | null
 }
 
 export type ClientCountAggregateOutputType = {
   id: number
   userId: number
-  clientId: number
   eSignature: number
   isAccountCreatedByOwnClient: number
   clientShowToOthers: number
   createdByProviderId: number
   createdAt: number
   updatedAt: number
+  clientId: number
   _all: number
 }
 
@@ -65,37 +65,37 @@ export type ClientCountAggregateOutputType = {
 export type ClientMinAggregateInputType = {
   id?: true
   userId?: true
-  clientId?: true
   eSignature?: true
   isAccountCreatedByOwnClient?: true
   clientShowToOthers?: true
   createdByProviderId?: true
   createdAt?: true
   updatedAt?: true
+  clientId?: true
 }
 
 export type ClientMaxAggregateInputType = {
   id?: true
   userId?: true
-  clientId?: true
   eSignature?: true
   isAccountCreatedByOwnClient?: true
   clientShowToOthers?: true
   createdByProviderId?: true
   createdAt?: true
   updatedAt?: true
+  clientId?: true
 }
 
 export type ClientCountAggregateInputType = {
   id?: true
   userId?: true
-  clientId?: true
   eSignature?: true
   isAccountCreatedByOwnClient?: true
   clientShowToOthers?: true
   createdByProviderId?: true
   createdAt?: true
   updatedAt?: true
+  clientId?: true
   _all?: true
 }
 
@@ -174,13 +174,13 @@ export type ClientGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 export type ClientGroupByOutputType = {
   id: string
   userId: string
-  clientId: string | null
   eSignature: string | null
   isAccountCreatedByOwnClient: boolean
   clientShowToOthers: boolean
   createdByProviderId: string | null
   createdAt: Date
   updatedAt: Date
+  clientId: string | null
   _count: ClientCountAggregateOutputType | null
   _min: ClientMinAggregateOutputType | null
   _max: ClientMaxAggregateOutputType | null
@@ -207,33 +207,33 @@ export type ClientWhereInput = {
   NOT?: Prisma.ClientWhereInput | Prisma.ClientWhereInput[]
   id?: Prisma.StringFilter<"Client"> | string
   userId?: Prisma.StringFilter<"Client"> | string
-  clientId?: Prisma.StringNullableFilter<"Client"> | string | null
   eSignature?: Prisma.StringNullableFilter<"Client"> | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFilter<"Client"> | boolean
   clientShowToOthers?: Prisma.BoolFilter<"Client"> | boolean
   createdByProviderId?: Prisma.StringNullableFilter<"Client"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Client"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Client"> | Date | string
+  clientId?: Prisma.StringNullableFilter<"Client"> | string | null
+  createdBy?: Prisma.XOR<Prisma.ProviderNullableScalarRelationFilter, Prisma.ProviderWhereInput> | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   receivedDocument?: Prisma.DocumentShareWithListRelationFilter
   providerList?: Prisma.ProviderOnClientListRelationFilter
-  createdBy?: Prisma.XOR<Prisma.ProviderNullableScalarRelationFilter, Prisma.ProviderWhereInput> | null
 }
 
 export type ClientOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  clientId?: Prisma.SortOrderInput | Prisma.SortOrder
   eSignature?: Prisma.SortOrderInput | Prisma.SortOrder
   isAccountCreatedByOwnClient?: Prisma.SortOrder
   clientShowToOthers?: Prisma.SortOrder
   createdByProviderId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  clientId?: Prisma.SortOrderInput | Prisma.SortOrder
+  createdBy?: Prisma.ProviderOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
   receivedDocument?: Prisma.DocumentShareWithOrderByRelationAggregateInput
   providerList?: Prisma.ProviderOnClientOrderByRelationAggregateInput
-  createdBy?: Prisma.ProviderOrderByWithRelationInput
 }
 
 export type ClientWhereUniqueInput = Prisma.AtLeast<{
@@ -249,22 +249,22 @@ export type ClientWhereUniqueInput = Prisma.AtLeast<{
   createdByProviderId?: Prisma.StringNullableFilter<"Client"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Client"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Client"> | Date | string
+  createdBy?: Prisma.XOR<Prisma.ProviderNullableScalarRelationFilter, Prisma.ProviderWhereInput> | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   receivedDocument?: Prisma.DocumentShareWithListRelationFilter
   providerList?: Prisma.ProviderOnClientListRelationFilter
-  createdBy?: Prisma.XOR<Prisma.ProviderNullableScalarRelationFilter, Prisma.ProviderWhereInput> | null
 }, "id" | "userId" | "clientId">
 
 export type ClientOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  clientId?: Prisma.SortOrderInput | Prisma.SortOrder
   eSignature?: Prisma.SortOrderInput | Prisma.SortOrder
   isAccountCreatedByOwnClient?: Prisma.SortOrder
   clientShowToOthers?: Prisma.SortOrder
   createdByProviderId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  clientId?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.ClientCountOrderByAggregateInput
   _max?: Prisma.ClientMaxOrderByAggregateInput
   _min?: Prisma.ClientMinOrderByAggregateInput
@@ -276,67 +276,67 @@ export type ClientScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ClientScalarWhereWithAggregatesInput | Prisma.ClientScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Client"> | string
   userId?: Prisma.StringWithAggregatesFilter<"Client"> | string
-  clientId?: Prisma.StringNullableWithAggregatesFilter<"Client"> | string | null
   eSignature?: Prisma.StringNullableWithAggregatesFilter<"Client"> | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolWithAggregatesFilter<"Client"> | boolean
   clientShowToOthers?: Prisma.BoolWithAggregatesFilter<"Client"> | boolean
   createdByProviderId?: Prisma.StringNullableWithAggregatesFilter<"Client"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Client"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Client"> | Date | string
+  clientId?: Prisma.StringNullableWithAggregatesFilter<"Client"> | string | null
 }
 
 export type ClientCreateInput = {
   id?: string
-  clientId?: string | null
   eSignature?: string | null
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  clientId?: string | null
+  createdBy?: Prisma.ProviderCreateNestedOneWithoutCreatedClientsInput
   user: Prisma.UserCreateNestedOneWithoutClientInput
   receivedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutClientInput
   providerList?: Prisma.ProviderOnClientCreateNestedManyWithoutClientInput
-  createdBy?: Prisma.ProviderCreateNestedOneWithoutCreatedClientsInput
 }
 
 export type ClientUncheckedCreateInput = {
   id?: string
   userId: string
-  clientId?: string | null
   eSignature?: string | null
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdByProviderId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  clientId?: string | null
   receivedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutClientInput
   providerList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutClientInput
 }
 
 export type ClientUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdBy?: Prisma.ProviderUpdateOneWithoutCreatedClientsNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutClientNestedInput
   receivedDocument?: Prisma.DocumentShareWithUpdateManyWithoutClientNestedInput
   providerList?: Prisma.ProviderOnClientUpdateManyWithoutClientNestedInput
-  createdBy?: Prisma.ProviderUpdateOneWithoutCreatedClientsNestedInput
 }
 
 export type ClientUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdByProviderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   receivedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutClientNestedInput
   providerList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutClientNestedInput
 }
@@ -344,35 +344,35 @@ export type ClientUncheckedUpdateInput = {
 export type ClientCreateManyInput = {
   id?: string
   userId: string
-  clientId?: string | null
   eSignature?: string | null
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdByProviderId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  clientId?: string | null
 }
 
 export type ClientUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ClientUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdByProviderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type ClientNullableScalarRelationFilter = {
@@ -383,37 +383,37 @@ export type ClientNullableScalarRelationFilter = {
 export type ClientCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  clientId?: Prisma.SortOrder
   eSignature?: Prisma.SortOrder
   isAccountCreatedByOwnClient?: Prisma.SortOrder
   clientShowToOthers?: Prisma.SortOrder
   createdByProviderId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  clientId?: Prisma.SortOrder
 }
 
 export type ClientMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  clientId?: Prisma.SortOrder
   eSignature?: Prisma.SortOrder
   isAccountCreatedByOwnClient?: Prisma.SortOrder
   clientShowToOthers?: Prisma.SortOrder
   createdByProviderId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  clientId?: Prisma.SortOrder
 }
 
 export type ClientMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  clientId?: Prisma.SortOrder
   eSignature?: Prisma.SortOrder
   isAccountCreatedByOwnClient?: Prisma.SortOrder
   clientShowToOthers?: Prisma.SortOrder
   createdByProviderId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  clientId?: Prisma.SortOrder
 }
 
 export type ClientListRelationFilter = {
@@ -537,26 +537,26 @@ export type ClientUpdateOneRequiredWithoutProviderListNestedInput = {
 
 export type ClientCreateWithoutUserInput = {
   id?: string
-  clientId?: string | null
   eSignature?: string | null
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  clientId?: string | null
+  createdBy?: Prisma.ProviderCreateNestedOneWithoutCreatedClientsInput
   receivedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutClientInput
   providerList?: Prisma.ProviderOnClientCreateNestedManyWithoutClientInput
-  createdBy?: Prisma.ProviderCreateNestedOneWithoutCreatedClientsInput
 }
 
 export type ClientUncheckedCreateWithoutUserInput = {
   id?: string
-  clientId?: string | null
   eSignature?: string | null
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdByProviderId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  clientId?: string | null
   receivedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutClientInput
   providerList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutClientInput
 }
@@ -579,38 +579,38 @@ export type ClientUpdateToOneWithWhereWithoutUserInput = {
 
 export type ClientUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdBy?: Prisma.ProviderUpdateOneWithoutCreatedClientsNestedInput
   receivedDocument?: Prisma.DocumentShareWithUpdateManyWithoutClientNestedInput
   providerList?: Prisma.ProviderOnClientUpdateManyWithoutClientNestedInput
-  createdBy?: Prisma.ProviderUpdateOneWithoutCreatedClientsNestedInput
 }
 
 export type ClientUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdByProviderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   receivedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutClientNestedInput
   providerList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutClientNestedInput
 }
 
 export type ClientCreateWithoutCreatedByInput = {
   id?: string
-  clientId?: string | null
   eSignature?: string | null
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  clientId?: string | null
   user: Prisma.UserCreateNestedOneWithoutClientInput
   receivedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutClientInput
   providerList?: Prisma.ProviderOnClientCreateNestedManyWithoutClientInput
@@ -619,12 +619,12 @@ export type ClientCreateWithoutCreatedByInput = {
 export type ClientUncheckedCreateWithoutCreatedByInput = {
   id?: string
   userId: string
-  clientId?: string | null
   eSignature?: string | null
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  clientId?: string | null
   receivedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutClientInput
   providerList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutClientInput
 }
@@ -661,38 +661,38 @@ export type ClientScalarWhereInput = {
   NOT?: Prisma.ClientScalarWhereInput | Prisma.ClientScalarWhereInput[]
   id?: Prisma.StringFilter<"Client"> | string
   userId?: Prisma.StringFilter<"Client"> | string
-  clientId?: Prisma.StringNullableFilter<"Client"> | string | null
   eSignature?: Prisma.StringNullableFilter<"Client"> | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFilter<"Client"> | boolean
   clientShowToOthers?: Prisma.BoolFilter<"Client"> | boolean
   createdByProviderId?: Prisma.StringNullableFilter<"Client"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Client"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Client"> | Date | string
+  clientId?: Prisma.StringNullableFilter<"Client"> | string | null
 }
 
 export type ClientCreateWithoutReceivedDocumentInput = {
   id?: string
-  clientId?: string | null
   eSignature?: string | null
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  clientId?: string | null
+  createdBy?: Prisma.ProviderCreateNestedOneWithoutCreatedClientsInput
   user: Prisma.UserCreateNestedOneWithoutClientInput
   providerList?: Prisma.ProviderOnClientCreateNestedManyWithoutClientInput
-  createdBy?: Prisma.ProviderCreateNestedOneWithoutCreatedClientsInput
 }
 
 export type ClientUncheckedCreateWithoutReceivedDocumentInput = {
   id?: string
   userId: string
-  clientId?: string | null
   eSignature?: string | null
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdByProviderId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  clientId?: string | null
   providerList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutClientInput
 }
 
@@ -714,53 +714,53 @@ export type ClientUpdateToOneWithWhereWithoutReceivedDocumentInput = {
 
 export type ClientUpdateWithoutReceivedDocumentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdBy?: Prisma.ProviderUpdateOneWithoutCreatedClientsNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutClientNestedInput
   providerList?: Prisma.ProviderOnClientUpdateManyWithoutClientNestedInput
-  createdBy?: Prisma.ProviderUpdateOneWithoutCreatedClientsNestedInput
 }
 
 export type ClientUncheckedUpdateWithoutReceivedDocumentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdByProviderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   providerList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutClientNestedInput
 }
 
 export type ClientCreateWithoutProviderListInput = {
   id?: string
-  clientId?: string | null
   eSignature?: string | null
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  clientId?: string | null
+  createdBy?: Prisma.ProviderCreateNestedOneWithoutCreatedClientsInput
   user: Prisma.UserCreateNestedOneWithoutClientInput
   receivedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutClientInput
-  createdBy?: Prisma.ProviderCreateNestedOneWithoutCreatedClientsInput
 }
 
 export type ClientUncheckedCreateWithoutProviderListInput = {
   id?: string
   userId: string
-  clientId?: string | null
   eSignature?: string | null
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdByProviderId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  clientId?: string | null
   receivedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutClientInput
 }
 
@@ -782,49 +782,49 @@ export type ClientUpdateToOneWithWhereWithoutProviderListInput = {
 
 export type ClientUpdateWithoutProviderListInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdBy?: Prisma.ProviderUpdateOneWithoutCreatedClientsNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutClientNestedInput
   receivedDocument?: Prisma.DocumentShareWithUpdateManyWithoutClientNestedInput
-  createdBy?: Prisma.ProviderUpdateOneWithoutCreatedClientsNestedInput
 }
 
 export type ClientUncheckedUpdateWithoutProviderListInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdByProviderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   receivedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutClientNestedInput
 }
 
 export type ClientCreateManyCreatedByInput = {
   id?: string
   userId: string
-  clientId?: string | null
   eSignature?: string | null
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  clientId?: string | null
 }
 
 export type ClientUpdateWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutClientNestedInput
   receivedDocument?: Prisma.DocumentShareWithUpdateManyWithoutClientNestedInput
   providerList?: Prisma.ProviderOnClientUpdateManyWithoutClientNestedInput
@@ -833,12 +833,12 @@ export type ClientUpdateWithoutCreatedByInput = {
 export type ClientUncheckedUpdateWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   receivedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutClientNestedInput
   providerList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutClientNestedInput
 }
@@ -846,12 +846,12 @@ export type ClientUncheckedUpdateWithoutCreatedByInput = {
 export type ClientUncheckedUpdateManyWithoutCreatedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAccountCreatedByOwnClient?: Prisma.BoolFieldUpdateOperationsInput | boolean
   clientShowToOthers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 
@@ -897,95 +897,95 @@ export type ClientCountOutputTypeCountProviderListArgs<ExtArgs extends runtime.T
 export type ClientSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
-  clientId?: boolean
   eSignature?: boolean
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdByProviderId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  clientId?: boolean
+  createdBy?: boolean | Prisma.Client$createdByArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   receivedDocument?: boolean | Prisma.Client$receivedDocumentArgs<ExtArgs>
   providerList?: boolean | Prisma.Client$providerListArgs<ExtArgs>
-  createdBy?: boolean | Prisma.Client$createdByArgs<ExtArgs>
   _count?: boolean | Prisma.ClientCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["client"]>
 
 export type ClientSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
-  clientId?: boolean
   eSignature?: boolean
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdByProviderId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  clientId?: boolean
   createdBy?: boolean | Prisma.Client$createdByArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["client"]>
 
 export type ClientSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
-  clientId?: boolean
   eSignature?: boolean
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdByProviderId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  clientId?: boolean
   createdBy?: boolean | Prisma.Client$createdByArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["client"]>
 
 export type ClientSelectScalar = {
   id?: boolean
   userId?: boolean
-  clientId?: boolean
   eSignature?: boolean
   isAccountCreatedByOwnClient?: boolean
   clientShowToOthers?: boolean
   createdByProviderId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  clientId?: boolean
 }
 
-export type ClientOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "clientId" | "eSignature" | "isAccountCreatedByOwnClient" | "clientShowToOthers" | "createdByProviderId" | "createdAt" | "updatedAt", ExtArgs["result"]["client"]>
+export type ClientOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "eSignature" | "isAccountCreatedByOwnClient" | "clientShowToOthers" | "createdByProviderId" | "createdAt" | "updatedAt" | "clientId", ExtArgs["result"]["client"]>
 export type ClientInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  createdBy?: boolean | Prisma.Client$createdByArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   receivedDocument?: boolean | Prisma.Client$receivedDocumentArgs<ExtArgs>
   providerList?: boolean | Prisma.Client$providerListArgs<ExtArgs>
-  createdBy?: boolean | Prisma.Client$createdByArgs<ExtArgs>
   _count?: boolean | Prisma.ClientCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ClientIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   createdBy?: boolean | Prisma.Client$createdByArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type ClientIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   createdBy?: boolean | Prisma.Client$createdByArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $ClientPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Client"
   objects: {
+    createdBy: Prisma.$ProviderPayload<ExtArgs> | null
     user: Prisma.$UserPayload<ExtArgs>
     receivedDocument: Prisma.$DocumentShareWithPayload<ExtArgs>[]
     providerList: Prisma.$ProviderOnClientPayload<ExtArgs>[]
-    createdBy: Prisma.$ProviderPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     userId: string
-    clientId: string | null
     eSignature: string | null
     isAccountCreatedByOwnClient: boolean
     clientShowToOthers: boolean
     createdByProviderId: string | null
     createdAt: Date
     updatedAt: Date
+    clientId: string | null
   }, ExtArgs["result"]["client"]>
   composites: {}
 }
@@ -1380,10 +1380,10 @@ readonly fields: ClientFieldRefs;
  */
 export interface Prisma__ClientClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  createdBy<T extends Prisma.Client$createdByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Client$createdByArgs<ExtArgs>>): Prisma.Prisma__ProviderClient<runtime.Types.Result.GetResult<Prisma.$ProviderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   receivedDocument<T extends Prisma.Client$receivedDocumentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Client$receivedDocumentArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DocumentShareWithPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   providerList<T extends Prisma.Client$providerListArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Client$providerListArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProviderOnClientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  createdBy<T extends Prisma.Client$createdByArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Client$createdByArgs<ExtArgs>>): Prisma.Prisma__ProviderClient<runtime.Types.Result.GetResult<Prisma.$ProviderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1415,13 +1415,13 @@ export interface Prisma__ClientClient<T, Null = never, ExtArgs extends runtime.T
 export interface ClientFieldRefs {
   readonly id: Prisma.FieldRef<"Client", 'String'>
   readonly userId: Prisma.FieldRef<"Client", 'String'>
-  readonly clientId: Prisma.FieldRef<"Client", 'String'>
   readonly eSignature: Prisma.FieldRef<"Client", 'String'>
   readonly isAccountCreatedByOwnClient: Prisma.FieldRef<"Client", 'Boolean'>
   readonly clientShowToOthers: Prisma.FieldRef<"Client", 'Boolean'>
   readonly createdByProviderId: Prisma.FieldRef<"Client", 'String'>
   readonly createdAt: Prisma.FieldRef<"Client", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Client", 'DateTime'>
+  readonly clientId: Prisma.FieldRef<"Client", 'String'>
 }
     
 
@@ -1818,6 +1818,25 @@ export type ClientDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Intern
 }
 
 /**
+ * Client.createdBy
+ */
+export type Client$createdByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Provider
+   */
+  select?: Prisma.ProviderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Provider
+   */
+  omit?: Prisma.ProviderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProviderInclude<ExtArgs> | null
+  where?: Prisma.ProviderWhereInput
+}
+
+/**
  * Client.receivedDocument
  */
 export type Client$receivedDocumentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1863,25 +1882,6 @@ export type Client$providerListArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.ProviderOnClientScalarFieldEnum | Prisma.ProviderOnClientScalarFieldEnum[]
-}
-
-/**
- * Client.createdBy
- */
-export type Client$createdByArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Provider
-   */
-  select?: Prisma.ProviderSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Provider
-   */
-  omit?: Prisma.ProviderOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ProviderInclude<ExtArgs> | null
-  where?: Prisma.ProviderWhereInput
 }
 
 /**

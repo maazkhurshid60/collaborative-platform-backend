@@ -1,28 +1,52 @@
 import { z } from "zod";
 const strongPassword = z
     .string()
-    .min(8, { message: "Kam az kam 8 characters ka password hona chahiye" })
-    .regex(/[a-z]/, { message: "Ek lowercase letter hona chahiye" })
-    .regex(/[A-Z]/, { message: "Ek uppercase letter hona chahiye" })
-    .regex(/[0-9]/, { message: "Ek number hona chahiye" })
-    .regex(/[^A-Za-z0-9]/, { message: "Ek special character hona chahiye" });
+    .min(10, { message: "Password must be at least 10 characters long" })
+    .regex(/[a-z]/, { message: "One sohuld be lower case letter" })
+    .regex(/[A-Z]/, { message: "One sohuld be upper case letter" })
+    .regex(/[0-9]/, { message: "One sohuld be numeric number" })
+    .regex(/[^A-Za-z0-9]/, { message: "One sohuld be special character" });
 
+export const fullNameValidator = z
+    .string()
+    .trim()
+    .min(2, "Full name must be at least 2 characters.")
+    .max(80, "Full name must be 80 characters or less.")
+    .refine((val) => /^[\p{L}.'-]+(?:\s[\p{L}.'-]+)*$/u.test(val), {
+        message:
+            "Full name can contain only letters, spaces, hyphens (-), apostrophes ('), and periods (.).",
+    });
+
+export const licenseNoValidator = z
+    .string()
+    .trim()
+    .min(6, "License number must be at least 6 characters.")
+    .max(50, "License number must be 50 characters or less.")
+    .refine((val) => /[A-Za-z]/.test(val), {
+        message: "License number must include at least one letter.",
+    })
+    .refine((val) => /\d/.test(val), {
+        message: "License number must include at least one number.",
+    })
+    .refine((val) => /[^A-Za-z0-9]/.test(val), {
+        message: "License number must include at least one special character.",
+    });
 
 export const userSchema = z.object({
-    fullName: z.string().nonempty().min(3, { message: "Full Name not less then 3letters." }),
+    fullName: fullNameValidator,
     profileImage: z.string().nullable().optional(),
     gender: z.enum(["male", "female", "other"], { message: "Gender must be either male or female or other" }).optional(),
     age: z.coerce.number()
         .min(10, { message: "Age must be at least 10" })  // Min 2-digit number (10)
         .max(99, { message: "Age must be at most 99" }).optional(), // Max 2-digit number (99)    
-    contactNo: z.string().nonempty().min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }).optional(),
+    contactNo: z.string().nonempty({ message: "Contact no is required" }).min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }).optional(),
     address: z.string().optional(),
     status: z.enum(["active", "disable"], { message: "Status must be either active or disable" }).optional(),
     licenseNo: z.string().optional(),
     role: z.enum(["client", "provider", "superAdmin"], { message: "Role must be either client or provider" }),
     isApprove: z.string().optional(),
     email: z.string().nonempty("Email is required").email("Invalid email format"),
-    password: z.string().nonempty("Password is required").min(6, "Password too short").optional(),
+    password: strongPassword.optional(),
     country: z.string().nonempty("Country is required"),
     state: z.string().nonempty("State is required"),
     publicKey: z.string().optional(),
@@ -38,6 +62,7 @@ export const clientSchema = userSchema.extend({
 export const providerSchema = userSchema.extend({
     department: z.string().nonempty("Department is required"),
     inviteToken: z.string().optional(),
+    licenseNo: licenseNoValidator.optional(),
 })
 // Super Admin Schema (Extends User)
 export const superAdminSchema = userSchema.extend({
@@ -46,10 +71,7 @@ export const superAdminSchema = userSchema.extend({
 // Login Schema
 export const loginSchema = z.object({
     email: z.string().nonempty("Email is required").email("Invalid email format"),
-    password: z
-        .string().nonempty("Password is required")
-        .min(5, { message: "Password not less then 5letters" })
-        .max(50, "Password not more then 50letters"),
+    password: z.string().nonempty("Password is required"),
 })
 
 

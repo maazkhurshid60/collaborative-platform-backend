@@ -28,30 +28,30 @@ export type ChatChannelMinAggregateOutputType = {
   id: string | null
   providerAId: string | null
   providerBId: string | null
-  deletedByA: boolean | null
-  deletedByB: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedByA: boolean | null
+  deletedByB: boolean | null
 }
 
 export type ChatChannelMaxAggregateOutputType = {
   id: string | null
   providerAId: string | null
   providerBId: string | null
-  deletedByA: boolean | null
-  deletedByB: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
+  deletedByA: boolean | null
+  deletedByB: boolean | null
 }
 
 export type ChatChannelCountAggregateOutputType = {
   id: number
   providerAId: number
   providerBId: number
-  deletedByA: number
-  deletedByB: number
   createdAt: number
   updatedAt: number
+  deletedByA: number
+  deletedByB: number
   _all: number
 }
 
@@ -60,30 +60,30 @@ export type ChatChannelMinAggregateInputType = {
   id?: true
   providerAId?: true
   providerBId?: true
-  deletedByA?: true
-  deletedByB?: true
   createdAt?: true
   updatedAt?: true
+  deletedByA?: true
+  deletedByB?: true
 }
 
 export type ChatChannelMaxAggregateInputType = {
   id?: true
   providerAId?: true
   providerBId?: true
-  deletedByA?: true
-  deletedByB?: true
   createdAt?: true
   updatedAt?: true
+  deletedByA?: true
+  deletedByB?: true
 }
 
 export type ChatChannelCountAggregateInputType = {
   id?: true
   providerAId?: true
   providerBId?: true
-  deletedByA?: true
-  deletedByB?: true
   createdAt?: true
   updatedAt?: true
+  deletedByA?: true
+  deletedByB?: true
   _all?: true
 }
 
@@ -163,10 +163,10 @@ export type ChatChannelGroupByOutputType = {
   id: string
   providerAId: string
   providerBId: string
-  deletedByA: boolean
-  deletedByB: boolean
   createdAt: Date
   updatedAt: Date
+  deletedByA: boolean
+  deletedByB: boolean
   _count: ChatChannelCountAggregateOutputType | null
   _min: ChatChannelMinAggregateOutputType | null
   _max: ChatChannelMaxAggregateOutputType | null
@@ -194,10 +194,10 @@ export type ChatChannelWhereInput = {
   id?: Prisma.StringFilter<"ChatChannel"> | string
   providerAId?: Prisma.StringFilter<"ChatChannel"> | string
   providerBId?: Prisma.StringFilter<"ChatChannel"> | string
-  deletedByA?: Prisma.BoolFilter<"ChatChannel"> | boolean
-  deletedByB?: Prisma.BoolFilter<"ChatChannel"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ChatChannel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ChatChannel"> | Date | string
+  deletedByA?: Prisma.BoolFilter<"ChatChannel"> | boolean
+  deletedByB?: Prisma.BoolFilter<"ChatChannel"> | boolean
   providerA?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   providerB?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   messages?: Prisma.ChatMessageListRelationFilter
@@ -207,10 +207,10 @@ export type ChatChannelOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   providerAId?: Prisma.SortOrder
   providerBId?: Prisma.SortOrder
-  deletedByA?: Prisma.SortOrder
-  deletedByB?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedByA?: Prisma.SortOrder
+  deletedByB?: Prisma.SortOrder
   providerA?: Prisma.UserOrderByWithRelationInput
   providerB?: Prisma.UserOrderByWithRelationInput
   messages?: Prisma.ChatMessageOrderByRelationAggregateInput
@@ -224,10 +224,10 @@ export type ChatChannelWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ChatChannelWhereInput | Prisma.ChatChannelWhereInput[]
   providerAId?: Prisma.StringFilter<"ChatChannel"> | string
   providerBId?: Prisma.StringFilter<"ChatChannel"> | string
-  deletedByA?: Prisma.BoolFilter<"ChatChannel"> | boolean
-  deletedByB?: Prisma.BoolFilter<"ChatChannel"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ChatChannel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ChatChannel"> | Date | string
+  deletedByA?: Prisma.BoolFilter<"ChatChannel"> | boolean
+  deletedByB?: Prisma.BoolFilter<"ChatChannel"> | boolean
   providerA?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   providerB?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   messages?: Prisma.ChatMessageListRelationFilter
@@ -237,10 +237,10 @@ export type ChatChannelOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   providerAId?: Prisma.SortOrder
   providerBId?: Prisma.SortOrder
-  deletedByA?: Prisma.SortOrder
-  deletedByB?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedByA?: Prisma.SortOrder
+  deletedByB?: Prisma.SortOrder
   _count?: Prisma.ChatChannelCountOrderByAggregateInput
   _max?: Prisma.ChatChannelMaxOrderByAggregateInput
   _min?: Prisma.ChatChannelMinOrderByAggregateInput
@@ -253,18 +253,18 @@ export type ChatChannelScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"ChatChannel"> | string
   providerAId?: Prisma.StringWithAggregatesFilter<"ChatChannel"> | string
   providerBId?: Prisma.StringWithAggregatesFilter<"ChatChannel"> | string
-  deletedByA?: Prisma.BoolWithAggregatesFilter<"ChatChannel"> | boolean
-  deletedByB?: Prisma.BoolWithAggregatesFilter<"ChatChannel"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ChatChannel"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ChatChannel"> | Date | string
+  deletedByA?: Prisma.BoolWithAggregatesFilter<"ChatChannel"> | boolean
+  deletedByB?: Prisma.BoolWithAggregatesFilter<"ChatChannel"> | boolean
 }
 
 export type ChatChannelCreateInput = {
   id?: string
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedByA?: boolean
+  deletedByB?: boolean
   providerA: Prisma.UserCreateNestedOneWithoutChatChannelsAInput
   providerB: Prisma.UserCreateNestedOneWithoutChatChannelsBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutChatChannelInput
@@ -274,19 +274,19 @@ export type ChatChannelUncheckedCreateInput = {
   id?: string
   providerAId: string
   providerBId: string
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedByA?: boolean
+  deletedByB?: boolean
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutChatChannelInput
 }
 
 export type ChatChannelUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   providerA?: Prisma.UserUpdateOneRequiredWithoutChatChannelsANestedInput
   providerB?: Prisma.UserUpdateOneRequiredWithoutChatChannelsBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutChatChannelNestedInput
@@ -296,10 +296,10 @@ export type ChatChannelUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   providerAId?: Prisma.StringFieldUpdateOperationsInput | string
   providerBId?: Prisma.StringFieldUpdateOperationsInput | string
-  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutChatChannelNestedInput
 }
 
@@ -307,28 +307,28 @@ export type ChatChannelCreateManyInput = {
   id?: string
   providerAId: string
   providerBId: string
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedByA?: boolean
+  deletedByB?: boolean
 }
 
 export type ChatChannelUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type ChatChannelUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   providerAId?: Prisma.StringFieldUpdateOperationsInput | string
   providerBId?: Prisma.StringFieldUpdateOperationsInput | string
-  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type ChatChannelListRelationFilter = {
@@ -350,30 +350,30 @@ export type ChatChannelCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   providerAId?: Prisma.SortOrder
   providerBId?: Prisma.SortOrder
-  deletedByA?: Prisma.SortOrder
-  deletedByB?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedByA?: Prisma.SortOrder
+  deletedByB?: Prisma.SortOrder
 }
 
 export type ChatChannelMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   providerAId?: Prisma.SortOrder
   providerBId?: Prisma.SortOrder
-  deletedByA?: Prisma.SortOrder
-  deletedByB?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedByA?: Prisma.SortOrder
+  deletedByB?: Prisma.SortOrder
 }
 
 export type ChatChannelMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   providerAId?: Prisma.SortOrder
   providerBId?: Prisma.SortOrder
-  deletedByA?: Prisma.SortOrder
-  deletedByB?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  deletedByA?: Prisma.SortOrder
+  deletedByB?: Prisma.SortOrder
 }
 
 export type ChatChannelNullableScalarRelationFilter = {
@@ -483,10 +483,10 @@ export type ChatChannelUpdateOneWithoutMessagesNestedInput = {
 
 export type ChatChannelCreateWithoutProviderAInput = {
   id?: string
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedByA?: boolean
+  deletedByB?: boolean
   providerB: Prisma.UserCreateNestedOneWithoutChatChannelsBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutChatChannelInput
 }
@@ -494,10 +494,10 @@ export type ChatChannelCreateWithoutProviderAInput = {
 export type ChatChannelUncheckedCreateWithoutProviderAInput = {
   id?: string
   providerBId: string
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedByA?: boolean
+  deletedByB?: boolean
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutChatChannelInput
 }
 
@@ -513,10 +513,10 @@ export type ChatChannelCreateManyProviderAInputEnvelope = {
 
 export type ChatChannelCreateWithoutProviderBInput = {
   id?: string
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedByA?: boolean
+  deletedByB?: boolean
   providerA: Prisma.UserCreateNestedOneWithoutChatChannelsAInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutChatChannelInput
 }
@@ -524,10 +524,10 @@ export type ChatChannelCreateWithoutProviderBInput = {
 export type ChatChannelUncheckedCreateWithoutProviderBInput = {
   id?: string
   providerAId: string
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedByA?: boolean
+  deletedByB?: boolean
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutChatChannelInput
 }
 
@@ -564,10 +564,10 @@ export type ChatChannelScalarWhereInput = {
   id?: Prisma.StringFilter<"ChatChannel"> | string
   providerAId?: Prisma.StringFilter<"ChatChannel"> | string
   providerBId?: Prisma.StringFilter<"ChatChannel"> | string
-  deletedByA?: Prisma.BoolFilter<"ChatChannel"> | boolean
-  deletedByB?: Prisma.BoolFilter<"ChatChannel"> | boolean
   createdAt?: Prisma.DateTimeFilter<"ChatChannel"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ChatChannel"> | Date | string
+  deletedByA?: Prisma.BoolFilter<"ChatChannel"> | boolean
+  deletedByB?: Prisma.BoolFilter<"ChatChannel"> | boolean
 }
 
 export type ChatChannelUpsertWithWhereUniqueWithoutProviderBInput = {
@@ -588,10 +588,10 @@ export type ChatChannelUpdateManyWithWhereWithoutProviderBInput = {
 
 export type ChatChannelCreateWithoutMessagesInput = {
   id?: string
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedByA?: boolean
+  deletedByB?: boolean
   providerA: Prisma.UserCreateNestedOneWithoutChatChannelsAInput
   providerB: Prisma.UserCreateNestedOneWithoutChatChannelsBInput
 }
@@ -600,10 +600,10 @@ export type ChatChannelUncheckedCreateWithoutMessagesInput = {
   id?: string
   providerAId: string
   providerBId: string
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedByA?: boolean
+  deletedByB?: boolean
 }
 
 export type ChatChannelCreateOrConnectWithoutMessagesInput = {
@@ -624,10 +624,10 @@ export type ChatChannelUpdateToOneWithWhereWithoutMessagesInput = {
 
 export type ChatChannelUpdateWithoutMessagesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   providerA?: Prisma.UserUpdateOneRequiredWithoutChatChannelsANestedInput
   providerB?: Prisma.UserUpdateOneRequiredWithoutChatChannelsBNestedInput
 }
@@ -636,36 +636,36 @@ export type ChatChannelUncheckedUpdateWithoutMessagesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   providerAId?: Prisma.StringFieldUpdateOperationsInput | string
   providerBId?: Prisma.StringFieldUpdateOperationsInput | string
-  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type ChatChannelCreateManyProviderAInput = {
   id?: string
   providerBId: string
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedByA?: boolean
+  deletedByB?: boolean
 }
 
 export type ChatChannelCreateManyProviderBInput = {
   id?: string
   providerAId: string
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
+  deletedByA?: boolean
+  deletedByB?: boolean
 }
 
 export type ChatChannelUpdateWithoutProviderAInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   providerB?: Prisma.UserUpdateOneRequiredWithoutChatChannelsBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutChatChannelNestedInput
 }
@@ -673,28 +673,28 @@ export type ChatChannelUpdateWithoutProviderAInput = {
 export type ChatChannelUncheckedUpdateWithoutProviderAInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   providerBId?: Prisma.StringFieldUpdateOperationsInput | string
-  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutChatChannelNestedInput
 }
 
 export type ChatChannelUncheckedUpdateManyWithoutProviderAInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   providerBId?: Prisma.StringFieldUpdateOperationsInput | string
-  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type ChatChannelUpdateWithoutProviderBInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   providerA?: Prisma.UserUpdateOneRequiredWithoutChatChannelsANestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutChatChannelNestedInput
 }
@@ -702,20 +702,20 @@ export type ChatChannelUpdateWithoutProviderBInput = {
 export type ChatChannelUncheckedUpdateWithoutProviderBInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   providerAId?: Prisma.StringFieldUpdateOperationsInput | string
-  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutChatChannelNestedInput
 }
 
 export type ChatChannelUncheckedUpdateManyWithoutProviderBInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   providerAId?: Prisma.StringFieldUpdateOperationsInput | string
-  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deletedByA?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  deletedByB?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 
@@ -753,10 +753,10 @@ export type ChatChannelSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   id?: boolean
   providerAId?: boolean
   providerBId?: boolean
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedByA?: boolean
+  deletedByB?: boolean
   providerA?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   providerB?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   messages?: boolean | Prisma.ChatChannel$messagesArgs<ExtArgs>
@@ -767,10 +767,10 @@ export type ChatChannelSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   id?: boolean
   providerAId?: boolean
   providerBId?: boolean
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedByA?: boolean
+  deletedByB?: boolean
   providerA?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   providerB?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["chatChannel"]>
@@ -779,10 +779,10 @@ export type ChatChannelSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   id?: boolean
   providerAId?: boolean
   providerBId?: boolean
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedByA?: boolean
+  deletedByB?: boolean
   providerA?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   providerB?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["chatChannel"]>
@@ -791,13 +791,13 @@ export type ChatChannelSelectScalar = {
   id?: boolean
   providerAId?: boolean
   providerBId?: boolean
-  deletedByA?: boolean
-  deletedByB?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  deletedByA?: boolean
+  deletedByB?: boolean
 }
 
-export type ChatChannelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "providerAId" | "providerBId" | "deletedByA" | "deletedByB" | "createdAt" | "updatedAt", ExtArgs["result"]["chatChannel"]>
+export type ChatChannelOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "providerAId" | "providerBId" | "createdAt" | "updatedAt" | "deletedByA" | "deletedByB", ExtArgs["result"]["chatChannel"]>
 export type ChatChannelInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   providerA?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   providerB?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -824,10 +824,10 @@ export type $ChatChannelPayload<ExtArgs extends runtime.Types.Extensions.Interna
     id: string
     providerAId: string
     providerBId: string
-    deletedByA: boolean
-    deletedByB: boolean
     createdAt: Date
     updatedAt: Date
+    deletedByA: boolean
+    deletedByB: boolean
   }, ExtArgs["result"]["chatChannel"]>
   composites: {}
 }
@@ -1257,10 +1257,10 @@ export interface ChatChannelFieldRefs {
   readonly id: Prisma.FieldRef<"ChatChannel", 'String'>
   readonly providerAId: Prisma.FieldRef<"ChatChannel", 'String'>
   readonly providerBId: Prisma.FieldRef<"ChatChannel", 'String'>
-  readonly deletedByA: Prisma.FieldRef<"ChatChannel", 'Boolean'>
-  readonly deletedByB: Prisma.FieldRef<"ChatChannel", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"ChatChannel", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ChatChannel", 'DateTime'>
+  readonly deletedByA: Prisma.FieldRef<"ChatChannel", 'Boolean'>
+  readonly deletedByB: Prisma.FieldRef<"ChatChannel", 'Boolean'>
 }
     
 

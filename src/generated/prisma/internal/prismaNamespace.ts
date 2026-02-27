@@ -1729,7 +1729,6 @@ export const UserScalarFieldEnum = {
   address: 'address',
   status: 'status',
   role: 'role',
-  stripeCustomerId: 'stripeCustomerId',
   isApprove: 'isApprove',
   licenseNo: 'licenseNo',
   isLicenseValid: 'isLicenseValid',
@@ -1738,11 +1737,12 @@ export const UserScalarFieldEnum = {
   blockedMembers: 'blockedMembers',
   privateKey: 'privateKey',
   publicKey: 'publicKey',
-  hasUsedFreeTrial: 'hasUsedFreeTrial',
-  resetPasswordToken: 'resetPasswordToken',
-  resetPasswordExpires: 'resetPasswordExpires',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  hasUsedFreeTrial: 'hasUsedFreeTrial',
+  stripeCustomerId: 'stripeCustomerId',
+  resetPasswordExpires: 'resetPasswordExpires',
+  resetPasswordToken: 'resetPasswordToken'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -1751,13 +1751,13 @@ export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof User
 export const ClientScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  clientId: 'clientId',
   eSignature: 'eSignature',
   isAccountCreatedByOwnClient: 'isAccountCreatedByOwnClient',
   clientShowToOthers: 'clientShowToOthers',
   createdByProviderId: 'createdByProviderId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  clientId: 'clientId'
 } as const
 
 export type ClientScalarFieldEnum = (typeof ClientScalarFieldEnum)[keyof typeof ClientScalarFieldEnum]
@@ -1788,10 +1788,10 @@ export const ChatChannelScalarFieldEnum = {
   id: 'id',
   providerAId: 'providerAId',
   providerBId: 'providerBId',
-  deletedByA: 'deletedByA',
-  deletedByB: 'deletedByB',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  deletedByA: 'deletedByA',
+  deletedByB: 'deletedByB'
 } as const
 
 export type ChatChannelScalarFieldEnum = (typeof ChatChannelScalarFieldEnum)[keyof typeof ChatChannelScalarFieldEnum]
@@ -1925,14 +1925,14 @@ export const SubscriptionScalarFieldEnum = {
   stripePriceId: 'stripePriceId',
   plan: 'plan',
   status: 'status',
-  trialStart: 'trialStart',
-  trialEnd: 'trialEnd',
   currentPeriodEnd: 'currentPeriodEnd',
-  billingCycle: 'billingCycle',
   cancelAtPeriodEnd: 'cancelAtPeriodEnd',
-  cancelReason: 'cancelReason',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  billingCycle: 'billingCycle',
+  cancelReason: 'cancelReason',
+  trialEnd: 'trialEnd',
+  trialStart: 'trialStart'
 } as const
 
 export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
@@ -1947,12 +1947,12 @@ export const PaymentScalarFieldEnum = {
   currency: 'currency',
   status: 'status',
   invoiceUrl: 'invoiceUrl',
-  periodStart: 'periodStart',
-  periodEnd: 'periodEnd',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   plan: 'plan',
-  paymentMethodLast4: 'paymentMethodLast4'
+  paymentMethodLast4: 'paymentMethodLast4',
+  periodEnd: 'periodEnd',
+  periodStart: 'periodStart'
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]

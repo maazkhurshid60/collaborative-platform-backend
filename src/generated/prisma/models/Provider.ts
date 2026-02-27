@@ -182,12 +182,12 @@ export type ProviderWhereInput = {
   department?: Prisma.StringFilter<"Provider"> | string
   createdAt?: Prisma.DateTimeFilter<"Provider"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Provider"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-  sharedDocument?: Prisma.DocumentShareWithListRelationFilter
-  clientList?: Prisma.ProviderOnClientListRelationFilter
-  invitations?: Prisma.InvitationListRelationFilter
-  groupChats?: Prisma.GroupChatListRelationFilter
   createdClients?: Prisma.ClientListRelationFilter
+  sharedDocument?: Prisma.DocumentShareWithListRelationFilter
+  groupChats?: Prisma.GroupChatListRelationFilter
+  invitations?: Prisma.InvitationListRelationFilter
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  clientList?: Prisma.ProviderOnClientListRelationFilter
 }
 
 export type ProviderOrderByWithRelationInput = {
@@ -196,12 +196,12 @@ export type ProviderOrderByWithRelationInput = {
   department?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  user?: Prisma.UserOrderByWithRelationInput
-  sharedDocument?: Prisma.DocumentShareWithOrderByRelationAggregateInput
-  clientList?: Prisma.ProviderOnClientOrderByRelationAggregateInput
-  invitations?: Prisma.InvitationOrderByRelationAggregateInput
-  groupChats?: Prisma.GroupChatOrderByRelationAggregateInput
   createdClients?: Prisma.ClientOrderByRelationAggregateInput
+  sharedDocument?: Prisma.DocumentShareWithOrderByRelationAggregateInput
+  groupChats?: Prisma.GroupChatOrderByRelationAggregateInput
+  invitations?: Prisma.InvitationOrderByRelationAggregateInput
+  user?: Prisma.UserOrderByWithRelationInput
+  clientList?: Prisma.ProviderOnClientOrderByRelationAggregateInput
 }
 
 export type ProviderWhereUniqueInput = Prisma.AtLeast<{
@@ -213,12 +213,12 @@ export type ProviderWhereUniqueInput = Prisma.AtLeast<{
   department?: Prisma.StringFilter<"Provider"> | string
   createdAt?: Prisma.DateTimeFilter<"Provider"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Provider"> | Date | string
-  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-  sharedDocument?: Prisma.DocumentShareWithListRelationFilter
-  clientList?: Prisma.ProviderOnClientListRelationFilter
-  invitations?: Prisma.InvitationListRelationFilter
-  groupChats?: Prisma.GroupChatListRelationFilter
   createdClients?: Prisma.ClientListRelationFilter
+  sharedDocument?: Prisma.DocumentShareWithListRelationFilter
+  groupChats?: Prisma.GroupChatListRelationFilter
+  invitations?: Prisma.InvitationListRelationFilter
+  user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  clientList?: Prisma.ProviderOnClientListRelationFilter
 }, "id" | "userId">
 
 export type ProviderOrderByWithAggregationInput = {
@@ -248,12 +248,12 @@ export type ProviderCreateInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutProviderInput
-  sharedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutProviderInput
-  clientList?: Prisma.ProviderOnClientCreateNestedManyWithoutProviderInput
-  invitations?: Prisma.InvitationCreateNestedManyWithoutInvitedByInput
-  groupChats?: Prisma.GroupChatCreateNestedManyWithoutProviderInput
   createdClients?: Prisma.ClientCreateNestedManyWithoutCreatedByInput
+  sharedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutProviderInput
+  groupChats?: Prisma.GroupChatCreateNestedManyWithoutProviderInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutInvitedByInput
+  user: Prisma.UserCreateNestedOneWithoutProviderInput
+  clientList?: Prisma.ProviderOnClientCreateNestedManyWithoutProviderInput
 }
 
 export type ProviderUncheckedCreateInput = {
@@ -262,11 +262,11 @@ export type ProviderUncheckedCreateInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  sharedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutProviderInput
-  clientList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutProviderInput
-  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInvitedByInput
-  groupChats?: Prisma.GroupChatUncheckedCreateNestedManyWithoutProviderInput
   createdClients?: Prisma.ClientUncheckedCreateNestedManyWithoutCreatedByInput
+  sharedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutProviderInput
+  groupChats?: Prisma.GroupChatUncheckedCreateNestedManyWithoutProviderInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInvitedByInput
+  clientList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutProviderInput
 }
 
 export type ProviderUpdateInput = {
@@ -274,12 +274,12 @@ export type ProviderUpdateInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutProviderNestedInput
-  sharedDocument?: Prisma.DocumentShareWithUpdateManyWithoutProviderNestedInput
-  clientList?: Prisma.ProviderOnClientUpdateManyWithoutProviderNestedInput
-  invitations?: Prisma.InvitationUpdateManyWithoutInvitedByNestedInput
-  groupChats?: Prisma.GroupChatUpdateManyWithoutProviderNestedInput
   createdClients?: Prisma.ClientUpdateManyWithoutCreatedByNestedInput
+  sharedDocument?: Prisma.DocumentShareWithUpdateManyWithoutProviderNestedInput
+  groupChats?: Prisma.GroupChatUpdateManyWithoutProviderNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutInvitedByNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutProviderNestedInput
+  clientList?: Prisma.ProviderOnClientUpdateManyWithoutProviderNestedInput
 }
 
 export type ProviderUncheckedUpdateInput = {
@@ -288,11 +288,11 @@ export type ProviderUncheckedUpdateInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  sharedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutProviderNestedInput
-  clientList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutProviderNestedInput
-  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInvitedByNestedInput
-  groupChats?: Prisma.GroupChatUncheckedUpdateManyWithoutProviderNestedInput
   createdClients?: Prisma.ClientUncheckedUpdateManyWithoutCreatedByNestedInput
+  sharedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutProviderNestedInput
+  groupChats?: Prisma.GroupChatUncheckedUpdateManyWithoutProviderNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInvitedByNestedInput
+  clientList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutProviderNestedInput
 }
 
 export type ProviderCreateManyInput = {
@@ -463,11 +463,11 @@ export type ProviderCreateWithoutUserInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  sharedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutProviderInput
-  clientList?: Prisma.ProviderOnClientCreateNestedManyWithoutProviderInput
-  invitations?: Prisma.InvitationCreateNestedManyWithoutInvitedByInput
-  groupChats?: Prisma.GroupChatCreateNestedManyWithoutProviderInput
   createdClients?: Prisma.ClientCreateNestedManyWithoutCreatedByInput
+  sharedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutProviderInput
+  groupChats?: Prisma.GroupChatCreateNestedManyWithoutProviderInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutInvitedByInput
+  clientList?: Prisma.ProviderOnClientCreateNestedManyWithoutProviderInput
 }
 
 export type ProviderUncheckedCreateWithoutUserInput = {
@@ -475,11 +475,11 @@ export type ProviderUncheckedCreateWithoutUserInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  sharedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutProviderInput
-  clientList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutProviderInput
-  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInvitedByInput
-  groupChats?: Prisma.GroupChatUncheckedCreateNestedManyWithoutProviderInput
   createdClients?: Prisma.ClientUncheckedCreateNestedManyWithoutCreatedByInput
+  sharedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutProviderInput
+  groupChats?: Prisma.GroupChatUncheckedCreateNestedManyWithoutProviderInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInvitedByInput
+  clientList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutProviderInput
 }
 
 export type ProviderCreateOrConnectWithoutUserInput = {
@@ -503,11 +503,11 @@ export type ProviderUpdateWithoutUserInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  sharedDocument?: Prisma.DocumentShareWithUpdateManyWithoutProviderNestedInput
-  clientList?: Prisma.ProviderOnClientUpdateManyWithoutProviderNestedInput
-  invitations?: Prisma.InvitationUpdateManyWithoutInvitedByNestedInput
-  groupChats?: Prisma.GroupChatUpdateManyWithoutProviderNestedInput
   createdClients?: Prisma.ClientUpdateManyWithoutCreatedByNestedInput
+  sharedDocument?: Prisma.DocumentShareWithUpdateManyWithoutProviderNestedInput
+  groupChats?: Prisma.GroupChatUpdateManyWithoutProviderNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutInvitedByNestedInput
+  clientList?: Prisma.ProviderOnClientUpdateManyWithoutProviderNestedInput
 }
 
 export type ProviderUncheckedUpdateWithoutUserInput = {
@@ -515,11 +515,11 @@ export type ProviderUncheckedUpdateWithoutUserInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  sharedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutProviderNestedInput
-  clientList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutProviderNestedInput
-  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInvitedByNestedInput
-  groupChats?: Prisma.GroupChatUncheckedUpdateManyWithoutProviderNestedInput
   createdClients?: Prisma.ClientUncheckedUpdateManyWithoutCreatedByNestedInput
+  sharedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutProviderNestedInput
+  groupChats?: Prisma.GroupChatUncheckedUpdateManyWithoutProviderNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInvitedByNestedInput
+  clientList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutProviderNestedInput
 }
 
 export type ProviderCreateWithoutCreatedClientsInput = {
@@ -527,11 +527,11 @@ export type ProviderCreateWithoutCreatedClientsInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutProviderInput
   sharedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutProviderInput
-  clientList?: Prisma.ProviderOnClientCreateNestedManyWithoutProviderInput
-  invitations?: Prisma.InvitationCreateNestedManyWithoutInvitedByInput
   groupChats?: Prisma.GroupChatCreateNestedManyWithoutProviderInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutInvitedByInput
+  user: Prisma.UserCreateNestedOneWithoutProviderInput
+  clientList?: Prisma.ProviderOnClientCreateNestedManyWithoutProviderInput
 }
 
 export type ProviderUncheckedCreateWithoutCreatedClientsInput = {
@@ -541,9 +541,9 @@ export type ProviderUncheckedCreateWithoutCreatedClientsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutProviderInput
-  clientList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutProviderInput
-  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInvitedByInput
   groupChats?: Prisma.GroupChatUncheckedCreateNestedManyWithoutProviderInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInvitedByInput
+  clientList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutProviderInput
 }
 
 export type ProviderCreateOrConnectWithoutCreatedClientsInput = {
@@ -567,11 +567,11 @@ export type ProviderUpdateWithoutCreatedClientsInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutProviderNestedInput
   sharedDocument?: Prisma.DocumentShareWithUpdateManyWithoutProviderNestedInput
-  clientList?: Prisma.ProviderOnClientUpdateManyWithoutProviderNestedInput
-  invitations?: Prisma.InvitationUpdateManyWithoutInvitedByNestedInput
   groupChats?: Prisma.GroupChatUpdateManyWithoutProviderNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutInvitedByNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutProviderNestedInput
+  clientList?: Prisma.ProviderOnClientUpdateManyWithoutProviderNestedInput
 }
 
 export type ProviderUncheckedUpdateWithoutCreatedClientsInput = {
@@ -581,9 +581,9 @@ export type ProviderUncheckedUpdateWithoutCreatedClientsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutProviderNestedInput
-  clientList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutProviderNestedInput
-  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInvitedByNestedInput
   groupChats?: Prisma.GroupChatUncheckedUpdateManyWithoutProviderNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInvitedByNestedInput
+  clientList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutProviderNestedInput
 }
 
 export type ProviderCreateWithoutSharedDocumentInput = {
@@ -591,11 +591,11 @@ export type ProviderCreateWithoutSharedDocumentInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  createdClients?: Prisma.ClientCreateNestedManyWithoutCreatedByInput
+  groupChats?: Prisma.GroupChatCreateNestedManyWithoutProviderInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutInvitedByInput
   user: Prisma.UserCreateNestedOneWithoutProviderInput
   clientList?: Prisma.ProviderOnClientCreateNestedManyWithoutProviderInput
-  invitations?: Prisma.InvitationCreateNestedManyWithoutInvitedByInput
-  groupChats?: Prisma.GroupChatCreateNestedManyWithoutProviderInput
-  createdClients?: Prisma.ClientCreateNestedManyWithoutCreatedByInput
 }
 
 export type ProviderUncheckedCreateWithoutSharedDocumentInput = {
@@ -604,10 +604,10 @@ export type ProviderUncheckedCreateWithoutSharedDocumentInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  clientList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutProviderInput
-  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInvitedByInput
-  groupChats?: Prisma.GroupChatUncheckedCreateNestedManyWithoutProviderInput
   createdClients?: Prisma.ClientUncheckedCreateNestedManyWithoutCreatedByInput
+  groupChats?: Prisma.GroupChatUncheckedCreateNestedManyWithoutProviderInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInvitedByInput
+  clientList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutProviderInput
 }
 
 export type ProviderCreateOrConnectWithoutSharedDocumentInput = {
@@ -631,11 +631,11 @@ export type ProviderUpdateWithoutSharedDocumentInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  createdClients?: Prisma.ClientUpdateManyWithoutCreatedByNestedInput
+  groupChats?: Prisma.GroupChatUpdateManyWithoutProviderNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutInvitedByNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutProviderNestedInput
   clientList?: Prisma.ProviderOnClientUpdateManyWithoutProviderNestedInput
-  invitations?: Prisma.InvitationUpdateManyWithoutInvitedByNestedInput
-  groupChats?: Prisma.GroupChatUpdateManyWithoutProviderNestedInput
-  createdClients?: Prisma.ClientUpdateManyWithoutCreatedByNestedInput
 }
 
 export type ProviderUncheckedUpdateWithoutSharedDocumentInput = {
@@ -644,10 +644,10 @@ export type ProviderUncheckedUpdateWithoutSharedDocumentInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  clientList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutProviderNestedInput
-  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInvitedByNestedInput
-  groupChats?: Prisma.GroupChatUncheckedUpdateManyWithoutProviderNestedInput
   createdClients?: Prisma.ClientUncheckedUpdateManyWithoutCreatedByNestedInput
+  groupChats?: Prisma.GroupChatUncheckedUpdateManyWithoutProviderNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInvitedByNestedInput
+  clientList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutProviderNestedInput
 }
 
 export type ProviderCreateWithoutGroupChatsInput = {
@@ -655,11 +655,11 @@ export type ProviderCreateWithoutGroupChatsInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutProviderInput
-  sharedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutProviderInput
-  clientList?: Prisma.ProviderOnClientCreateNestedManyWithoutProviderInput
-  invitations?: Prisma.InvitationCreateNestedManyWithoutInvitedByInput
   createdClients?: Prisma.ClientCreateNestedManyWithoutCreatedByInput
+  sharedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutProviderInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutInvitedByInput
+  user: Prisma.UserCreateNestedOneWithoutProviderInput
+  clientList?: Prisma.ProviderOnClientCreateNestedManyWithoutProviderInput
 }
 
 export type ProviderUncheckedCreateWithoutGroupChatsInput = {
@@ -668,10 +668,10 @@ export type ProviderUncheckedCreateWithoutGroupChatsInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  sharedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutProviderInput
-  clientList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutProviderInput
-  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInvitedByInput
   createdClients?: Prisma.ClientUncheckedCreateNestedManyWithoutCreatedByInput
+  sharedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutProviderInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInvitedByInput
+  clientList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutProviderInput
 }
 
 export type ProviderCreateOrConnectWithoutGroupChatsInput = {
@@ -695,11 +695,11 @@ export type ProviderUpdateWithoutGroupChatsInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutProviderNestedInput
-  sharedDocument?: Prisma.DocumentShareWithUpdateManyWithoutProviderNestedInput
-  clientList?: Prisma.ProviderOnClientUpdateManyWithoutProviderNestedInput
-  invitations?: Prisma.InvitationUpdateManyWithoutInvitedByNestedInput
   createdClients?: Prisma.ClientUpdateManyWithoutCreatedByNestedInput
+  sharedDocument?: Prisma.DocumentShareWithUpdateManyWithoutProviderNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutInvitedByNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutProviderNestedInput
+  clientList?: Prisma.ProviderOnClientUpdateManyWithoutProviderNestedInput
 }
 
 export type ProviderUncheckedUpdateWithoutGroupChatsInput = {
@@ -708,10 +708,10 @@ export type ProviderUncheckedUpdateWithoutGroupChatsInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  sharedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutProviderNestedInput
-  clientList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutProviderNestedInput
-  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInvitedByNestedInput
   createdClients?: Prisma.ClientUncheckedUpdateManyWithoutCreatedByNestedInput
+  sharedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutProviderNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInvitedByNestedInput
+  clientList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutProviderNestedInput
 }
 
 export type ProviderCreateWithoutInvitationsInput = {
@@ -719,11 +719,11 @@ export type ProviderCreateWithoutInvitationsInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutProviderInput
-  sharedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutProviderInput
-  clientList?: Prisma.ProviderOnClientCreateNestedManyWithoutProviderInput
-  groupChats?: Prisma.GroupChatCreateNestedManyWithoutProviderInput
   createdClients?: Prisma.ClientCreateNestedManyWithoutCreatedByInput
+  sharedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutProviderInput
+  groupChats?: Prisma.GroupChatCreateNestedManyWithoutProviderInput
+  user: Prisma.UserCreateNestedOneWithoutProviderInput
+  clientList?: Prisma.ProviderOnClientCreateNestedManyWithoutProviderInput
 }
 
 export type ProviderUncheckedCreateWithoutInvitationsInput = {
@@ -732,10 +732,10 @@ export type ProviderUncheckedCreateWithoutInvitationsInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  sharedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutProviderInput
-  clientList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutProviderInput
-  groupChats?: Prisma.GroupChatUncheckedCreateNestedManyWithoutProviderInput
   createdClients?: Prisma.ClientUncheckedCreateNestedManyWithoutCreatedByInput
+  sharedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutProviderInput
+  groupChats?: Prisma.GroupChatUncheckedCreateNestedManyWithoutProviderInput
+  clientList?: Prisma.ProviderOnClientUncheckedCreateNestedManyWithoutProviderInput
 }
 
 export type ProviderCreateOrConnectWithoutInvitationsInput = {
@@ -759,11 +759,11 @@ export type ProviderUpdateWithoutInvitationsInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutProviderNestedInput
-  sharedDocument?: Prisma.DocumentShareWithUpdateManyWithoutProviderNestedInput
-  clientList?: Prisma.ProviderOnClientUpdateManyWithoutProviderNestedInput
-  groupChats?: Prisma.GroupChatUpdateManyWithoutProviderNestedInput
   createdClients?: Prisma.ClientUpdateManyWithoutCreatedByNestedInput
+  sharedDocument?: Prisma.DocumentShareWithUpdateManyWithoutProviderNestedInput
+  groupChats?: Prisma.GroupChatUpdateManyWithoutProviderNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutProviderNestedInput
+  clientList?: Prisma.ProviderOnClientUpdateManyWithoutProviderNestedInput
 }
 
 export type ProviderUncheckedUpdateWithoutInvitationsInput = {
@@ -772,10 +772,10 @@ export type ProviderUncheckedUpdateWithoutInvitationsInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  sharedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutProviderNestedInput
-  clientList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutProviderNestedInput
-  groupChats?: Prisma.GroupChatUncheckedUpdateManyWithoutProviderNestedInput
   createdClients?: Prisma.ClientUncheckedUpdateManyWithoutCreatedByNestedInput
+  sharedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutProviderNestedInput
+  groupChats?: Prisma.GroupChatUncheckedUpdateManyWithoutProviderNestedInput
+  clientList?: Prisma.ProviderOnClientUncheckedUpdateManyWithoutProviderNestedInput
 }
 
 export type ProviderCreateWithoutClientListInput = {
@@ -783,11 +783,11 @@ export type ProviderCreateWithoutClientListInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutProviderInput
-  sharedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutProviderInput
-  invitations?: Prisma.InvitationCreateNestedManyWithoutInvitedByInput
-  groupChats?: Prisma.GroupChatCreateNestedManyWithoutProviderInput
   createdClients?: Prisma.ClientCreateNestedManyWithoutCreatedByInput
+  sharedDocument?: Prisma.DocumentShareWithCreateNestedManyWithoutProviderInput
+  groupChats?: Prisma.GroupChatCreateNestedManyWithoutProviderInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutInvitedByInput
+  user: Prisma.UserCreateNestedOneWithoutProviderInput
 }
 
 export type ProviderUncheckedCreateWithoutClientListInput = {
@@ -796,10 +796,10 @@ export type ProviderUncheckedCreateWithoutClientListInput = {
   department: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  sharedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutProviderInput
-  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInvitedByInput
-  groupChats?: Prisma.GroupChatUncheckedCreateNestedManyWithoutProviderInput
   createdClients?: Prisma.ClientUncheckedCreateNestedManyWithoutCreatedByInput
+  sharedDocument?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutProviderInput
+  groupChats?: Prisma.GroupChatUncheckedCreateNestedManyWithoutProviderInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutInvitedByInput
 }
 
 export type ProviderCreateOrConnectWithoutClientListInput = {
@@ -823,11 +823,11 @@ export type ProviderUpdateWithoutClientListInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutProviderNestedInput
-  sharedDocument?: Prisma.DocumentShareWithUpdateManyWithoutProviderNestedInput
-  invitations?: Prisma.InvitationUpdateManyWithoutInvitedByNestedInput
-  groupChats?: Prisma.GroupChatUpdateManyWithoutProviderNestedInput
   createdClients?: Prisma.ClientUpdateManyWithoutCreatedByNestedInput
+  sharedDocument?: Prisma.DocumentShareWithUpdateManyWithoutProviderNestedInput
+  groupChats?: Prisma.GroupChatUpdateManyWithoutProviderNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutInvitedByNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutProviderNestedInput
 }
 
 export type ProviderUncheckedUpdateWithoutClientListInput = {
@@ -836,10 +836,10 @@ export type ProviderUncheckedUpdateWithoutClientListInput = {
   department?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  sharedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutProviderNestedInput
-  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInvitedByNestedInput
-  groupChats?: Prisma.GroupChatUncheckedUpdateManyWithoutProviderNestedInput
   createdClients?: Prisma.ClientUncheckedUpdateManyWithoutCreatedByNestedInput
+  sharedDocument?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutProviderNestedInput
+  groupChats?: Prisma.GroupChatUncheckedUpdateManyWithoutProviderNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutInvitedByNestedInput
 }
 
 
@@ -848,19 +848,19 @@ export type ProviderUncheckedUpdateWithoutClientListInput = {
  */
 
 export type ProviderCountOutputType = {
-  sharedDocument: number
-  clientList: number
-  invitations: number
-  groupChats: number
   createdClients: number
+  sharedDocument: number
+  groupChats: number
+  invitations: number
+  clientList: number
 }
 
 export type ProviderCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  sharedDocument?: boolean | ProviderCountOutputTypeCountSharedDocumentArgs
-  clientList?: boolean | ProviderCountOutputTypeCountClientListArgs
-  invitations?: boolean | ProviderCountOutputTypeCountInvitationsArgs
-  groupChats?: boolean | ProviderCountOutputTypeCountGroupChatsArgs
   createdClients?: boolean | ProviderCountOutputTypeCountCreatedClientsArgs
+  sharedDocument?: boolean | ProviderCountOutputTypeCountSharedDocumentArgs
+  groupChats?: boolean | ProviderCountOutputTypeCountGroupChatsArgs
+  invitations?: boolean | ProviderCountOutputTypeCountInvitationsArgs
+  clientList?: boolean | ProviderCountOutputTypeCountClientListArgs
 }
 
 /**
@@ -876,22 +876,15 @@ export type ProviderCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Ext
 /**
  * ProviderCountOutputType without action
  */
+export type ProviderCountOutputTypeCountCreatedClientsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ClientWhereInput
+}
+
+/**
+ * ProviderCountOutputType without action
+ */
 export type ProviderCountOutputTypeCountSharedDocumentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.DocumentShareWithWhereInput
-}
-
-/**
- * ProviderCountOutputType without action
- */
-export type ProviderCountOutputTypeCountClientListArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ProviderOnClientWhereInput
-}
-
-/**
- * ProviderCountOutputType without action
- */
-export type ProviderCountOutputTypeCountInvitationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.InvitationWhereInput
 }
 
 /**
@@ -904,8 +897,15 @@ export type ProviderCountOutputTypeCountGroupChatsArgs<ExtArgs extends runtime.T
 /**
  * ProviderCountOutputType without action
  */
-export type ProviderCountOutputTypeCountCreatedClientsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ClientWhereInput
+export type ProviderCountOutputTypeCountInvitationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.InvitationWhereInput
+}
+
+/**
+ * ProviderCountOutputType without action
+ */
+export type ProviderCountOutputTypeCountClientListArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProviderOnClientWhereInput
 }
 
 
@@ -915,12 +915,12 @@ export type ProviderSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   department?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  sharedDocument?: boolean | Prisma.Provider$sharedDocumentArgs<ExtArgs>
-  clientList?: boolean | Prisma.Provider$clientListArgs<ExtArgs>
-  invitations?: boolean | Prisma.Provider$invitationsArgs<ExtArgs>
-  groupChats?: boolean | Prisma.Provider$groupChatsArgs<ExtArgs>
   createdClients?: boolean | Prisma.Provider$createdClientsArgs<ExtArgs>
+  sharedDocument?: boolean | Prisma.Provider$sharedDocumentArgs<ExtArgs>
+  groupChats?: boolean | Prisma.Provider$groupChatsArgs<ExtArgs>
+  invitations?: boolean | Prisma.Provider$invitationsArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  clientList?: boolean | Prisma.Provider$clientListArgs<ExtArgs>
   _count?: boolean | Prisma.ProviderCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["provider"]>
 
@@ -952,12 +952,12 @@ export type ProviderSelectScalar = {
 
 export type ProviderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "department" | "createdAt" | "updatedAt", ExtArgs["result"]["provider"]>
 export type ProviderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  sharedDocument?: boolean | Prisma.Provider$sharedDocumentArgs<ExtArgs>
-  clientList?: boolean | Prisma.Provider$clientListArgs<ExtArgs>
-  invitations?: boolean | Prisma.Provider$invitationsArgs<ExtArgs>
-  groupChats?: boolean | Prisma.Provider$groupChatsArgs<ExtArgs>
   createdClients?: boolean | Prisma.Provider$createdClientsArgs<ExtArgs>
+  sharedDocument?: boolean | Prisma.Provider$sharedDocumentArgs<ExtArgs>
+  groupChats?: boolean | Prisma.Provider$groupChatsArgs<ExtArgs>
+  invitations?: boolean | Prisma.Provider$invitationsArgs<ExtArgs>
+  user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  clientList?: boolean | Prisma.Provider$clientListArgs<ExtArgs>
   _count?: boolean | Prisma.ProviderCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ProviderIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -970,12 +970,12 @@ export type ProviderIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
 export type $ProviderPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Provider"
   objects: {
-    user: Prisma.$UserPayload<ExtArgs>
-    sharedDocument: Prisma.$DocumentShareWithPayload<ExtArgs>[]
-    clientList: Prisma.$ProviderOnClientPayload<ExtArgs>[]
-    invitations: Prisma.$InvitationPayload<ExtArgs>[]
-    groupChats: Prisma.$GroupChatPayload<ExtArgs>[]
     createdClients: Prisma.$ClientPayload<ExtArgs>[]
+    sharedDocument: Prisma.$DocumentShareWithPayload<ExtArgs>[]
+    groupChats: Prisma.$GroupChatPayload<ExtArgs>[]
+    invitations: Prisma.$InvitationPayload<ExtArgs>[]
+    user: Prisma.$UserPayload<ExtArgs>
+    clientList: Prisma.$ProviderOnClientPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1377,12 +1377,12 @@ readonly fields: ProviderFieldRefs;
  */
 export interface Prisma__ProviderClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  sharedDocument<T extends Prisma.Provider$sharedDocumentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Provider$sharedDocumentArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DocumentShareWithPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  clientList<T extends Prisma.Provider$clientListArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Provider$clientListArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProviderOnClientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  invitations<T extends Prisma.Provider$invitationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Provider$invitationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  groupChats<T extends Prisma.Provider$groupChatsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Provider$groupChatsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GroupChatPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   createdClients<T extends Prisma.Provider$createdClientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Provider$createdClientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ClientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sharedDocument<T extends Prisma.Provider$sharedDocumentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Provider$sharedDocumentArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DocumentShareWithPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  groupChats<T extends Prisma.Provider$groupChatsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Provider$groupChatsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GroupChatPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  invitations<T extends Prisma.Provider$invitationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Provider$invitationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  clientList<T extends Prisma.Provider$clientListArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Provider$clientListArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProviderOnClientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1813,6 +1813,30 @@ export type ProviderDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
 }
 
 /**
+ * Provider.createdClients
+ */
+export type Provider$createdClientsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Client
+   */
+  select?: Prisma.ClientSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Client
+   */
+  omit?: Prisma.ClientOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ClientInclude<ExtArgs> | null
+  where?: Prisma.ClientWhereInput
+  orderBy?: Prisma.ClientOrderByWithRelationInput | Prisma.ClientOrderByWithRelationInput[]
+  cursor?: Prisma.ClientWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ClientScalarFieldEnum | Prisma.ClientScalarFieldEnum[]
+}
+
+/**
  * Provider.sharedDocument
  */
 export type Provider$sharedDocumentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1834,54 +1858,6 @@ export type Provider$sharedDocumentArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.DocumentShareWithScalarFieldEnum | Prisma.DocumentShareWithScalarFieldEnum[]
-}
-
-/**
- * Provider.clientList
- */
-export type Provider$clientListArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ProviderOnClient
-   */
-  select?: Prisma.ProviderOnClientSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ProviderOnClient
-   */
-  omit?: Prisma.ProviderOnClientOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ProviderOnClientInclude<ExtArgs> | null
-  where?: Prisma.ProviderOnClientWhereInput
-  orderBy?: Prisma.ProviderOnClientOrderByWithRelationInput | Prisma.ProviderOnClientOrderByWithRelationInput[]
-  cursor?: Prisma.ProviderOnClientWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ProviderOnClientScalarFieldEnum | Prisma.ProviderOnClientScalarFieldEnum[]
-}
-
-/**
- * Provider.invitations
- */
-export type Provider$invitationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Invitation
-   */
-  select?: Prisma.InvitationSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Invitation
-   */
-  omit?: Prisma.InvitationOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.InvitationInclude<ExtArgs> | null
-  where?: Prisma.InvitationWhereInput
-  orderBy?: Prisma.InvitationOrderByWithRelationInput | Prisma.InvitationOrderByWithRelationInput[]
-  cursor?: Prisma.InvitationWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.InvitationScalarFieldEnum | Prisma.InvitationScalarFieldEnum[]
 }
 
 /**
@@ -1909,27 +1885,51 @@ export type Provider$groupChatsArgs<ExtArgs extends runtime.Types.Extensions.Int
 }
 
 /**
- * Provider.createdClients
+ * Provider.invitations
  */
-export type Provider$createdClientsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+export type Provider$invitationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   /**
-   * Select specific fields to fetch from the Client
+   * Select specific fields to fetch from the Invitation
    */
-  select?: Prisma.ClientSelect<ExtArgs> | null
+  select?: Prisma.InvitationSelect<ExtArgs> | null
   /**
-   * Omit specific fields from the Client
+   * Omit specific fields from the Invitation
    */
-  omit?: Prisma.ClientOmit<ExtArgs> | null
+  omit?: Prisma.InvitationOmit<ExtArgs> | null
   /**
    * Choose, which related nodes to fetch as well
    */
-  include?: Prisma.ClientInclude<ExtArgs> | null
-  where?: Prisma.ClientWhereInput
-  orderBy?: Prisma.ClientOrderByWithRelationInput | Prisma.ClientOrderByWithRelationInput[]
-  cursor?: Prisma.ClientWhereUniqueInput
+  include?: Prisma.InvitationInclude<ExtArgs> | null
+  where?: Prisma.InvitationWhereInput
+  orderBy?: Prisma.InvitationOrderByWithRelationInput | Prisma.InvitationOrderByWithRelationInput[]
+  cursor?: Prisma.InvitationWhereUniqueInput
   take?: number
   skip?: number
-  distinct?: Prisma.ClientScalarFieldEnum | Prisma.ClientScalarFieldEnum[]
+  distinct?: Prisma.InvitationScalarFieldEnum | Prisma.InvitationScalarFieldEnum[]
+}
+
+/**
+ * Provider.clientList
+ */
+export type Provider$clientListArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProviderOnClient
+   */
+  select?: Prisma.ProviderOnClientSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProviderOnClient
+   */
+  omit?: Prisma.ProviderOnClientOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProviderOnClientInclude<ExtArgs> | null
+  where?: Prisma.ProviderOnClientWhereInput
+  orderBy?: Prisma.ProviderOnClientOrderByWithRelationInput | Prisma.ProviderOnClientOrderByWithRelationInput[]
+  cursor?: Prisma.ProviderOnClientWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProviderOnClientScalarFieldEnum | Prisma.ProviderOnClientScalarFieldEnum[]
 }
 
 /**

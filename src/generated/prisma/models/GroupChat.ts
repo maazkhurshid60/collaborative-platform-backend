@@ -182,8 +182,8 @@ export type GroupChatWhereInput = {
   providerId?: Prisma.StringFilter<"GroupChat"> | string
   createdAt?: Prisma.DateTimeFilter<"GroupChat"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GroupChat"> | Date | string
-  provider?: Prisma.XOR<Prisma.ProviderScalarRelationFilter, Prisma.ProviderWhereInput>
   messages?: Prisma.ChatMessageListRelationFilter
+  provider?: Prisma.XOR<Prisma.ProviderScalarRelationFilter, Prisma.ProviderWhereInput>
   members?: Prisma.GroupMembersListRelationFilter
 }
 
@@ -193,8 +193,8 @@ export type GroupChatOrderByWithRelationInput = {
   providerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  provider?: Prisma.ProviderOrderByWithRelationInput
   messages?: Prisma.ChatMessageOrderByRelationAggregateInput
+  provider?: Prisma.ProviderOrderByWithRelationInput
   members?: Prisma.GroupMembersOrderByRelationAggregateInput
 }
 
@@ -207,8 +207,8 @@ export type GroupChatWhereUniqueInput = Prisma.AtLeast<{
   providerId?: Prisma.StringFilter<"GroupChat"> | string
   createdAt?: Prisma.DateTimeFilter<"GroupChat"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GroupChat"> | Date | string
-  provider?: Prisma.XOR<Prisma.ProviderScalarRelationFilter, Prisma.ProviderWhereInput>
   messages?: Prisma.ChatMessageListRelationFilter
+  provider?: Prisma.XOR<Prisma.ProviderScalarRelationFilter, Prisma.ProviderWhereInput>
   members?: Prisma.GroupMembersListRelationFilter
 }, "id">
 
@@ -239,8 +239,8 @@ export type GroupChatCreateInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  provider: Prisma.ProviderCreateNestedOneWithoutGroupChatsInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutGroupInput
+  provider: Prisma.ProviderCreateNestedOneWithoutGroupChatsInput
   members?: Prisma.GroupMembersCreateNestedManyWithoutGroupChatInput
 }
 
@@ -259,8 +259,8 @@ export type GroupChatUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  provider?: Prisma.ProviderUpdateOneRequiredWithoutGroupChatsNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutGroupNestedInput
+  provider?: Prisma.ProviderUpdateOneRequiredWithoutGroupChatsNestedInput
   members?: Prisma.GroupMembersUpdateManyWithoutGroupChatNestedInput
 }
 
@@ -525,8 +525,8 @@ export type GroupChatCreateWithoutMembersInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
-  provider: Prisma.ProviderCreateNestedOneWithoutGroupChatsInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutGroupInput
+  provider: Prisma.ProviderCreateNestedOneWithoutGroupChatsInput
 }
 
 export type GroupChatUncheckedCreateWithoutMembersInput = {
@@ -559,8 +559,8 @@ export type GroupChatUpdateWithoutMembersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  provider?: Prisma.ProviderUpdateOneRequiredWithoutGroupChatsNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutGroupNestedInput
+  provider?: Prisma.ProviderUpdateOneRequiredWithoutGroupChatsNestedInput
 }
 
 export type GroupChatUncheckedUpdateWithoutMembersInput = {
@@ -650,8 +650,8 @@ export type GroupChatSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   providerId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  provider?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
   messages?: boolean | Prisma.GroupChat$messagesArgs<ExtArgs>
+  provider?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
   members?: boolean | Prisma.GroupChat$membersArgs<ExtArgs>
   _count?: boolean | Prisma.GroupChatCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["groupChat"]>
@@ -684,8 +684,8 @@ export type GroupChatSelectScalar = {
 
 export type GroupChatOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "providerId" | "createdAt" | "updatedAt", ExtArgs["result"]["groupChat"]>
 export type GroupChatInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  provider?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
   messages?: boolean | Prisma.GroupChat$messagesArgs<ExtArgs>
+  provider?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
   members?: boolean | Prisma.GroupChat$membersArgs<ExtArgs>
   _count?: boolean | Prisma.GroupChatCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -699,8 +699,8 @@ export type GroupChatIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
 export type $GroupChatPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "GroupChat"
   objects: {
-    provider: Prisma.$ProviderPayload<ExtArgs>
     messages: Prisma.$ChatMessagePayload<ExtArgs>[]
+    provider: Prisma.$ProviderPayload<ExtArgs>
     members: Prisma.$GroupMembersPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1103,8 +1103,8 @@ readonly fields: GroupChatFieldRefs;
  */
 export interface Prisma__GroupChatClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  provider<T extends Prisma.ProviderDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProviderDefaultArgs<ExtArgs>>): Prisma.Prisma__ProviderClient<runtime.Types.Result.GetResult<Prisma.$ProviderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   messages<T extends Prisma.GroupChat$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.GroupChat$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChatMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  provider<T extends Prisma.ProviderDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProviderDefaultArgs<ExtArgs>>): Prisma.Prisma__ProviderClient<runtime.Types.Result.GetResult<Prisma.$ProviderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   members<T extends Prisma.GroupChat$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.GroupChat$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GroupMembersPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.

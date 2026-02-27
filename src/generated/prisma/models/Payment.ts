@@ -43,12 +43,12 @@ export type PaymentMinAggregateOutputType = {
   currency: string | null
   status: $Enums.PaymentStatus | null
   invoiceUrl: string | null
-  periodStart: Date | null
-  periodEnd: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   plan: string | null
   paymentMethodLast4: string | null
+  periodEnd: Date | null
+  periodStart: Date | null
 }
 
 export type PaymentMaxAggregateOutputType = {
@@ -60,12 +60,12 @@ export type PaymentMaxAggregateOutputType = {
   currency: string | null
   status: $Enums.PaymentStatus | null
   invoiceUrl: string | null
-  periodStart: Date | null
-  periodEnd: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   plan: string | null
   paymentMethodLast4: string | null
+  periodEnd: Date | null
+  periodStart: Date | null
 }
 
 export type PaymentCountAggregateOutputType = {
@@ -77,12 +77,12 @@ export type PaymentCountAggregateOutputType = {
   currency: number
   status: number
   invoiceUrl: number
-  periodStart: number
-  periodEnd: number
   createdAt: number
   updatedAt: number
   plan: number
   paymentMethodLast4: number
+  periodEnd: number
+  periodStart: number
   _all: number
 }
 
@@ -104,12 +104,12 @@ export type PaymentMinAggregateInputType = {
   currency?: true
   status?: true
   invoiceUrl?: true
-  periodStart?: true
-  periodEnd?: true
   createdAt?: true
   updatedAt?: true
   plan?: true
   paymentMethodLast4?: true
+  periodEnd?: true
+  periodStart?: true
 }
 
 export type PaymentMaxAggregateInputType = {
@@ -121,12 +121,12 @@ export type PaymentMaxAggregateInputType = {
   currency?: true
   status?: true
   invoiceUrl?: true
-  periodStart?: true
-  periodEnd?: true
   createdAt?: true
   updatedAt?: true
   plan?: true
   paymentMethodLast4?: true
+  periodEnd?: true
+  periodStart?: true
 }
 
 export type PaymentCountAggregateInputType = {
@@ -138,12 +138,12 @@ export type PaymentCountAggregateInputType = {
   currency?: true
   status?: true
   invoiceUrl?: true
-  periodStart?: true
-  periodEnd?: true
   createdAt?: true
   updatedAt?: true
   plan?: true
   paymentMethodLast4?: true
+  periodEnd?: true
+  periodStart?: true
   _all?: true
 }
 
@@ -242,12 +242,12 @@ export type PaymentGroupByOutputType = {
   currency: string
   status: $Enums.PaymentStatus
   invoiceUrl: string | null
-  periodStart: Date | null
-  periodEnd: Date | null
   createdAt: Date
   updatedAt: Date
   plan: string | null
   paymentMethodLast4: string | null
+  periodEnd: Date | null
+  periodStart: Date | null
   _count: PaymentCountAggregateOutputType | null
   _avg: PaymentAvgAggregateOutputType | null
   _sum: PaymentSumAggregateOutputType | null
@@ -282,12 +282,12 @@ export type PaymentWhereInput = {
   currency?: Prisma.StringFilter<"Payment"> | string
   status?: Prisma.EnumPaymentStatusFilter<"Payment"> | $Enums.PaymentStatus
   invoiceUrl?: Prisma.StringNullableFilter<"Payment"> | string | null
-  periodStart?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
-  periodEnd?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   plan?: Prisma.StringNullableFilter<"Payment"> | string | null
   paymentMethodLast4?: Prisma.StringNullableFilter<"Payment"> | string | null
+  periodEnd?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
+  periodStart?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
@@ -300,12 +300,12 @@ export type PaymentOrderByWithRelationInput = {
   currency?: Prisma.SortOrder
   status?: Prisma.SortOrder
   invoiceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
-  periodStart?: Prisma.SortOrderInput | Prisma.SortOrder
-  periodEnd?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   plan?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentMethodLast4?: Prisma.SortOrderInput | Prisma.SortOrder
+  periodEnd?: Prisma.SortOrderInput | Prisma.SortOrder
+  periodStart?: Prisma.SortOrderInput | Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
 }
 
@@ -321,12 +321,12 @@ export type PaymentWhereUniqueInput = Prisma.AtLeast<{
   currency?: Prisma.StringFilter<"Payment"> | string
   status?: Prisma.EnumPaymentStatusFilter<"Payment"> | $Enums.PaymentStatus
   invoiceUrl?: Prisma.StringNullableFilter<"Payment"> | string | null
-  periodStart?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
-  periodEnd?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   plan?: Prisma.StringNullableFilter<"Payment"> | string | null
   paymentMethodLast4?: Prisma.StringNullableFilter<"Payment"> | string | null
+  periodEnd?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
+  periodStart?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
 
@@ -339,12 +339,12 @@ export type PaymentOrderByWithAggregationInput = {
   currency?: Prisma.SortOrder
   status?: Prisma.SortOrder
   invoiceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
-  periodStart?: Prisma.SortOrderInput | Prisma.SortOrder
-  periodEnd?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   plan?: Prisma.SortOrderInput | Prisma.SortOrder
   paymentMethodLast4?: Prisma.SortOrderInput | Prisma.SortOrder
+  periodEnd?: Prisma.SortOrderInput | Prisma.SortOrder
+  periodStart?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.PaymentCountOrderByAggregateInput
   _avg?: Prisma.PaymentAvgOrderByAggregateInput
   _max?: Prisma.PaymentMaxOrderByAggregateInput
@@ -364,12 +364,12 @@ export type PaymentScalarWhereWithAggregatesInput = {
   currency?: Prisma.StringWithAggregatesFilter<"Payment"> | string
   status?: Prisma.EnumPaymentStatusWithAggregatesFilter<"Payment"> | $Enums.PaymentStatus
   invoiceUrl?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
-  periodStart?: Prisma.DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
-  periodEnd?: Prisma.DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Payment"> | Date | string
   plan?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
   paymentMethodLast4?: Prisma.StringNullableWithAggregatesFilter<"Payment"> | string | null
+  periodEnd?: Prisma.DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
+  periodStart?: Prisma.DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
 }
 
 export type PaymentCreateInput = {
@@ -380,12 +380,12 @@ export type PaymentCreateInput = {
   currency: string
   status?: $Enums.PaymentStatus
   invoiceUrl?: string | null
-  periodStart?: Date | string | null
-  periodEnd?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   plan?: string | null
   paymentMethodLast4?: string | null
+  periodEnd?: Date | string | null
+  periodStart?: Date | string | null
   user: Prisma.UserCreateNestedOneWithoutPaymentsInput
 }
 
@@ -398,12 +398,12 @@ export type PaymentUncheckedCreateInput = {
   currency: string
   status?: $Enums.PaymentStatus
   invoiceUrl?: string | null
-  periodStart?: Date | string | null
-  periodEnd?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   plan?: string | null
   paymentMethodLast4?: string | null
+  periodEnd?: Date | string | null
+  periodStart?: Date | string | null
 }
 
 export type PaymentUpdateInput = {
@@ -414,12 +414,12 @@ export type PaymentUpdateInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   invoiceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   plan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentMethodLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   user?: Prisma.UserUpdateOneRequiredWithoutPaymentsNestedInput
 }
 
@@ -432,12 +432,12 @@ export type PaymentUncheckedUpdateInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   invoiceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   plan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentMethodLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PaymentCreateManyInput = {
@@ -449,12 +449,12 @@ export type PaymentCreateManyInput = {
   currency: string
   status?: $Enums.PaymentStatus
   invoiceUrl?: string | null
-  periodStart?: Date | string | null
-  periodEnd?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   plan?: string | null
   paymentMethodLast4?: string | null
+  periodEnd?: Date | string | null
+  periodStart?: Date | string | null
 }
 
 export type PaymentUpdateManyMutationInput = {
@@ -465,12 +465,12 @@ export type PaymentUpdateManyMutationInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   invoiceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   plan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentMethodLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PaymentUncheckedUpdateManyInput = {
@@ -482,12 +482,12 @@ export type PaymentUncheckedUpdateManyInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   invoiceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   plan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentMethodLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PaymentListRelationFilter = {
@@ -509,12 +509,12 @@ export type PaymentCountOrderByAggregateInput = {
   currency?: Prisma.SortOrder
   status?: Prisma.SortOrder
   invoiceUrl?: Prisma.SortOrder
-  periodStart?: Prisma.SortOrder
-  periodEnd?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   plan?: Prisma.SortOrder
   paymentMethodLast4?: Prisma.SortOrder
+  periodEnd?: Prisma.SortOrder
+  periodStart?: Prisma.SortOrder
 }
 
 export type PaymentAvgOrderByAggregateInput = {
@@ -530,12 +530,12 @@ export type PaymentMaxOrderByAggregateInput = {
   currency?: Prisma.SortOrder
   status?: Prisma.SortOrder
   invoiceUrl?: Prisma.SortOrder
-  periodStart?: Prisma.SortOrder
-  periodEnd?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   plan?: Prisma.SortOrder
   paymentMethodLast4?: Prisma.SortOrder
+  periodEnd?: Prisma.SortOrder
+  periodStart?: Prisma.SortOrder
 }
 
 export type PaymentMinOrderByAggregateInput = {
@@ -547,12 +547,12 @@ export type PaymentMinOrderByAggregateInput = {
   currency?: Prisma.SortOrder
   status?: Prisma.SortOrder
   invoiceUrl?: Prisma.SortOrder
-  periodStart?: Prisma.SortOrder
-  periodEnd?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   plan?: Prisma.SortOrder
   paymentMethodLast4?: Prisma.SortOrder
+  periodEnd?: Prisma.SortOrder
+  periodStart?: Prisma.SortOrder
 }
 
 export type PaymentSumOrderByAggregateInput = {
@@ -621,12 +621,12 @@ export type PaymentCreateWithoutUserInput = {
   currency: string
   status?: $Enums.PaymentStatus
   invoiceUrl?: string | null
-  periodStart?: Date | string | null
-  periodEnd?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   plan?: string | null
   paymentMethodLast4?: string | null
+  periodEnd?: Date | string | null
+  periodStart?: Date | string | null
 }
 
 export type PaymentUncheckedCreateWithoutUserInput = {
@@ -637,12 +637,12 @@ export type PaymentUncheckedCreateWithoutUserInput = {
   currency: string
   status?: $Enums.PaymentStatus
   invoiceUrl?: string | null
-  periodStart?: Date | string | null
-  periodEnd?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   plan?: string | null
   paymentMethodLast4?: string | null
+  periodEnd?: Date | string | null
+  periodStart?: Date | string | null
 }
 
 export type PaymentCreateOrConnectWithoutUserInput = {
@@ -683,12 +683,12 @@ export type PaymentScalarWhereInput = {
   currency?: Prisma.StringFilter<"Payment"> | string
   status?: Prisma.EnumPaymentStatusFilter<"Payment"> | $Enums.PaymentStatus
   invoiceUrl?: Prisma.StringNullableFilter<"Payment"> | string | null
-  periodStart?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
-  periodEnd?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Payment"> | Date | string
   plan?: Prisma.StringNullableFilter<"Payment"> | string | null
   paymentMethodLast4?: Prisma.StringNullableFilter<"Payment"> | string | null
+  periodEnd?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
+  periodStart?: Prisma.DateTimeNullableFilter<"Payment"> | Date | string | null
 }
 
 export type PaymentCreateManyUserInput = {
@@ -699,12 +699,12 @@ export type PaymentCreateManyUserInput = {
   currency: string
   status?: $Enums.PaymentStatus
   invoiceUrl?: string | null
-  periodStart?: Date | string | null
-  periodEnd?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   plan?: string | null
   paymentMethodLast4?: string | null
+  periodEnd?: Date | string | null
+  periodStart?: Date | string | null
 }
 
 export type PaymentUpdateWithoutUserInput = {
@@ -715,12 +715,12 @@ export type PaymentUpdateWithoutUserInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   invoiceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   plan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentMethodLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PaymentUncheckedUpdateWithoutUserInput = {
@@ -731,12 +731,12 @@ export type PaymentUncheckedUpdateWithoutUserInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   invoiceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   plan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentMethodLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type PaymentUncheckedUpdateManyWithoutUserInput = {
@@ -747,12 +747,12 @@ export type PaymentUncheckedUpdateManyWithoutUserInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumPaymentStatusFieldUpdateOperationsInput | $Enums.PaymentStatus
   invoiceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   plan?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paymentMethodLast4?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  periodEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  periodStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -766,12 +766,12 @@ export type PaymentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   currency?: boolean
   status?: boolean
   invoiceUrl?: boolean
-  periodStart?: boolean
-  periodEnd?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   plan?: boolean
   paymentMethodLast4?: boolean
+  periodEnd?: boolean
+  periodStart?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["payment"]>
 
@@ -784,12 +784,12 @@ export type PaymentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   currency?: boolean
   status?: boolean
   invoiceUrl?: boolean
-  periodStart?: boolean
-  periodEnd?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   plan?: boolean
   paymentMethodLast4?: boolean
+  periodEnd?: boolean
+  periodStart?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["payment"]>
 
@@ -802,12 +802,12 @@ export type PaymentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   currency?: boolean
   status?: boolean
   invoiceUrl?: boolean
-  periodStart?: boolean
-  periodEnd?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   plan?: boolean
   paymentMethodLast4?: boolean
+  periodEnd?: boolean
+  periodStart?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["payment"]>
 
@@ -820,15 +820,15 @@ export type PaymentSelectScalar = {
   currency?: boolean
   status?: boolean
   invoiceUrl?: boolean
-  periodStart?: boolean
-  periodEnd?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   plan?: boolean
   paymentMethodLast4?: boolean
+  periodEnd?: boolean
+  periodStart?: boolean
 }
 
-export type PaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "stripePaymentIntentId" | "stripeInvoiceId" | "amount" | "currency" | "status" | "invoiceUrl" | "periodStart" | "periodEnd" | "createdAt" | "updatedAt" | "plan" | "paymentMethodLast4", ExtArgs["result"]["payment"]>
+export type PaymentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "stripePaymentIntentId" | "stripeInvoiceId" | "amount" | "currency" | "status" | "invoiceUrl" | "createdAt" | "updatedAt" | "plan" | "paymentMethodLast4" | "periodEnd" | "periodStart", ExtArgs["result"]["payment"]>
 export type PaymentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -853,12 +853,12 @@ export type $PaymentPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     currency: string
     status: $Enums.PaymentStatus
     invoiceUrl: string | null
-    periodStart: Date | null
-    periodEnd: Date | null
     createdAt: Date
     updatedAt: Date
     plan: string | null
     paymentMethodLast4: string | null
+    periodEnd: Date | null
+    periodStart: Date | null
   }, ExtArgs["result"]["payment"]>
   composites: {}
 }
@@ -1291,12 +1291,12 @@ export interface PaymentFieldRefs {
   readonly currency: Prisma.FieldRef<"Payment", 'String'>
   readonly status: Prisma.FieldRef<"Payment", 'PaymentStatus'>
   readonly invoiceUrl: Prisma.FieldRef<"Payment", 'String'>
-  readonly periodStart: Prisma.FieldRef<"Payment", 'DateTime'>
-  readonly periodEnd: Prisma.FieldRef<"Payment", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"Payment", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Payment", 'DateTime'>
   readonly plan: Prisma.FieldRef<"Payment", 'String'>
   readonly paymentMethodLast4: Prisma.FieldRef<"Payment", 'String'>
+  readonly periodEnd: Prisma.FieldRef<"Payment", 'DateTime'>
+  readonly periodStart: Prisma.FieldRef<"Payment", 'DateTime'>
 }
     
 

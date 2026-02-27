@@ -46,7 +46,6 @@ export type UserMinAggregateOutputType = {
   address: string | null
   status: string | null
   role: $Enums.Role | null
-  stripeCustomerId: string | null
   isApprove: $Enums.Approve | null
   licenseNo: string | null
   isLicenseValid: boolean | null
@@ -54,11 +53,12 @@ export type UserMinAggregateOutputType = {
   state: string | null
   privateKey: string | null
   publicKey: string | null
-  hasUsedFreeTrial: boolean | null
-  resetPasswordToken: string | null
-  resetPasswordExpires: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  hasUsedFreeTrial: boolean | null
+  stripeCustomerId: string | null
+  resetPasswordExpires: Date | null
+  resetPasswordToken: string | null
 }
 
 export type UserMaxAggregateOutputType = {
@@ -73,7 +73,6 @@ export type UserMaxAggregateOutputType = {
   address: string | null
   status: string | null
   role: $Enums.Role | null
-  stripeCustomerId: string | null
   isApprove: $Enums.Approve | null
   licenseNo: string | null
   isLicenseValid: boolean | null
@@ -81,11 +80,12 @@ export type UserMaxAggregateOutputType = {
   state: string | null
   privateKey: string | null
   publicKey: string | null
-  hasUsedFreeTrial: boolean | null
-  resetPasswordToken: string | null
-  resetPasswordExpires: Date | null
   createdAt: Date | null
   updatedAt: Date | null
+  hasUsedFreeTrial: boolean | null
+  stripeCustomerId: string | null
+  resetPasswordExpires: Date | null
+  resetPasswordToken: string | null
 }
 
 export type UserCountAggregateOutputType = {
@@ -100,7 +100,6 @@ export type UserCountAggregateOutputType = {
   address: number
   status: number
   role: number
-  stripeCustomerId: number
   isApprove: number
   licenseNo: number
   isLicenseValid: number
@@ -109,11 +108,12 @@ export type UserCountAggregateOutputType = {
   blockedMembers: number
   privateKey: number
   publicKey: number
-  hasUsedFreeTrial: number
-  resetPasswordToken: number
-  resetPasswordExpires: number
   createdAt: number
   updatedAt: number
+  hasUsedFreeTrial: number
+  stripeCustomerId: number
+  resetPasswordExpires: number
+  resetPasswordToken: number
   _all: number
 }
 
@@ -138,7 +138,6 @@ export type UserMinAggregateInputType = {
   address?: true
   status?: true
   role?: true
-  stripeCustomerId?: true
   isApprove?: true
   licenseNo?: true
   isLicenseValid?: true
@@ -146,11 +145,12 @@ export type UserMinAggregateInputType = {
   state?: true
   privateKey?: true
   publicKey?: true
-  hasUsedFreeTrial?: true
-  resetPasswordToken?: true
-  resetPasswordExpires?: true
   createdAt?: true
   updatedAt?: true
+  hasUsedFreeTrial?: true
+  stripeCustomerId?: true
+  resetPasswordExpires?: true
+  resetPasswordToken?: true
 }
 
 export type UserMaxAggregateInputType = {
@@ -165,7 +165,6 @@ export type UserMaxAggregateInputType = {
   address?: true
   status?: true
   role?: true
-  stripeCustomerId?: true
   isApprove?: true
   licenseNo?: true
   isLicenseValid?: true
@@ -173,11 +172,12 @@ export type UserMaxAggregateInputType = {
   state?: true
   privateKey?: true
   publicKey?: true
-  hasUsedFreeTrial?: true
-  resetPasswordToken?: true
-  resetPasswordExpires?: true
   createdAt?: true
   updatedAt?: true
+  hasUsedFreeTrial?: true
+  stripeCustomerId?: true
+  resetPasswordExpires?: true
+  resetPasswordToken?: true
 }
 
 export type UserCountAggregateInputType = {
@@ -192,7 +192,6 @@ export type UserCountAggregateInputType = {
   address?: true
   status?: true
   role?: true
-  stripeCustomerId?: true
   isApprove?: true
   licenseNo?: true
   isLicenseValid?: true
@@ -201,11 +200,12 @@ export type UserCountAggregateInputType = {
   blockedMembers?: true
   privateKey?: true
   publicKey?: true
-  hasUsedFreeTrial?: true
-  resetPasswordToken?: true
-  resetPasswordExpires?: true
   createdAt?: true
   updatedAt?: true
+  hasUsedFreeTrial?: true
+  stripeCustomerId?: true
+  resetPasswordExpires?: true
+  resetPasswordToken?: true
   _all?: true
 }
 
@@ -307,7 +307,6 @@ export type UserGroupByOutputType = {
   address: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId: string | null
   isApprove: $Enums.Approve
   licenseNo: string | null
   isLicenseValid: boolean
@@ -316,11 +315,12 @@ export type UserGroupByOutputType = {
   blockedMembers: string[]
   privateKey: string | null
   publicKey: string | null
-  hasUsedFreeTrial: boolean
-  resetPasswordToken: string | null
-  resetPasswordExpires: Date | null
   createdAt: Date
   updatedAt: Date
+  hasUsedFreeTrial: boolean
+  stripeCustomerId: string | null
+  resetPasswordExpires: Date | null
+  resetPasswordToken: string | null
   _count: UserCountAggregateOutputType | null
   _avg: UserAvgAggregateOutputType | null
   _sum: UserSumAggregateOutputType | null
@@ -358,7 +358,6 @@ export type UserWhereInput = {
   address?: Prisma.StringNullableFilter<"User"> | string | null
   status?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
-  stripeCustomerId?: Prisma.StringNullableFilter<"User"> | string | null
   isApprove?: Prisma.EnumApproveFilter<"User"> | $Enums.Approve
   licenseNo?: Prisma.StringNullableFilter<"User"> | string | null
   isLicenseValid?: Prisma.BoolFilter<"User"> | boolean
@@ -367,24 +366,25 @@ export type UserWhereInput = {
   blockedMembers?: Prisma.StringNullableListFilter<"User">
   privateKey?: Prisma.StringNullableFilter<"User"> | string | null
   publicKey?: Prisma.StringNullableFilter<"User"> | string | null
-  hasUsedFreeTrial?: Prisma.BoolFilter<"User"> | boolean
-  resetPasswordToken?: Prisma.StringNullableFilter<"User"> | string | null
-  resetPasswordExpires?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  client?: Prisma.XOR<Prisma.ClientNullableScalarRelationFilter, Prisma.ClientWhereInput> | null
-  provider?: Prisma.XOR<Prisma.ProviderNullableScalarRelationFilter, Prisma.ProviderWhereInput> | null
-  superAdmin?: Prisma.XOR<Prisma.SuperAdminNullableScalarRelationFilter, Prisma.SuperAdminWhereInput> | null
-  subscription?: Prisma.XOR<Prisma.SubscriptionNullableScalarRelationFilter, Prisma.SubscriptionWhereInput> | null
-  sentNotifications?: Prisma.NotificationListRelationFilter
-  receivedNotifications?: Prisma.NotificationListRelationFilter
+  hasUsedFreeTrial?: Prisma.BoolFilter<"User"> | boolean
+  stripeCustomerId?: Prisma.StringNullableFilter<"User"> | string | null
+  resetPasswordExpires?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  resetPasswordToken?: Prisma.StringNullableFilter<"User"> | string | null
   chatChannelsA?: Prisma.ChatChannelListRelationFilter
   chatChannelsB?: Prisma.ChatChannelListRelationFilter
   messages?: Prisma.ChatMessageListRelationFilter
+  client?: Prisma.XOR<Prisma.ClientNullableScalarRelationFilter, Prisma.ClientWhereInput> | null
   groupMemberships?: Prisma.GroupMembersListRelationFilter
-  readReceipts?: Prisma.ReadReceiptListRelationFilter
   groupReadReceipts?: Prisma.GroupReadReceiptListRelationFilter
+  receivedNotifications?: Prisma.NotificationListRelationFilter
+  sentNotifications?: Prisma.NotificationListRelationFilter
   payments?: Prisma.PaymentListRelationFilter
+  provider?: Prisma.XOR<Prisma.ProviderNullableScalarRelationFilter, Prisma.ProviderWhereInput> | null
+  readReceipts?: Prisma.ReadReceiptListRelationFilter
+  subscription?: Prisma.XOR<Prisma.SubscriptionNullableScalarRelationFilter, Prisma.SubscriptionWhereInput> | null
+  superAdmin?: Prisma.XOR<Prisma.SuperAdminNullableScalarRelationFilter, Prisma.SuperAdminWhereInput> | null
 }
 
 export type UserOrderByWithRelationInput = {
@@ -399,7 +399,6 @@ export type UserOrderByWithRelationInput = {
   address?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   role?: Prisma.SortOrder
-  stripeCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   isApprove?: Prisma.SortOrder
   licenseNo?: Prisma.SortOrderInput | Prisma.SortOrder
   isLicenseValid?: Prisma.SortOrder
@@ -408,31 +407,32 @@ export type UserOrderByWithRelationInput = {
   blockedMembers?: Prisma.SortOrder
   privateKey?: Prisma.SortOrderInput | Prisma.SortOrder
   publicKey?: Prisma.SortOrderInput | Prisma.SortOrder
-  hasUsedFreeTrial?: Prisma.SortOrder
-  resetPasswordToken?: Prisma.SortOrderInput | Prisma.SortOrder
-  resetPasswordExpires?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
-  client?: Prisma.ClientOrderByWithRelationInput
-  provider?: Prisma.ProviderOrderByWithRelationInput
-  superAdmin?: Prisma.SuperAdminOrderByWithRelationInput
-  subscription?: Prisma.SubscriptionOrderByWithRelationInput
-  sentNotifications?: Prisma.NotificationOrderByRelationAggregateInput
-  receivedNotifications?: Prisma.NotificationOrderByRelationAggregateInput
+  hasUsedFreeTrial?: Prisma.SortOrder
+  stripeCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
+  resetPasswordExpires?: Prisma.SortOrderInput | Prisma.SortOrder
+  resetPasswordToken?: Prisma.SortOrderInput | Prisma.SortOrder
   chatChannelsA?: Prisma.ChatChannelOrderByRelationAggregateInput
   chatChannelsB?: Prisma.ChatChannelOrderByRelationAggregateInput
   messages?: Prisma.ChatMessageOrderByRelationAggregateInput
+  client?: Prisma.ClientOrderByWithRelationInput
   groupMemberships?: Prisma.GroupMembersOrderByRelationAggregateInput
-  readReceipts?: Prisma.ReadReceiptOrderByRelationAggregateInput
   groupReadReceipts?: Prisma.GroupReadReceiptOrderByRelationAggregateInput
+  receivedNotifications?: Prisma.NotificationOrderByRelationAggregateInput
+  sentNotifications?: Prisma.NotificationOrderByRelationAggregateInput
   payments?: Prisma.PaymentOrderByRelationAggregateInput
+  provider?: Prisma.ProviderOrderByWithRelationInput
+  readReceipts?: Prisma.ReadReceiptOrderByRelationAggregateInput
+  subscription?: Prisma.SubscriptionOrderByWithRelationInput
+  superAdmin?: Prisma.SuperAdminOrderByWithRelationInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   email?: string
-  stripeCustomerId?: string
   licenseNo?: string
+  stripeCustomerId?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
@@ -452,25 +452,25 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   blockedMembers?: Prisma.StringNullableListFilter<"User">
   privateKey?: Prisma.StringNullableFilter<"User"> | string | null
   publicKey?: Prisma.StringNullableFilter<"User"> | string | null
-  hasUsedFreeTrial?: Prisma.BoolFilter<"User"> | boolean
-  resetPasswordToken?: Prisma.StringNullableFilter<"User"> | string | null
-  resetPasswordExpires?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  client?: Prisma.XOR<Prisma.ClientNullableScalarRelationFilter, Prisma.ClientWhereInput> | null
-  provider?: Prisma.XOR<Prisma.ProviderNullableScalarRelationFilter, Prisma.ProviderWhereInput> | null
-  superAdmin?: Prisma.XOR<Prisma.SuperAdminNullableScalarRelationFilter, Prisma.SuperAdminWhereInput> | null
-  subscription?: Prisma.XOR<Prisma.SubscriptionNullableScalarRelationFilter, Prisma.SubscriptionWhereInput> | null
-  sentNotifications?: Prisma.NotificationListRelationFilter
-  receivedNotifications?: Prisma.NotificationListRelationFilter
+  hasUsedFreeTrial?: Prisma.BoolFilter<"User"> | boolean
+  resetPasswordExpires?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  resetPasswordToken?: Prisma.StringNullableFilter<"User"> | string | null
   chatChannelsA?: Prisma.ChatChannelListRelationFilter
   chatChannelsB?: Prisma.ChatChannelListRelationFilter
   messages?: Prisma.ChatMessageListRelationFilter
+  client?: Prisma.XOR<Prisma.ClientNullableScalarRelationFilter, Prisma.ClientWhereInput> | null
   groupMemberships?: Prisma.GroupMembersListRelationFilter
-  readReceipts?: Prisma.ReadReceiptListRelationFilter
   groupReadReceipts?: Prisma.GroupReadReceiptListRelationFilter
+  receivedNotifications?: Prisma.NotificationListRelationFilter
+  sentNotifications?: Prisma.NotificationListRelationFilter
   payments?: Prisma.PaymentListRelationFilter
-}, "id" | "email" | "stripeCustomerId" | "licenseNo">
+  provider?: Prisma.XOR<Prisma.ProviderNullableScalarRelationFilter, Prisma.ProviderWhereInput> | null
+  readReceipts?: Prisma.ReadReceiptListRelationFilter
+  subscription?: Prisma.XOR<Prisma.SubscriptionNullableScalarRelationFilter, Prisma.SubscriptionWhereInput> | null
+  superAdmin?: Prisma.XOR<Prisma.SuperAdminNullableScalarRelationFilter, Prisma.SuperAdminWhereInput> | null
+}, "id" | "email" | "licenseNo" | "stripeCustomerId">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -484,7 +484,6 @@ export type UserOrderByWithAggregationInput = {
   address?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   role?: Prisma.SortOrder
-  stripeCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   isApprove?: Prisma.SortOrder
   licenseNo?: Prisma.SortOrderInput | Prisma.SortOrder
   isLicenseValid?: Prisma.SortOrder
@@ -493,11 +492,12 @@ export type UserOrderByWithAggregationInput = {
   blockedMembers?: Prisma.SortOrder
   privateKey?: Prisma.SortOrderInput | Prisma.SortOrder
   publicKey?: Prisma.SortOrderInput | Prisma.SortOrder
-  hasUsedFreeTrial?: Prisma.SortOrder
-  resetPasswordToken?: Prisma.SortOrderInput | Prisma.SortOrder
-  resetPasswordExpires?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  hasUsedFreeTrial?: Prisma.SortOrder
+  stripeCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
+  resetPasswordExpires?: Prisma.SortOrderInput | Prisma.SortOrder
+  resetPasswordToken?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
@@ -520,7 +520,6 @@ export type UserScalarWhereWithAggregatesInput = {
   address?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"User"> | string
   role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
-  stripeCustomerId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   isApprove?: Prisma.EnumApproveWithAggregatesFilter<"User"> | $Enums.Approve
   licenseNo?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   isLicenseValid?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
@@ -529,11 +528,12 @@ export type UserScalarWhereWithAggregatesInput = {
   blockedMembers?: Prisma.StringNullableListFilter<"User">
   privateKey?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   publicKey?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  hasUsedFreeTrial?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
-  resetPasswordToken?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
-  resetPasswordExpires?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
+  hasUsedFreeTrial?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  stripeCustomerId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  resetPasswordExpires?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  resetPasswordToken?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
 }
 
 export type UserCreateInput = {
@@ -548,7 +548,6 @@ export type UserCreateInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -557,24 +556,25 @@ export type UserCreateInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -589,7 +589,6 @@ export type UserUncheckedCreateInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -598,24 +597,25 @@ export type UserUncheckedCreateInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -630,7 +630,6 @@ export type UserUpdateInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -639,24 +638,25 @@ export type UserUpdateInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -671,7 +671,6 @@ export type UserUncheckedUpdateInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -680,24 +679,25 @@ export type UserUncheckedUpdateInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -712,7 +712,6 @@ export type UserCreateManyInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -721,11 +720,12 @@ export type UserCreateManyInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
 }
 
 export type UserUpdateManyMutationInput = {
@@ -740,7 +740,6 @@ export type UserUpdateManyMutationInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -749,11 +748,12 @@ export type UserUpdateManyMutationInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type UserUncheckedUpdateManyInput = {
@@ -768,7 +768,6 @@ export type UserUncheckedUpdateManyInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -777,11 +776,12 @@ export type UserUncheckedUpdateManyInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type StringNullableListFilter<$PrismaModel = never> = {
@@ -804,7 +804,6 @@ export type UserCountOrderByAggregateInput = {
   address?: Prisma.SortOrder
   status?: Prisma.SortOrder
   role?: Prisma.SortOrder
-  stripeCustomerId?: Prisma.SortOrder
   isApprove?: Prisma.SortOrder
   licenseNo?: Prisma.SortOrder
   isLicenseValid?: Prisma.SortOrder
@@ -813,11 +812,12 @@ export type UserCountOrderByAggregateInput = {
   blockedMembers?: Prisma.SortOrder
   privateKey?: Prisma.SortOrder
   publicKey?: Prisma.SortOrder
-  hasUsedFreeTrial?: Prisma.SortOrder
-  resetPasswordToken?: Prisma.SortOrder
-  resetPasswordExpires?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  hasUsedFreeTrial?: Prisma.SortOrder
+  stripeCustomerId?: Prisma.SortOrder
+  resetPasswordExpires?: Prisma.SortOrder
+  resetPasswordToken?: Prisma.SortOrder
 }
 
 export type UserAvgOrderByAggregateInput = {
@@ -836,7 +836,6 @@ export type UserMaxOrderByAggregateInput = {
   address?: Prisma.SortOrder
   status?: Prisma.SortOrder
   role?: Prisma.SortOrder
-  stripeCustomerId?: Prisma.SortOrder
   isApprove?: Prisma.SortOrder
   licenseNo?: Prisma.SortOrder
   isLicenseValid?: Prisma.SortOrder
@@ -844,11 +843,12 @@ export type UserMaxOrderByAggregateInput = {
   state?: Prisma.SortOrder
   privateKey?: Prisma.SortOrder
   publicKey?: Prisma.SortOrder
-  hasUsedFreeTrial?: Prisma.SortOrder
-  resetPasswordToken?: Prisma.SortOrder
-  resetPasswordExpires?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  hasUsedFreeTrial?: Prisma.SortOrder
+  stripeCustomerId?: Prisma.SortOrder
+  resetPasswordExpires?: Prisma.SortOrder
+  resetPasswordToken?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
@@ -863,7 +863,6 @@ export type UserMinOrderByAggregateInput = {
   address?: Prisma.SortOrder
   status?: Prisma.SortOrder
   role?: Prisma.SortOrder
-  stripeCustomerId?: Prisma.SortOrder
   isApprove?: Prisma.SortOrder
   licenseNo?: Prisma.SortOrder
   isLicenseValid?: Prisma.SortOrder
@@ -871,11 +870,12 @@ export type UserMinOrderByAggregateInput = {
   state?: Prisma.SortOrder
   privateKey?: Prisma.SortOrder
   publicKey?: Prisma.SortOrder
-  hasUsedFreeTrial?: Prisma.SortOrder
-  resetPasswordToken?: Prisma.SortOrder
-  resetPasswordExpires?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  hasUsedFreeTrial?: Prisma.SortOrder
+  stripeCustomerId?: Prisma.SortOrder
+  resetPasswordExpires?: Prisma.SortOrder
+  resetPasswordToken?: Prisma.SortOrder
 }
 
 export type UserSumOrderByAggregateInput = {
@@ -933,12 +933,12 @@ export type UserUpdateblockedMembersInput = {
   push?: string | string[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
 }
 
 export type UserCreateNestedOneWithoutClientInput = {
@@ -1137,7 +1137,6 @@ export type UserCreateWithoutClientInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -1146,23 +1145,24 @@ export type UserCreateWithoutClientInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutClientInput = {
@@ -1177,7 +1177,6 @@ export type UserUncheckedCreateWithoutClientInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -1186,23 +1185,24 @@ export type UserUncheckedCreateWithoutClientInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutClientInput = {
@@ -1233,7 +1233,6 @@ export type UserUpdateWithoutClientInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1242,23 +1241,24 @@ export type UserUpdateWithoutClientInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutClientInput = {
@@ -1273,7 +1273,6 @@ export type UserUncheckedUpdateWithoutClientInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1282,23 +1281,24 @@ export type UserUncheckedUpdateWithoutClientInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutProviderInput = {
@@ -1313,7 +1313,6 @@ export type UserCreateWithoutProviderInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -1322,23 +1321,24 @@ export type UserCreateWithoutProviderInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutProviderInput = {
@@ -1353,7 +1353,6 @@ export type UserUncheckedCreateWithoutProviderInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -1362,23 +1361,24 @@ export type UserUncheckedCreateWithoutProviderInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutProviderInput = {
@@ -1409,7 +1409,6 @@ export type UserUpdateWithoutProviderInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1418,23 +1417,24 @@ export type UserUpdateWithoutProviderInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutProviderInput = {
@@ -1449,7 +1449,6 @@ export type UserUncheckedUpdateWithoutProviderInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1458,23 +1457,24 @@ export type UserUncheckedUpdateWithoutProviderInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutSuperAdminInput = {
@@ -1489,7 +1489,6 @@ export type UserCreateWithoutSuperAdminInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -1498,23 +1497,24 @@ export type UserCreateWithoutSuperAdminInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSuperAdminInput = {
@@ -1529,7 +1529,6 @@ export type UserUncheckedCreateWithoutSuperAdminInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -1538,23 +1537,24 @@ export type UserUncheckedCreateWithoutSuperAdminInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSuperAdminInput = {
@@ -1585,7 +1585,6 @@ export type UserUpdateWithoutSuperAdminInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1594,23 +1593,24 @@ export type UserUpdateWithoutSuperAdminInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSuperAdminInput = {
@@ -1625,7 +1625,6 @@ export type UserUncheckedUpdateWithoutSuperAdminInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1634,23 +1633,24 @@ export type UserUncheckedUpdateWithoutSuperAdminInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutChatChannelsAInput = {
@@ -1665,7 +1665,6 @@ export type UserCreateWithoutChatChannelsAInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -1674,23 +1673,24 @@ export type UserCreateWithoutChatChannelsAInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutChatChannelsAInput = {
@@ -1705,7 +1705,6 @@ export type UserUncheckedCreateWithoutChatChannelsAInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -1714,23 +1713,24 @@ export type UserUncheckedCreateWithoutChatChannelsAInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutChatChannelsAInput = {
@@ -1750,7 +1750,6 @@ export type UserCreateWithoutChatChannelsBInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -1759,23 +1758,24 @@ export type UserCreateWithoutChatChannelsBInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutChatChannelsBInput = {
@@ -1790,7 +1790,6 @@ export type UserUncheckedCreateWithoutChatChannelsBInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -1799,23 +1798,24 @@ export type UserUncheckedCreateWithoutChatChannelsBInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutChatChannelsBInput = {
@@ -1846,7 +1846,6 @@ export type UserUpdateWithoutChatChannelsAInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1855,23 +1854,24 @@ export type UserUpdateWithoutChatChannelsAInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutChatChannelsAInput = {
@@ -1886,7 +1886,6 @@ export type UserUncheckedUpdateWithoutChatChannelsAInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1895,23 +1894,24 @@ export type UserUncheckedUpdateWithoutChatChannelsAInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutChatChannelsBInput = {
@@ -1937,7 +1937,6 @@ export type UserUpdateWithoutChatChannelsBInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1946,23 +1945,24 @@ export type UserUpdateWithoutChatChannelsBInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutChatChannelsBInput = {
@@ -1977,7 +1977,6 @@ export type UserUncheckedUpdateWithoutChatChannelsBInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1986,23 +1985,24 @@ export type UserUncheckedUpdateWithoutChatChannelsBInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutMessagesInput = {
@@ -2017,7 +2017,6 @@ export type UserCreateWithoutMessagesInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -2026,23 +2025,24 @@ export type UserCreateWithoutMessagesInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutMessagesInput = {
@@ -2057,7 +2057,6 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -2066,23 +2065,24 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutMessagesInput = {
@@ -2113,7 +2113,6 @@ export type UserUpdateWithoutMessagesInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2122,23 +2121,24 @@ export type UserUpdateWithoutMessagesInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMessagesInput = {
@@ -2153,7 +2153,6 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2162,23 +2161,24 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutGroupMembershipsInput = {
@@ -2193,7 +2193,6 @@ export type UserCreateWithoutGroupMembershipsInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -2202,23 +2201,24 @@ export type UserCreateWithoutGroupMembershipsInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutGroupMembershipsInput = {
@@ -2233,7 +2233,6 @@ export type UserUncheckedCreateWithoutGroupMembershipsInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -2242,23 +2241,24 @@ export type UserUncheckedCreateWithoutGroupMembershipsInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutGroupMembershipsInput = {
@@ -2289,7 +2289,6 @@ export type UserUpdateWithoutGroupMembershipsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2298,23 +2297,24 @@ export type UserUpdateWithoutGroupMembershipsInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutGroupMembershipsInput = {
@@ -2329,7 +2329,6 @@ export type UserUncheckedUpdateWithoutGroupMembershipsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2338,23 +2337,24 @@ export type UserUncheckedUpdateWithoutGroupMembershipsInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutGroupReadReceiptsInput = {
@@ -2369,7 +2369,6 @@ export type UserCreateWithoutGroupReadReceiptsInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -2378,23 +2377,24 @@ export type UserCreateWithoutGroupReadReceiptsInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutGroupReadReceiptsInput = {
@@ -2409,7 +2409,6 @@ export type UserUncheckedCreateWithoutGroupReadReceiptsInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -2418,23 +2417,24 @@ export type UserUncheckedCreateWithoutGroupReadReceiptsInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutGroupReadReceiptsInput = {
@@ -2465,7 +2465,6 @@ export type UserUpdateWithoutGroupReadReceiptsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2474,23 +2473,24 @@ export type UserUpdateWithoutGroupReadReceiptsInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutGroupReadReceiptsInput = {
@@ -2505,7 +2505,6 @@ export type UserUncheckedUpdateWithoutGroupReadReceiptsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2514,23 +2513,24 @@ export type UserUncheckedUpdateWithoutGroupReadReceiptsInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutReceivedNotificationsInput = {
@@ -2545,7 +2545,6 @@ export type UserCreateWithoutReceivedNotificationsInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -2554,23 +2553,24 @@ export type UserCreateWithoutReceivedNotificationsInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReceivedNotificationsInput = {
@@ -2585,7 +2585,6 @@ export type UserUncheckedCreateWithoutReceivedNotificationsInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -2594,23 +2593,24 @@ export type UserUncheckedCreateWithoutReceivedNotificationsInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReceivedNotificationsInput = {
@@ -2630,7 +2630,6 @@ export type UserCreateWithoutSentNotificationsInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -2639,23 +2638,24 @@ export type UserCreateWithoutSentNotificationsInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSentNotificationsInput = {
@@ -2670,7 +2670,6 @@ export type UserUncheckedCreateWithoutSentNotificationsInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -2679,23 +2678,24 @@ export type UserUncheckedCreateWithoutSentNotificationsInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSentNotificationsInput = {
@@ -2726,7 +2726,6 @@ export type UserUpdateWithoutReceivedNotificationsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2735,23 +2734,24 @@ export type UserUpdateWithoutReceivedNotificationsInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReceivedNotificationsInput = {
@@ -2766,7 +2766,6 @@ export type UserUncheckedUpdateWithoutReceivedNotificationsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2775,23 +2774,24 @@ export type UserUncheckedUpdateWithoutReceivedNotificationsInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserUpsertWithoutSentNotificationsInput = {
@@ -2817,7 +2817,6 @@ export type UserUpdateWithoutSentNotificationsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2826,23 +2825,24 @@ export type UserUpdateWithoutSentNotificationsInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSentNotificationsInput = {
@@ -2857,7 +2857,6 @@ export type UserUncheckedUpdateWithoutSentNotificationsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2866,23 +2865,24 @@ export type UserUncheckedUpdateWithoutSentNotificationsInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutReadReceiptsInput = {
@@ -2897,7 +2897,6 @@ export type UserCreateWithoutReadReceiptsInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -2906,23 +2905,24 @@ export type UserCreateWithoutReadReceiptsInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutReadReceiptsInput = {
@@ -2937,7 +2937,6 @@ export type UserUncheckedCreateWithoutReadReceiptsInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -2946,23 +2945,24 @@ export type UserUncheckedCreateWithoutReadReceiptsInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutReadReceiptsInput = {
@@ -2993,7 +2993,6 @@ export type UserUpdateWithoutReadReceiptsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3002,23 +3001,24 @@ export type UserUpdateWithoutReadReceiptsInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReadReceiptsInput = {
@@ -3033,7 +3033,6 @@ export type UserUncheckedUpdateWithoutReadReceiptsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3042,23 +3041,24 @@ export type UserUncheckedUpdateWithoutReadReceiptsInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutSubscriptionInput = {
@@ -3073,7 +3073,6 @@ export type UserCreateWithoutSubscriptionInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -3082,23 +3081,24 @@ export type UserCreateWithoutSubscriptionInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutSubscriptionInput = {
@@ -3113,7 +3113,6 @@ export type UserUncheckedCreateWithoutSubscriptionInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -3122,23 +3121,24 @@ export type UserUncheckedCreateWithoutSubscriptionInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
   payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutSubscriptionInput = {
@@ -3169,7 +3169,6 @@ export type UserUpdateWithoutSubscriptionInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3178,23 +3177,24 @@ export type UserUpdateWithoutSubscriptionInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSubscriptionInput = {
@@ -3209,7 +3209,6 @@ export type UserUncheckedUpdateWithoutSubscriptionInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3218,23 +3217,24 @@ export type UserUncheckedUpdateWithoutSubscriptionInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
   payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 export type UserCreateWithoutPaymentsInput = {
@@ -3249,7 +3249,6 @@ export type UserCreateWithoutPaymentsInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -3258,23 +3257,24 @@ export type UserCreateWithoutPaymentsInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutPaymentsInput = {
@@ -3289,7 +3289,6 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   address?: string | null
   status: string
   role: $Enums.Role
-  stripeCustomerId?: string | null
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
@@ -3298,23 +3297,24 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
   publicKey?: string | null
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: string | null
-  resetPasswordExpires?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
-  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
-  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
-  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
-  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
-  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
-  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
   groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
-  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutPaymentsInput = {
@@ -3345,7 +3345,6 @@ export type UserUpdateWithoutPaymentsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3354,23 +3353,24 @@ export type UserUpdateWithoutPaymentsInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPaymentsInput = {
@@ -3385,7 +3385,6 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3394,23 +3393,24 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
-  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
-  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
-  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
-  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
-  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
   groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
-  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
 }
 
 
@@ -3419,27 +3419,27 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
  */
 
 export type UserCountOutputType = {
-  sentNotifications: number
-  receivedNotifications: number
   chatChannelsA: number
   chatChannelsB: number
   messages: number
   groupMemberships: number
-  readReceipts: number
   groupReadReceipts: number
+  receivedNotifications: number
+  sentNotifications: number
   payments: number
+  readReceipts: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  sentNotifications?: boolean | UserCountOutputTypeCountSentNotificationsArgs
-  receivedNotifications?: boolean | UserCountOutputTypeCountReceivedNotificationsArgs
   chatChannelsA?: boolean | UserCountOutputTypeCountChatChannelsAArgs
   chatChannelsB?: boolean | UserCountOutputTypeCountChatChannelsBArgs
   messages?: boolean | UserCountOutputTypeCountMessagesArgs
   groupMemberships?: boolean | UserCountOutputTypeCountGroupMembershipsArgs
-  readReceipts?: boolean | UserCountOutputTypeCountReadReceiptsArgs
   groupReadReceipts?: boolean | UserCountOutputTypeCountGroupReadReceiptsArgs
+  receivedNotifications?: boolean | UserCountOutputTypeCountReceivedNotificationsArgs
+  sentNotifications?: boolean | UserCountOutputTypeCountSentNotificationsArgs
   payments?: boolean | UserCountOutputTypeCountPaymentsArgs
+  readReceipts?: boolean | UserCountOutputTypeCountReadReceiptsArgs
 }
 
 /**
@@ -3450,20 +3450,6 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
    * Select specific fields to fetch from the UserCountOutputType
    */
   select?: Prisma.UserCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * UserCountOutputType without action
- */
-export type UserCountOutputTypeCountSentNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.NotificationWhereInput
-}
-
-/**
- * UserCountOutputType without action
- */
-export type UserCountOutputTypeCountReceivedNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.NotificationWhereInput
 }
 
 /**
@@ -3497,13 +3483,6 @@ export type UserCountOutputTypeCountGroupMembershipsArgs<ExtArgs extends runtime
 /**
  * UserCountOutputType without action
  */
-export type UserCountOutputTypeCountReadReceiptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.ReadReceiptWhereInput
-}
-
-/**
- * UserCountOutputType without action
- */
 export type UserCountOutputTypeCountGroupReadReceiptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.GroupReadReceiptWhereInput
 }
@@ -3511,8 +3490,29 @@ export type UserCountOutputTypeCountGroupReadReceiptsArgs<ExtArgs extends runtim
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountReceivedNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.NotificationWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountSentNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.NotificationWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountPaymentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.PaymentWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountReadReceiptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReadReceiptWhereInput
 }
 
 
@@ -3528,7 +3528,6 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   address?: boolean
   status?: boolean
   role?: boolean
-  stripeCustomerId?: boolean
   isApprove?: boolean
   licenseNo?: boolean
   isLicenseValid?: boolean
@@ -3537,24 +3536,25 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   blockedMembers?: boolean
   privateKey?: boolean
   publicKey?: boolean
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: boolean
-  resetPasswordExpires?: boolean
   createdAt?: boolean
   updatedAt?: boolean
-  client?: boolean | Prisma.User$clientArgs<ExtArgs>
-  provider?: boolean | Prisma.User$providerArgs<ExtArgs>
-  superAdmin?: boolean | Prisma.User$superAdminArgs<ExtArgs>
-  subscription?: boolean | Prisma.User$subscriptionArgs<ExtArgs>
-  sentNotifications?: boolean | Prisma.User$sentNotificationsArgs<ExtArgs>
-  receivedNotifications?: boolean | Prisma.User$receivedNotificationsArgs<ExtArgs>
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: boolean
+  resetPasswordExpires?: boolean
+  resetPasswordToken?: boolean
   chatChannelsA?: boolean | Prisma.User$chatChannelsAArgs<ExtArgs>
   chatChannelsB?: boolean | Prisma.User$chatChannelsBArgs<ExtArgs>
   messages?: boolean | Prisma.User$messagesArgs<ExtArgs>
+  client?: boolean | Prisma.User$clientArgs<ExtArgs>
   groupMemberships?: boolean | Prisma.User$groupMembershipsArgs<ExtArgs>
-  readReceipts?: boolean | Prisma.User$readReceiptsArgs<ExtArgs>
   groupReadReceipts?: boolean | Prisma.User$groupReadReceiptsArgs<ExtArgs>
+  receivedNotifications?: boolean | Prisma.User$receivedNotificationsArgs<ExtArgs>
+  sentNotifications?: boolean | Prisma.User$sentNotificationsArgs<ExtArgs>
   payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
+  provider?: boolean | Prisma.User$providerArgs<ExtArgs>
+  readReceipts?: boolean | Prisma.User$readReceiptsArgs<ExtArgs>
+  subscription?: boolean | Prisma.User$subscriptionArgs<ExtArgs>
+  superAdmin?: boolean | Prisma.User$superAdminArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -3570,7 +3570,6 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   address?: boolean
   status?: boolean
   role?: boolean
-  stripeCustomerId?: boolean
   isApprove?: boolean
   licenseNo?: boolean
   isLicenseValid?: boolean
@@ -3579,11 +3578,12 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   blockedMembers?: boolean
   privateKey?: boolean
   publicKey?: boolean
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: boolean
-  resetPasswordExpires?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: boolean
+  resetPasswordExpires?: boolean
+  resetPasswordToken?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -3598,7 +3598,6 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   address?: boolean
   status?: boolean
   role?: boolean
-  stripeCustomerId?: boolean
   isApprove?: boolean
   licenseNo?: boolean
   isLicenseValid?: boolean
@@ -3607,11 +3606,12 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   blockedMembers?: boolean
   privateKey?: boolean
   publicKey?: boolean
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: boolean
-  resetPasswordExpires?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: boolean
+  resetPasswordExpires?: boolean
+  resetPasswordToken?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -3626,7 +3626,6 @@ export type UserSelectScalar = {
   address?: boolean
   status?: boolean
   role?: boolean
-  stripeCustomerId?: boolean
   isApprove?: boolean
   licenseNo?: boolean
   isLicenseValid?: boolean
@@ -3635,28 +3634,29 @@ export type UserSelectScalar = {
   blockedMembers?: boolean
   privateKey?: boolean
   publicKey?: boolean
-  hasUsedFreeTrial?: boolean
-  resetPasswordToken?: boolean
-  resetPasswordExpires?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: boolean
+  resetPasswordExpires?: boolean
+  resetPasswordToken?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fullName" | "email" | "password" | "profileImage" | "gender" | "age" | "contactNo" | "address" | "status" | "role" | "stripeCustomerId" | "isApprove" | "licenseNo" | "isLicenseValid" | "country" | "state" | "blockedMembers" | "privateKey" | "publicKey" | "hasUsedFreeTrial" | "resetPasswordToken" | "resetPasswordExpires" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fullName" | "email" | "password" | "profileImage" | "gender" | "age" | "contactNo" | "address" | "status" | "role" | "isApprove" | "licenseNo" | "isLicenseValid" | "country" | "state" | "blockedMembers" | "privateKey" | "publicKey" | "createdAt" | "updatedAt" | "hasUsedFreeTrial" | "stripeCustomerId" | "resetPasswordExpires" | "resetPasswordToken", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  client?: boolean | Prisma.User$clientArgs<ExtArgs>
-  provider?: boolean | Prisma.User$providerArgs<ExtArgs>
-  superAdmin?: boolean | Prisma.User$superAdminArgs<ExtArgs>
-  subscription?: boolean | Prisma.User$subscriptionArgs<ExtArgs>
-  sentNotifications?: boolean | Prisma.User$sentNotificationsArgs<ExtArgs>
-  receivedNotifications?: boolean | Prisma.User$receivedNotificationsArgs<ExtArgs>
   chatChannelsA?: boolean | Prisma.User$chatChannelsAArgs<ExtArgs>
   chatChannelsB?: boolean | Prisma.User$chatChannelsBArgs<ExtArgs>
   messages?: boolean | Prisma.User$messagesArgs<ExtArgs>
+  client?: boolean | Prisma.User$clientArgs<ExtArgs>
   groupMemberships?: boolean | Prisma.User$groupMembershipsArgs<ExtArgs>
-  readReceipts?: boolean | Prisma.User$readReceiptsArgs<ExtArgs>
   groupReadReceipts?: boolean | Prisma.User$groupReadReceiptsArgs<ExtArgs>
+  receivedNotifications?: boolean | Prisma.User$receivedNotificationsArgs<ExtArgs>
+  sentNotifications?: boolean | Prisma.User$sentNotificationsArgs<ExtArgs>
   payments?: boolean | Prisma.User$paymentsArgs<ExtArgs>
+  provider?: boolean | Prisma.User$providerArgs<ExtArgs>
+  readReceipts?: boolean | Prisma.User$readReceiptsArgs<ExtArgs>
+  subscription?: boolean | Prisma.User$subscriptionArgs<ExtArgs>
+  superAdmin?: boolean | Prisma.User$superAdminArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -3665,19 +3665,19 @@ export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
-    client: Prisma.$ClientPayload<ExtArgs> | null
-    provider: Prisma.$ProviderPayload<ExtArgs> | null
-    superAdmin: Prisma.$SuperAdminPayload<ExtArgs> | null
-    subscription: Prisma.$SubscriptionPayload<ExtArgs> | null
-    sentNotifications: Prisma.$NotificationPayload<ExtArgs>[]
-    receivedNotifications: Prisma.$NotificationPayload<ExtArgs>[]
     chatChannelsA: Prisma.$ChatChannelPayload<ExtArgs>[]
     chatChannelsB: Prisma.$ChatChannelPayload<ExtArgs>[]
     messages: Prisma.$ChatMessagePayload<ExtArgs>[]
+    client: Prisma.$ClientPayload<ExtArgs> | null
     groupMemberships: Prisma.$GroupMembersPayload<ExtArgs>[]
-    readReceipts: Prisma.$ReadReceiptPayload<ExtArgs>[]
     groupReadReceipts: Prisma.$GroupReadReceiptPayload<ExtArgs>[]
+    receivedNotifications: Prisma.$NotificationPayload<ExtArgs>[]
+    sentNotifications: Prisma.$NotificationPayload<ExtArgs>[]
     payments: Prisma.$PaymentPayload<ExtArgs>[]
+    provider: Prisma.$ProviderPayload<ExtArgs> | null
+    readReceipts: Prisma.$ReadReceiptPayload<ExtArgs>[]
+    subscription: Prisma.$SubscriptionPayload<ExtArgs> | null
+    superAdmin: Prisma.$SuperAdminPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -3691,7 +3691,6 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     address: string | null
     status: string
     role: $Enums.Role
-    stripeCustomerId: string | null
     isApprove: $Enums.Approve
     licenseNo: string | null
     isLicenseValid: boolean
@@ -3700,11 +3699,12 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     blockedMembers: string[]
     privateKey: string | null
     publicKey: string | null
-    hasUsedFreeTrial: boolean
-    resetPasswordToken: string | null
-    resetPasswordExpires: Date | null
     createdAt: Date
     updatedAt: Date
+    hasUsedFreeTrial: boolean
+    stripeCustomerId: string | null
+    resetPasswordExpires: Date | null
+    resetPasswordToken: string | null
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -4099,19 +4099,19 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  client<T extends Prisma.User$clientArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$clientArgs<ExtArgs>>): Prisma.Prisma__ClientClient<runtime.Types.Result.GetResult<Prisma.$ClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  provider<T extends Prisma.User$providerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$providerArgs<ExtArgs>>): Prisma.Prisma__ProviderClient<runtime.Types.Result.GetResult<Prisma.$ProviderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  superAdmin<T extends Prisma.User$superAdminArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$superAdminArgs<ExtArgs>>): Prisma.Prisma__SuperAdminClient<runtime.Types.Result.GetResult<Prisma.$SuperAdminPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  subscription<T extends Prisma.User$subscriptionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$subscriptionArgs<ExtArgs>>): Prisma.Prisma__SubscriptionClient<runtime.Types.Result.GetResult<Prisma.$SubscriptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  sentNotifications<T extends Prisma.User$sentNotificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sentNotificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  receivedNotifications<T extends Prisma.User$receivedNotificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$receivedNotificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   chatChannelsA<T extends Prisma.User$chatChannelsAArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$chatChannelsAArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChatChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   chatChannelsB<T extends Prisma.User$chatChannelsBArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$chatChannelsBArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChatChannelPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   messages<T extends Prisma.User$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChatMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  client<T extends Prisma.User$clientArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$clientArgs<ExtArgs>>): Prisma.Prisma__ClientClient<runtime.Types.Result.GetResult<Prisma.$ClientPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   groupMemberships<T extends Prisma.User$groupMembershipsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$groupMembershipsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GroupMembersPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  readReceipts<T extends Prisma.User$readReceiptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$readReceiptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReadReceiptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   groupReadReceipts<T extends Prisma.User$groupReadReceiptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$groupReadReceiptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GroupReadReceiptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  receivedNotifications<T extends Prisma.User$receivedNotificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$receivedNotificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  sentNotifications<T extends Prisma.User$sentNotificationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sentNotificationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   payments<T extends Prisma.User$paymentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$paymentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PaymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  provider<T extends Prisma.User$providerArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$providerArgs<ExtArgs>>): Prisma.Prisma__ProviderClient<runtime.Types.Result.GetResult<Prisma.$ProviderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  readReceipts<T extends Prisma.User$readReceiptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$readReceiptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReadReceiptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  subscription<T extends Prisma.User$subscriptionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$subscriptionArgs<ExtArgs>>): Prisma.Prisma__SubscriptionClient<runtime.Types.Result.GetResult<Prisma.$SubscriptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  superAdmin<T extends Prisma.User$superAdminArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$superAdminArgs<ExtArgs>>): Prisma.Prisma__SuperAdminClient<runtime.Types.Result.GetResult<Prisma.$SuperAdminPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -4152,7 +4152,6 @@ export interface UserFieldRefs {
   readonly address: Prisma.FieldRef<"User", 'String'>
   readonly status: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'Role'>
-  readonly stripeCustomerId: Prisma.FieldRef<"User", 'String'>
   readonly isApprove: Prisma.FieldRef<"User", 'Approve'>
   readonly licenseNo: Prisma.FieldRef<"User", 'String'>
   readonly isLicenseValid: Prisma.FieldRef<"User", 'Boolean'>
@@ -4161,11 +4160,12 @@ export interface UserFieldRefs {
   readonly blockedMembers: Prisma.FieldRef<"User", 'String[]'>
   readonly privateKey: Prisma.FieldRef<"User", 'String'>
   readonly publicKey: Prisma.FieldRef<"User", 'String'>
-  readonly hasUsedFreeTrial: Prisma.FieldRef<"User", 'Boolean'>
-  readonly resetPasswordToken: Prisma.FieldRef<"User", 'String'>
-  readonly resetPasswordExpires: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly hasUsedFreeTrial: Prisma.FieldRef<"User", 'Boolean'>
+  readonly stripeCustomerId: Prisma.FieldRef<"User", 'String'>
+  readonly resetPasswordExpires: Prisma.FieldRef<"User", 'DateTime'>
+  readonly resetPasswordToken: Prisma.FieldRef<"User", 'String'>
 }
     
 
@@ -4554,130 +4554,6 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
 }
 
 /**
- * User.client
- */
-export type User$clientArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Client
-   */
-  select?: Prisma.ClientSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Client
-   */
-  omit?: Prisma.ClientOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ClientInclude<ExtArgs> | null
-  where?: Prisma.ClientWhereInput
-}
-
-/**
- * User.provider
- */
-export type User$providerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Provider
-   */
-  select?: Prisma.ProviderSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Provider
-   */
-  omit?: Prisma.ProviderOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ProviderInclude<ExtArgs> | null
-  where?: Prisma.ProviderWhereInput
-}
-
-/**
- * User.superAdmin
- */
-export type User$superAdminArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the SuperAdmin
-   */
-  select?: Prisma.SuperAdminSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the SuperAdmin
-   */
-  omit?: Prisma.SuperAdminOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.SuperAdminInclude<ExtArgs> | null
-  where?: Prisma.SuperAdminWhereInput
-}
-
-/**
- * User.subscription
- */
-export type User$subscriptionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Subscription
-   */
-  select?: Prisma.SubscriptionSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Subscription
-   */
-  omit?: Prisma.SubscriptionOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.SubscriptionInclude<ExtArgs> | null
-  where?: Prisma.SubscriptionWhereInput
-}
-
-/**
- * User.sentNotifications
- */
-export type User$sentNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Notification
-   */
-  select?: Prisma.NotificationSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Notification
-   */
-  omit?: Prisma.NotificationOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.NotificationInclude<ExtArgs> | null
-  where?: Prisma.NotificationWhereInput
-  orderBy?: Prisma.NotificationOrderByWithRelationInput | Prisma.NotificationOrderByWithRelationInput[]
-  cursor?: Prisma.NotificationWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
-}
-
-/**
- * User.receivedNotifications
- */
-export type User$receivedNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Notification
-   */
-  select?: Prisma.NotificationSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Notification
-   */
-  omit?: Prisma.NotificationOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.NotificationInclude<ExtArgs> | null
-  where?: Prisma.NotificationWhereInput
-  orderBy?: Prisma.NotificationOrderByWithRelationInput | Prisma.NotificationOrderByWithRelationInput[]
-  cursor?: Prisma.NotificationWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
-}
-
-/**
  * User.chatChannelsA
  */
 export type User$chatChannelsAArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4750,6 +4626,25 @@ export type User$messagesArgs<ExtArgs extends runtime.Types.Extensions.InternalA
 }
 
 /**
+ * User.client
+ */
+export type User$clientArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Client
+   */
+  select?: Prisma.ClientSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Client
+   */
+  omit?: Prisma.ClientOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ClientInclude<ExtArgs> | null
+  where?: Prisma.ClientWhereInput
+}
+
+/**
  * User.groupMemberships
  */
 export type User$groupMembershipsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4771,30 +4666,6 @@ export type User$groupMembershipsArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.GroupMembersScalarFieldEnum | Prisma.GroupMembersScalarFieldEnum[]
-}
-
-/**
- * User.readReceipts
- */
-export type User$readReceiptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the ReadReceipt
-   */
-  select?: Prisma.ReadReceiptSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the ReadReceipt
-   */
-  omit?: Prisma.ReadReceiptOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.ReadReceiptInclude<ExtArgs> | null
-  where?: Prisma.ReadReceiptWhereInput
-  orderBy?: Prisma.ReadReceiptOrderByWithRelationInput | Prisma.ReadReceiptOrderByWithRelationInput[]
-  cursor?: Prisma.ReadReceiptWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.ReadReceiptScalarFieldEnum | Prisma.ReadReceiptScalarFieldEnum[]
 }
 
 /**
@@ -4822,6 +4693,54 @@ export type User$groupReadReceiptsArgs<ExtArgs extends runtime.Types.Extensions.
 }
 
 /**
+ * User.receivedNotifications
+ */
+export type User$receivedNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Notification
+   */
+  select?: Prisma.NotificationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Notification
+   */
+  omit?: Prisma.NotificationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificationInclude<ExtArgs> | null
+  where?: Prisma.NotificationWhereInput
+  orderBy?: Prisma.NotificationOrderByWithRelationInput | Prisma.NotificationOrderByWithRelationInput[]
+  cursor?: Prisma.NotificationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
+}
+
+/**
+ * User.sentNotifications
+ */
+export type User$sentNotificationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Notification
+   */
+  select?: Prisma.NotificationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Notification
+   */
+  omit?: Prisma.NotificationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificationInclude<ExtArgs> | null
+  where?: Prisma.NotificationWhereInput
+  orderBy?: Prisma.NotificationOrderByWithRelationInput | Prisma.NotificationOrderByWithRelationInput[]
+  cursor?: Prisma.NotificationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.NotificationScalarFieldEnum | Prisma.NotificationScalarFieldEnum[]
+}
+
+/**
  * User.payments
  */
 export type User$paymentsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -4843,6 +4762,87 @@ export type User$paymentsArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.PaymentScalarFieldEnum | Prisma.PaymentScalarFieldEnum[]
+}
+
+/**
+ * User.provider
+ */
+export type User$providerArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Provider
+   */
+  select?: Prisma.ProviderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Provider
+   */
+  omit?: Prisma.ProviderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProviderInclude<ExtArgs> | null
+  where?: Prisma.ProviderWhereInput
+}
+
+/**
+ * User.readReceipts
+ */
+export type User$readReceiptsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ReadReceipt
+   */
+  select?: Prisma.ReadReceiptSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ReadReceipt
+   */
+  omit?: Prisma.ReadReceiptOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReadReceiptInclude<ExtArgs> | null
+  where?: Prisma.ReadReceiptWhereInput
+  orderBy?: Prisma.ReadReceiptOrderByWithRelationInput | Prisma.ReadReceiptOrderByWithRelationInput[]
+  cursor?: Prisma.ReadReceiptWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReadReceiptScalarFieldEnum | Prisma.ReadReceiptScalarFieldEnum[]
+}
+
+/**
+ * User.subscription
+ */
+export type User$subscriptionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Subscription
+   */
+  select?: Prisma.SubscriptionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Subscription
+   */
+  omit?: Prisma.SubscriptionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SubscriptionInclude<ExtArgs> | null
+  where?: Prisma.SubscriptionWhereInput
+}
+
+/**
+ * User.superAdmin
+ */
+export type User$superAdminArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the SuperAdmin
+   */
+  select?: Prisma.SuperAdminSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the SuperAdmin
+   */
+  omit?: Prisma.SuperAdminOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.SuperAdminInclude<ExtArgs> | null
+  where?: Prisma.SuperAdminWhereInput
 }
 
 /**
