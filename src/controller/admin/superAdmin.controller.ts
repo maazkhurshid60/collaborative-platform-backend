@@ -151,10 +151,12 @@ export const getAllPayments = asyncHandler(async (_req: Request, res: Response) 
 
 export const getAllSubscriptions = asyncHandler(async (_req: Request, res: Response) => {
   const subscriptions = await prisma.subscription.findMany({
+    where: { hiddenFromAdmin: false },
     include: {
       user: {
         include: {
           payments: {
+            where: { hiddenFromAdmin: false },
             orderBy: {
               createdAt: "desc",
             },
@@ -195,13 +197,21 @@ export const updateSubscription = asyncHandler(async (req: Request, res: Respons
 export const deleteSubscription = asyncHandler(async (req: Request, res: Response) => {
   const id = req.params.id as string;
 
-  await prisma.subscription.delete({
-    where: { id },
-  });
+  const subscription = await prisma.subscription.findUnique({ where: { id } });
+  if (subscription) {
+    await prisma.subscription.update({
+      where: { id },
+      data: { hiddenFromAdmin: true },
+    });
+    await prisma.payment.updateMany({
+      where: { userId: subscription.userId },
+      data: { hiddenFromAdmin: true },
+    });
+  }
 
   return res
     .status(StatusCodes.OK)
-    .json(new ApiResponse(StatusCodes.OK, null, "Subscription deleted successfully"));
+    .json(new ApiResponse(StatusCodes.OK, null, "Provider billing hidden successfully"));
 });
 
 export const getProviderContactInfo = asyncHandler(async (req: Request, res: Response) => {
@@ -229,8 +239,8 @@ export const getProviderContactInfo = asyncHandler(async (req: Request, res: Res
 export const getProviderSubscriptionInfo = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.params.userId as string;
 
-  const subscription = await prisma.subscription.findUnique({
-    where: { userId },
+  const subscription = await prisma.subscription.findFirst({
+    where: { userId, hiddenFromAdmin: false },
   });
 
   if (!subscription) {
@@ -249,7 +259,7 @@ export const getProviderPaymentHistory = asyncHandler(async (req: Request, res: 
   const userId = req.params.userId as string;
 
   const payments = await prisma.payment.findMany({
-    where: { userId },
+    where: { userId, hiddenFromAdmin: false },
     orderBy: {
       createdAt: "desc",
     },

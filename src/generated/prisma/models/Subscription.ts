@@ -40,6 +40,7 @@ export type SubscriptionMinAggregateOutputType = {
   cancelReason: string | null
   trialEnd: Date | null
   trialStart: Date | null
+  hiddenFromAdmin: boolean | null
 }
 
 export type SubscriptionMaxAggregateOutputType = {
@@ -58,6 +59,7 @@ export type SubscriptionMaxAggregateOutputType = {
   cancelReason: string | null
   trialEnd: Date | null
   trialStart: Date | null
+  hiddenFromAdmin: boolean | null
 }
 
 export type SubscriptionCountAggregateOutputType = {
@@ -76,6 +78,7 @@ export type SubscriptionCountAggregateOutputType = {
   cancelReason: number
   trialEnd: number
   trialStart: number
+  hiddenFromAdmin: number
   _all: number
 }
 
@@ -96,6 +99,7 @@ export type SubscriptionMinAggregateInputType = {
   cancelReason?: true
   trialEnd?: true
   trialStart?: true
+  hiddenFromAdmin?: true
 }
 
 export type SubscriptionMaxAggregateInputType = {
@@ -114,6 +118,7 @@ export type SubscriptionMaxAggregateInputType = {
   cancelReason?: true
   trialEnd?: true
   trialStart?: true
+  hiddenFromAdmin?: true
 }
 
 export type SubscriptionCountAggregateInputType = {
@@ -132,6 +137,7 @@ export type SubscriptionCountAggregateInputType = {
   cancelReason?: true
   trialEnd?: true
   trialStart?: true
+  hiddenFromAdmin?: true
   _all?: true
 }
 
@@ -223,6 +229,7 @@ export type SubscriptionGroupByOutputType = {
   cancelReason: string | null
   trialEnd: Date | null
   trialStart: Date | null
+  hiddenFromAdmin: boolean
   _count: SubscriptionCountAggregateOutputType | null
   _min: SubscriptionMinAggregateOutputType | null
   _max: SubscriptionMaxAggregateOutputType | null
@@ -262,6 +269,7 @@ export type SubscriptionWhereInput = {
   cancelReason?: Prisma.StringNullableFilter<"Subscription"> | string | null
   trialEnd?: Prisma.DateTimeNullableFilter<"Subscription"> | Date | string | null
   trialStart?: Prisma.DateTimeNullableFilter<"Subscription"> | Date | string | null
+  hiddenFromAdmin?: Prisma.BoolFilter<"Subscription"> | boolean
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
@@ -281,6 +289,7 @@ export type SubscriptionOrderByWithRelationInput = {
   cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
   trialEnd?: Prisma.SortOrderInput | Prisma.SortOrder
   trialStart?: Prisma.SortOrderInput | Prisma.SortOrder
+  hiddenFromAdmin?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
 }
 
@@ -303,6 +312,7 @@ export type SubscriptionWhereUniqueInput = Prisma.AtLeast<{
   cancelReason?: Prisma.StringNullableFilter<"Subscription"> | string | null
   trialEnd?: Prisma.DateTimeNullableFilter<"Subscription"> | Date | string | null
   trialStart?: Prisma.DateTimeNullableFilter<"Subscription"> | Date | string | null
+  hiddenFromAdmin?: Prisma.BoolFilter<"Subscription"> | boolean
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id" | "userId" | "stripeSubscriptionId">
 
@@ -322,6 +332,7 @@ export type SubscriptionOrderByWithAggregationInput = {
   cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
   trialEnd?: Prisma.SortOrderInput | Prisma.SortOrder
   trialStart?: Prisma.SortOrderInput | Prisma.SortOrder
+  hiddenFromAdmin?: Prisma.SortOrder
   _count?: Prisma.SubscriptionCountOrderByAggregateInput
   _max?: Prisma.SubscriptionMaxOrderByAggregateInput
   _min?: Prisma.SubscriptionMinOrderByAggregateInput
@@ -346,6 +357,7 @@ export type SubscriptionScalarWhereWithAggregatesInput = {
   cancelReason?: Prisma.StringNullableWithAggregatesFilter<"Subscription"> | string | null
   trialEnd?: Prisma.DateTimeNullableWithAggregatesFilter<"Subscription"> | Date | string | null
   trialStart?: Prisma.DateTimeNullableWithAggregatesFilter<"Subscription"> | Date | string | null
+  hiddenFromAdmin?: Prisma.BoolWithAggregatesFilter<"Subscription"> | boolean
 }
 
 export type SubscriptionCreateInput = {
@@ -363,6 +375,7 @@ export type SubscriptionCreateInput = {
   cancelReason?: string | null
   trialEnd?: Date | string | null
   trialStart?: Date | string | null
+  hiddenFromAdmin?: boolean
   user: Prisma.UserCreateNestedOneWithoutSubscriptionInput
 }
 
@@ -382,6 +395,7 @@ export type SubscriptionUncheckedCreateInput = {
   cancelReason?: string | null
   trialEnd?: Date | string | null
   trialStart?: Date | string | null
+  hiddenFromAdmin?: boolean
 }
 
 export type SubscriptionUpdateInput = {
@@ -399,6 +413,7 @@ export type SubscriptionUpdateInput = {
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   trialEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   trialStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  hiddenFromAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   user?: Prisma.UserUpdateOneRequiredWithoutSubscriptionNestedInput
 }
 
@@ -418,6 +433,7 @@ export type SubscriptionUncheckedUpdateInput = {
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   trialEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   trialStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  hiddenFromAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type SubscriptionCreateManyInput = {
@@ -436,6 +452,7 @@ export type SubscriptionCreateManyInput = {
   cancelReason?: string | null
   trialEnd?: Date | string | null
   trialStart?: Date | string | null
+  hiddenFromAdmin?: boolean
 }
 
 export type SubscriptionUpdateManyMutationInput = {
@@ -453,6 +470,7 @@ export type SubscriptionUpdateManyMutationInput = {
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   trialEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   trialStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  hiddenFromAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type SubscriptionUncheckedUpdateManyInput = {
@@ -471,6 +489,7 @@ export type SubscriptionUncheckedUpdateManyInput = {
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   trialEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   trialStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  hiddenFromAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type SubscriptionNullableScalarRelationFilter = {
@@ -494,6 +513,7 @@ export type SubscriptionCountOrderByAggregateInput = {
   cancelReason?: Prisma.SortOrder
   trialEnd?: Prisma.SortOrder
   trialStart?: Prisma.SortOrder
+  hiddenFromAdmin?: Prisma.SortOrder
 }
 
 export type SubscriptionMaxOrderByAggregateInput = {
@@ -512,6 +532,7 @@ export type SubscriptionMaxOrderByAggregateInput = {
   cancelReason?: Prisma.SortOrder
   trialEnd?: Prisma.SortOrder
   trialStart?: Prisma.SortOrder
+  hiddenFromAdmin?: Prisma.SortOrder
 }
 
 export type SubscriptionMinOrderByAggregateInput = {
@@ -530,6 +551,7 @@ export type SubscriptionMinOrderByAggregateInput = {
   cancelReason?: Prisma.SortOrder
   trialEnd?: Prisma.SortOrder
   trialStart?: Prisma.SortOrder
+  hiddenFromAdmin?: Prisma.SortOrder
 }
 
 export type SubscriptionCreateNestedOneWithoutUserInput = {
@@ -587,6 +609,7 @@ export type SubscriptionCreateWithoutUserInput = {
   cancelReason?: string | null
   trialEnd?: Date | string | null
   trialStart?: Date | string | null
+  hiddenFromAdmin?: boolean
 }
 
 export type SubscriptionUncheckedCreateWithoutUserInput = {
@@ -604,6 +627,7 @@ export type SubscriptionUncheckedCreateWithoutUserInput = {
   cancelReason?: string | null
   trialEnd?: Date | string | null
   trialStart?: Date | string | null
+  hiddenFromAdmin?: boolean
 }
 
 export type SubscriptionCreateOrConnectWithoutUserInput = {
@@ -637,6 +661,7 @@ export type SubscriptionUpdateWithoutUserInput = {
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   trialEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   trialStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  hiddenFromAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type SubscriptionUncheckedUpdateWithoutUserInput = {
@@ -654,6 +679,7 @@ export type SubscriptionUncheckedUpdateWithoutUserInput = {
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   trialEnd?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   trialStart?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  hiddenFromAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 
@@ -674,6 +700,7 @@ export type SubscriptionSelect<ExtArgs extends runtime.Types.Extensions.Internal
   cancelReason?: boolean
   trialEnd?: boolean
   trialStart?: boolean
+  hiddenFromAdmin?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["subscription"]>
 
@@ -693,6 +720,7 @@ export type SubscriptionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   cancelReason?: boolean
   trialEnd?: boolean
   trialStart?: boolean
+  hiddenFromAdmin?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["subscription"]>
 
@@ -712,6 +740,7 @@ export type SubscriptionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   cancelReason?: boolean
   trialEnd?: boolean
   trialStart?: boolean
+  hiddenFromAdmin?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["subscription"]>
 
@@ -731,9 +760,10 @@ export type SubscriptionSelectScalar = {
   cancelReason?: boolean
   trialEnd?: boolean
   trialStart?: boolean
+  hiddenFromAdmin?: boolean
 }
 
-export type SubscriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "stripeCustomerId" | "stripeSubscriptionId" | "stripePriceId" | "plan" | "status" | "currentPeriodEnd" | "cancelAtPeriodEnd" | "createdAt" | "updatedAt" | "billingCycle" | "cancelReason" | "trialEnd" | "trialStart", ExtArgs["result"]["subscription"]>
+export type SubscriptionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "stripeCustomerId" | "stripeSubscriptionId" | "stripePriceId" | "plan" | "status" | "currentPeriodEnd" | "cancelAtPeriodEnd" | "createdAt" | "updatedAt" | "billingCycle" | "cancelReason" | "trialEnd" | "trialStart" | "hiddenFromAdmin", ExtArgs["result"]["subscription"]>
 export type SubscriptionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -765,6 +795,7 @@ export type $SubscriptionPayload<ExtArgs extends runtime.Types.Extensions.Intern
     cancelReason: string | null
     trialEnd: Date | null
     trialStart: Date | null
+    hiddenFromAdmin: boolean
   }, ExtArgs["result"]["subscription"]>
   composites: {}
 }
@@ -1204,6 +1235,7 @@ export interface SubscriptionFieldRefs {
   readonly cancelReason: Prisma.FieldRef<"Subscription", 'String'>
   readonly trialEnd: Prisma.FieldRef<"Subscription", 'DateTime'>
   readonly trialStart: Prisma.FieldRef<"Subscription", 'DateTime'>
+  readonly hiddenFromAdmin: Prisma.FieldRef<"Subscription", 'Boolean'>
 }
     
 

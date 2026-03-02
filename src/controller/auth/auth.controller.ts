@@ -55,9 +55,15 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         profileImageUpdate = (files['profileImage'][0] as any).location;
     }
 
+    let eSignatureUpdate;
+    if (files && files['eSignature'] && files['eSignature'].length > 0) {
+        eSignatureUpdate = (files['eSignature'][0] as any).location;
+    }
+
     const updatedUser = await userService.updateMe(loginUserId, {
         ...req.body,
-        profileImageUpdate
+        profileImageUpdate,
+        eSignatureUpdate
     });
 
     return res.status(StatusCodes.OK).json(
@@ -335,7 +341,7 @@ const getMeApi = asyncHandler(async (req: Request, res: Response) => {
     const meData = await userService.getMe(loginUserId, role);
 
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { data: meData }, "OK")
+        new ApiResponse(StatusCodes.OK, meData, "OK")
     );
 });
 const findByLicenseNo = asyncHandler(async (req: Request, res: Response) => {
@@ -396,7 +402,7 @@ const findByLicenseNo = asyncHandler(async (req: Request, res: Response) => {
     }
 
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { data: foundUser }, "Record found.")
+        new ApiResponse(StatusCodes.OK, foundUser, "Record found.")
     );
 })
 

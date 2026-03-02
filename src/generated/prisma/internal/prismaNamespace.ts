@@ -1932,7 +1932,8 @@ export const SubscriptionScalarFieldEnum = {
   billingCycle: 'billingCycle',
   cancelReason: 'cancelReason',
   trialEnd: 'trialEnd',
-  trialStart: 'trialStart'
+  trialStart: 'trialStart',
+  hiddenFromAdmin: 'hiddenFromAdmin'
 } as const
 
 export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
@@ -1952,7 +1953,8 @@ export const PaymentScalarFieldEnum = {
   plan: 'plan',
   paymentMethodLast4: 'paymentMethodLast4',
   periodEnd: 'periodEnd',
-  periodStart: 'periodStart'
+  periodStart: 'periodStart',
+  hiddenFromAdmin: 'hiddenFromAdmin'
 } as const
 
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]

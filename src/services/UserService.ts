@@ -4,6 +4,7 @@ import { Role, Gender } from "../generated/prisma/enums";
 import { ApiError } from "../utils/apiError";
 import { StatusCodes } from "http-status-codes";
 import { AuthService } from "./AuthService";
+import { SubscriptionService } from "./SubscriptionService";
 
 const authService = new AuthService();
 
@@ -62,10 +63,10 @@ export class UserService {
 
         if (role === Role.client) {
             const clientUpdateData: any = {};
-            if (eSignatureAction === "replace" && eSignature) {
-                clientUpdateData.eSignature = eSignature.location;
+            if (eSignatureAction === "replace" && updateData.eSignatureUpdate) {
+                clientUpdateData.eSignature = updateData.eSignatureUpdate;
             } else if (eSignatureAction === "remove") {
-                clientUpdateData.eSignature = "null";
+                clientUpdateData.eSignature = null;
             }
 
             const clientUpdate = await prisma.client.update({
@@ -100,6 +101,14 @@ export class UserService {
         if (!user) {
             throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
         }
+
+        try {
+            const subscriptionService = new SubscriptionService();
+            await subscriptionService.cancelStripeSubscription(userId);
+        } catch (error) {
+            console.error("Failed to safely cancel stripe sub during deleteMe", error);
+        }
+
         await prisma.user.delete({ where: { id: userId } });
         return { success: true };
     }

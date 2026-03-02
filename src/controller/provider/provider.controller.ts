@@ -5,6 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { Role } from "../../generated/prisma/enums";
 import { providerSchema } from "../../schema/provider/provider.schema";
+import { SubscriptionService } from "../../services/SubscriptionService";
 
 
 const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) => {
@@ -137,6 +138,14 @@ const deletProvider = asyncHandler(async (req: Request, res: Response) => {
     if (!isProviderExist) {
         return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { error: "Provider does not exist." }, ""))
     }
+
+    try {
+        const subscriptionService = new SubscriptionService();
+        await subscriptionService.cancelStripeSubscription(isProviderExist.userId);
+    } catch (error) {
+        console.error("Failed to safely cancel stripe sub during account delete", error);
+    }
+
     const isProviderDeleted = await prisma.provider.delete({ where: { id: providerId } })
     if (!isProviderDeleted) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Internal Server Error." }, ""))

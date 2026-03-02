@@ -15,13 +15,10 @@ export function setupSocket(server: any) {
         },
     });
 
-    console.log("⚡️ Socket.IO initialized");
 
     io.on('connection', async (socket: any) => {
         const providerId = socket.handshake.query.providerId;
         const userId = socket.handshake.query.userId;
-
-        console.log(`Socket connected providerId: ${providerId}`);
 
         // Join notification room
         if (userId) {

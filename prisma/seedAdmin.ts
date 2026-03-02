@@ -20,14 +20,14 @@ async function main() {
     });
 
     if (existingAdmin) {
-        console.log(`⚠️ User with email ${adminEmail} already exists.`);
+        console.log(`User with email ${adminEmail} already exists.`);
 
         // Optional: Check if they are a superAdmin
         if (existingAdmin.role === 'superAdmin') {
-            console.log('✅ User is already a Super Admin. No action needed.');
+            console.log('User is already a Super Admin. No action needed.');
             return;
         } else {
-            console.log('❌ User exists but is NOT a Super Admin. Please delete this user manually or use a different email.');
+            console.log('User exists but is NOT a Super Admin. Please delete this user manually or use a different email.');
             return;
         }
     }
@@ -46,6 +46,7 @@ async function main() {
                 status: 'active',
                 country: 'USA',
                 state: 'California',
+                licenseNo: "353535353535333"
             },
         });
 

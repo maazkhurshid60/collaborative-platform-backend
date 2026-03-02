@@ -10,6 +10,10 @@ export class StripeService {
         });
     }
 
+    async deleteCustomer(customerId: string) {
+        return await stripe.customers.del(customerId);
+    }
+
     async createSubscription(params: Stripe.SubscriptionCreateParams) {
         return await stripe.subscriptions.create(params);
     }

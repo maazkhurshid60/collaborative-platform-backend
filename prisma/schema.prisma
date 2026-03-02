@@ -236,7 +236,8 @@ model Subscription {
   cancelReason         String?
   trialEnd             DateTime?
   trialStart           DateTime?
-  user                 User               @relation(fields: [userId], references: [id])
+  hiddenFromAdmin      Boolean            @default(false)
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Payment {
@@ -254,6 +255,7 @@ model Payment {
   paymentMethodLast4    String?
   periodEnd             DateTime?
   periodStart           DateTime?
+  hiddenFromAdmin       Boolean       @default(false)
   user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 

@@ -641,4 +641,19 @@ export class SubscriptionService {
             }
         }
     }
+
+    public async cancelStripeSubscription(userId: string) {
+        try {
+            const user = await prisma.user.findUnique({
+                where: { id: userId }
+            });
+            if (user && user.stripeCustomerId) {
+                await stripeService.deleteCustomer(user.stripeCustomerId);
+                console.log(`Successfully deleted Stripe customer for user: ${userId}`);
+            }
+        } catch (error) {
+            console.error("Error canceling Stripe subscription for user:", userId, error);
+            // We catch so account deletion can continue even if stripe fails
+        }
+    }
 }
