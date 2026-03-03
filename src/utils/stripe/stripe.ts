@@ -44,8 +44,5 @@ export const STRIPE_PLANS_IDS = {
     // }
 }
 
-
-
-
-
 export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "mock_secret";
+export const STRIPE_DOMAIN_ID = process.env.STRIPE_DOMAIN_ID;

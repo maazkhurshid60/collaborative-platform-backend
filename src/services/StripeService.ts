@@ -55,4 +55,8 @@ export class StripeService {
     constructWebhookEvent(payload: string | Buffer, sig: string, secret: string) {
         return stripe.webhooks.constructEvent(payload, sig, secret);
     }
+
+    async getPaymentMethodDomain(domainId: string) {
+        return await stripe.paymentMethodDomains.retrieve(domainId);
+    }
 }
