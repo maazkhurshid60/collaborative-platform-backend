@@ -8,6 +8,8 @@ import {
   decryptText,
   encryptText,
 } from "../../utils/encryptedMessage/EncryptedMessage";
+import { sendShareChatEmail } from "../../utils/nodeMailer/ShareChatEmail";
+import { getFrontendUrl } from "../../utils/nodeMailer/getFrontendUrl";
 
 const getAllSingleConservationMessage = asyncHandler(
   async (req: Request, res: Response) => {
@@ -217,18 +219,22 @@ const deleteMessageToSingleConservation = asyncHandler(
   async (req: Request, res: Response) => {
     const { channelId, messageId, loginUserId } = req.body;
 
-    // Ensure the channel exists
-    const isChannelExist = await prisma.chatChannel.findFirst({
+    // Check if it's a 1-on-1 chat channel OR a group channel
+    const isOneOnOneChannel = await prisma.chatChannel.findFirst({
       where: { id: channelId },
     });
 
-    if (!isChannelExist) {
+    const isGroupChannel = !isOneOnOneChannel
+      ? await prisma.groupChat.findFirst({ where: { id: channelId } })
+      : null;
+
+    if (!isOneOnOneChannel && !isGroupChannel) {
       return res
         .status(StatusCodes.CONFLICT)
         .json(
           new ApiResponse(
             StatusCodes.CONFLICT,
-            { message: `This chat channe; does not exist.` },
+            { message: `This chat channel does not exist.` },
             "Channel Not Found",
           ),
         );
@@ -253,13 +259,21 @@ const deleteMessageToSingleConservation = asyncHandler(
 
     const userIdToCheck = provider.userId;
 
-    // Ensure the message exists and check if the message is sent by the logged-in user
+    // Build the message query based on channel type (1-on-1 vs group)
+    const messageQuery: any = {
+      id: messageId,
+      senderId: userIdToCheck, // Ensure the message is sent by the login user
+    };
+
+    if (isOneOnOneChannel) {
+      messageQuery.chatChannelId = channelId;
+    } else {
+      messageQuery.groupId = channelId;
+    }
+
+    // Ensure the message exists and belongs to the user
     const message = await prisma.chatMessage.findFirst({
-      where: {
-        id: messageId,
-        chatChannelId: channelId, // Ensure the message belongs to the channel
-        senderId: userIdToCheck, // Ensure the message is sent by the login user
-      },
+      where: messageQuery,
     });
 
     if (!message) {
@@ -607,6 +621,48 @@ const getAllPublicSingleConservationMessage = asyncHandler(
   },
 );
 
+const shareChatByEmail = asyncHandler(async (req: Request, res: Response) => {
+  const { chatChannelId, email, loginUserId } = req.body;
+
+  if (!chatChannelId || !email || !loginUserId) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      message: "chatChannelId, email, and loginUserId are required",
+    });
+  }
+
+  try {
+    const chatChannel = await prisma.chatChannel.findUnique({
+      where: { id: chatChannelId },
+    });
+
+    if (!chatChannel) {
+      return res.status(StatusCodes.NOT_FOUND).json({ message: "Chat channel not found" });
+    }
+
+    const sender = await prisma.user.findUnique({
+      where: { id: loginUserId },
+      select: { fullName: true }
+    });
+
+    const frontendUrl = getFrontendUrl();
+    const chatLink = `${frontendUrl}/invite-chat/individual/${chatChannelId}`;
+
+    await sendShareChatEmail(
+      email,
+      sender?.fullName || "A user",
+      chatLink,
+      'individual'
+    );
+
+    return res.status(StatusCodes.OK).json(
+      new ApiResponse(StatusCodes.OK, null, "Chat shared successfully via email")
+    );
+  } catch (error) {
+    console.error("Error sharing chat:", error);
+    return res.status(500).json({ message: "Error sharing chat", error });
+  }
+});
+
 export {
   getAllSingleConservationMessage,
   sendMessageToSingleConservation,
@@ -615,4 +671,5 @@ export {
   getAllConversations,
   getAllPublicSingleConservationMessage,
   markMessagesAsRead,
+  shareChatByEmail,
 };

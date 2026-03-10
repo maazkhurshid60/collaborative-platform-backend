@@ -6,6 +6,7 @@ import {
   getGroupMessageApi,
   sendMessageToGroupApi,
   updateGroupApi,
+  shareGroupChatByEmail,
 } from "../../controller/chatGroup/chatGroup.controller";
 import { authJWT } from "../../middlewares/auth.middleware";
 import { markMessagesAsRead } from "../../controller/chat/chat.controller";
@@ -21,6 +22,7 @@ chatGroupRouter.post(
   sendMessageToGroupApi,
 );
 chatGroupRouter.post("/get-all-group", getAllGroupsApi);
+chatGroupRouter.post("/share-group-chat", shareGroupChatByEmail);
 chatGroupRouter.post("/read-message", markMessagesAsRead);
 chatGroupRouter.patch("/update-group", updateGroupApi);
 chatGroupRouter.delete("/delete-group-message", deleteGroupChannel);

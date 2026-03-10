@@ -2,7 +2,7 @@ import request from "supertest";
 import app from "../../../app";
 import prisma from "../../../db/db.config";
 import { StatusCodes } from "http-status-codes";
-import { Role } from "@prisma/client";
+import { Role } from "../../../generated/prisma/client";
 
 // Mock the dependencies
 jest.mock("../../../db/db.config", () => {

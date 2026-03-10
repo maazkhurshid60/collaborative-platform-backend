@@ -4,7 +4,7 @@ import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { clientSchema } from "../../schema/client/client.schema";
-import { Role, Gender, Approve } from "@prisma/client";
+import { Role, Gender, Approve } from "../../generated/prisma/client";
 import { userSchema } from "../../schema/auth/auth.schema";
 import bcrypt from "bcrypt";
 
@@ -546,7 +546,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
 
     if (existingUserEmail) {
         return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${normalizedEmail} is already taken.` }, "Duplicate Error")
+            new ApiResponse(StatusCodes.CONFLICT, { error: "Email already exists." }, "Email already exists.")
         );
     }
 
@@ -615,7 +615,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
     } catch (err: any) {
         if (err?.code === "P2002") {
             return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: "Duplicate value. Please use different credentials." }, "Duplicate Error")
+                new ApiResponse(StatusCodes.CONFLICT, { error: "Duplicate value. Please use different credentials." }, "Duplicate value.")
             );
         }
 
@@ -733,7 +733,7 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
         const existingUserEmail = await prisma.user.findFirst({ where: { email: normalizedEmail } });
         if (existingUserEmail) {
             return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${normalizedEmail} is already taken.` }, "Validation failed")
+                new ApiResponse(StatusCodes.CONFLICT, { error: "Email already exists." }, "Email already exists.")
             );
         }
 

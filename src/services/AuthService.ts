@@ -44,10 +44,29 @@ export class AuthService {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 3. Handle Stripe trial for FREE plan
-        let stripeData: { stripeCustomerId: string; stripeSubscriptionId: string; trialEnd: Date } | null = null;
+        // 3. Handle Stripe trial for FREE plan or fetch existing subscription details
+        let stripeData: { stripeCustomerId: string; stripeSubscriptionId: string; trialEnd?: Date; currentPeriodEnd?: Date } | null = null;
         let mappedPlanType = planType;
-        if (planType === 'FREE') {
+
+        const isValidDate = (d: Date | undefined) => d instanceof Date && !isNaN(d.getTime());
+
+        if (userData.subscriptionId) {
+            // User paid BEFORE signup, webhook missed them. Fetch details from Stripe so we can store next billing date.
+            try {
+                const existingStripeSub = await stripe.subscriptions.retrieve(userData.subscriptionId);
+                // current_period_end is null on INCOMPLETE subscriptions — guard against NaN dates
+                const periodEnd = existingStripeSub.current_period_end
+                    ? new Date(existingStripeSub.current_period_end * 1000)
+                    : undefined;
+                stripeData = {
+                    stripeCustomerId: existingStripeSub.customer as string,
+                    stripeSubscriptionId: existingStripeSub.id,
+                    ...(isValidDate(periodEnd) && { currentPeriodEnd: periodEnd })
+                } as any;
+            } catch (err: any) {
+                console.error("❌ Failed to retrieve existing Stripe subscription during signup:", err);
+            }
+        } else if (planType === 'FREE') {
             mappedPlanType = 'STANDARD';
             try {
                 const customer = await stripe.customers.create({
@@ -64,11 +83,15 @@ export class AuthService {
                     metadata: { role, email, planType: 'STANDARD', userId: 'temp' }
                 });
 
+                const periodEnd = subscription.current_period_end
+                    ? new Date(subscription.current_period_end * 1000)
+                    : undefined;
                 stripeData = {
                     stripeCustomerId: customer.id,
                     stripeSubscriptionId: subscription.id,
-                    trialEnd: new Date(subscription.trial_end! * 1000)
-                };
+                    trialEnd: new Date(subscription.trial_end! * 1000),
+                    ...(isValidDate(periodEnd) && { currentPeriodEnd: periodEnd })
+                } as any;
             } catch (error: any) {
                 console.error("❌ Stripe trial creation failed:", error);
                 throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Failed to create trial subscription");
@@ -102,7 +125,8 @@ export class AuthService {
                             create: {
                                 stripeSubscriptionId: userData.subscriptionId,
                                 plan: mappedPlanType || 'STANDARD',
-                                status: 'ACTIVE'
+                                status: 'ACTIVE',
+                                ...(stripeData?.currentPeriodEnd && { currentPeriodEnd: stripeData.currentPeriodEnd })
                             }
                         }
                     }),
@@ -112,6 +136,7 @@ export class AuthService {
                                 stripeSubscriptionId: stripeData?.stripeSubscriptionId,
                                 plan: mappedPlanType,
                                 status: (planType === 'FREE' && stripeData) ? 'TRIALING' : 'ACTIVE',
+                                ...(stripeData?.currentPeriodEnd && { currentPeriodEnd: stripeData.currentPeriodEnd }),
                                 ...(planType === 'FREE' && stripeData && {
                                     trialStart: new Date(),
                                     trialEnd: stripeData.trialEnd
@@ -206,15 +231,52 @@ export class AuthService {
             }
         };
 
+        const safeUserWithRole = {
+            select: {
+                id: true,
+                fullName: true,
+                email: true,
+                profileImage: true,
+                role: true,
+                status: true,
+                isApprove: true,
+                licenseNo: true,
+                age: true,
+                contactNo: true,
+                address: true,
+                country: true,
+                state: true,
+                hasUsedFreeTrial: true,
+            }
+        };
+
         if (role === Role.provider) {
             completeUserData = await prisma.provider.findUnique({
                 where: { userId: userId },
-                include: { user: { select: selectUser }, clientList: true }
+                include: {
+                    user: { select: selectUser },
+                    clientList: {
+                        include: {
+                            client: {
+                                include: { user: safeUserWithRole }
+                            }
+                        }
+                    }
+                }
             });
         } else if (role === Role.client) {
             completeUserData = await prisma.client.findUnique({
                 where: { userId: userId },
-                include: { user: { select: selectUser }, providerList: true }
+                include: {
+                    user: { select: selectUser },
+                    providerList: {
+                        include: {
+                            provider: {
+                                include: { user: safeUserWithRole }
+                            }
+                        }
+                    }
+                }
             });
         } else if (role === Role.superAdmin) {
             completeUserData = await prisma.superAdmin.findUnique({
@@ -245,7 +307,7 @@ export class AuthService {
 
         const isPasswordValid = await bcrypt.compare(passwordInput, user.password);
         if (!isPasswordValid) {
-            throw new ApiError(StatusCodes.UNAUTHORIZED, "Incorrect password");
+            throw new ApiError(StatusCodes.UNAUTHORIZED, "Invaild Credentails");
         }
 
         let roleId;

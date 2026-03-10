@@ -77,12 +77,8 @@ const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) 
 
 const getTotalProviders = asyncHandler(async (req: Request, res: Response) => {
 
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit
     const allProviders = await prisma.provider.findMany({
-        skip,
-        take: limit,
+        take: 1000,
         select: {
             id: true,
             department: true,

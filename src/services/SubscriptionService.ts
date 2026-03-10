@@ -1,5 +1,6 @@
 import prisma from "../db/db.config";
 import { StripeService } from "./StripeService";
+import Stripe from "stripe";
 import { STRIPE_PRICES } from "../utils/stripe/stripe";
 import { ApiError } from "../utils/apiError";
 import { StatusCodes } from "http-status-codes";
@@ -115,10 +116,34 @@ export class SubscriptionService {
         if (!sub) throw new ApiError(StatusCodes.NOT_FOUND, "No active subscription found");
 
         if (sub.stripeSubscriptionId) {
-            const stripeSub = await stripeService.retrieveSubscription(sub.stripeSubscriptionId);
-            await stripeService.cancelSubscription(sub.stripeSubscriptionId);
+            let amountSnapshot = 0;
+            let currency = 'usd';
+            let periodStart: Date | null = null;
+            let periodEnd: Date | null = null;
 
-            const amountSnapshot = stripeSub.items.data[0].plan.amount || 0;
+            // Attempt to retrieve + cancel on Stripe.
+            // If the sub was already cancelled (e.g. from a previous failed attempt),
+            // Stripe returns "No such subscription" — we ignore that and just update the DB.
+            try {
+                const stripeSub = await stripeService.retrieveSubscription(sub.stripeSubscriptionId);
+                amountSnapshot = stripeSub.items.data[0].plan.amount || 0;
+                currency = stripeSub.items.data[0].plan.currency || 'usd';
+
+                // current_period_start/end are null on INCOMPLETE subscriptions — guard against NaN dates
+                if (stripeSub.current_period_start) {
+                    periodStart = new Date(stripeSub.current_period_start * 1000);
+                }
+                if (stripeSub.current_period_end) {
+                    periodEnd = new Date(stripeSub.current_period_end * 1000);
+                }
+
+                await stripeService.cancelSubscription(sub.stripeSubscriptionId);
+            } catch (err: any) {
+                // "resource_missing" means subscription is already gone from Stripe — safe to continue with DB update
+                if (err?.code !== 'resource_missing') {
+                    console.warn("Could not cancel Stripe subscription:", err?.message);
+                }
+            }
 
             await prisma.$transaction([
                 prisma.subscription.update({
@@ -133,13 +158,13 @@ export class SubscriptionService {
                     data: {
                         userId,
                         amount: amountSnapshot,
-                        currency: stripeSub.items.data[0].plan.currency || 'usd',
+                        currency,
                         status: 'CANCELED',
                         plan: sub.plan,
                         stripePaymentIntentId: `manual_cancel_${Date.now()}`,
-                        stripeInvoiceId: `cancel_${sub.stripeSubscriptionId}`,
-                        periodStart: new Date(stripeSub.current_period_start * 1000),
-                        periodEnd: new Date(stripeSub.current_period_end * 1000)
+                        stripeInvoiceId: `cancel_${sub.stripeSubscriptionId}_${Date.now()}`,
+                        ...(periodStart && { periodStart }),
+                        ...(periodEnd && { periodEnd })
                     }
                 })
             ]);
@@ -189,11 +214,21 @@ export class SubscriptionService {
             collection_method: 'charge_automatically',
             payment_behavior: 'default_incomplete',
             payment_settings: { save_default_payment_method: 'on_subscription', payment_method_types: ['card'] },
-            expand: ['latest_invoice.payment_intent', 'pending_setup_intent'],
+            expand: ['latest_invoice.confirmation_secret', 'latest_invoice.payment_intent', 'pending_setup_intent'],
             metadata: { planType, period, email, userId: user?.id || "temp" }
         });
 
+        console.log("Subscription details", subscription)
         if (user) {
+            // Compute an estimated period end based on biling cycle
+            // We cannot trust `subscription.current_period_end` at this point because
+            // the subscription is INCOMPLETE (payment hasn't happened yet) and the date
+            // from Stripe may reflect a trial or yearly interval incorrectly.
+            // The webhook (`invoice.payment_succeeded`) will overwrite this with the real value.
+            const estimatedPeriodEnd = normalizedPeriod === 'YEARLY'
+                ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+                : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
             await prisma.subscription.upsert({
                 where: { userId: user.id },
                 create: {
@@ -201,25 +236,49 @@ export class SubscriptionService {
                     stripeCustomerId: customerId,
                     stripeSubscriptionId: subscription.id,
                     plan: planType as any,
-                    status: (subscription.status.toUpperCase()) as any,
-                    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                    status: 'INCOMPLETE' as any,
+                    currentPeriodEnd: estimatedPeriodEnd,
                     billingCycle: period
                 },
                 update: {
                     stripeSubscriptionId: subscription.id,
                     plan: planType as any,
-                    status: (subscription.status.toUpperCase()) as any,
-                    currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                    status: 'INCOMPLETE' as any,
+                    currentPeriodEnd: estimatedPeriodEnd,
                     billingCycle: period
                 }
             });
             await prisma.user.update({ where: { id: user.id }, data: { hasUsedFreeTrial: true } });
         }
 
-        let latestInvoice = subscription.latest_invoice as any;
-        let clientSecret = latestInvoice?.payment_intent?.client_secret || (subscription.pending_setup_intent as any)?.client_secret;
+        let clientSecret: string | null = null;
+
+        const latestInvoice = subscription.latest_invoice as any;
+
+        // API 2025-12-15.clover+: confirmation_secret replaces payment_intent on Invoice
+        // Keep payment_intent as fallback for older API versions
+        clientSecret = latestInvoice?.confirmation_secret?.client_secret
+            || latestInvoice?.payment_intent?.client_secret
+            || (subscription.pending_setup_intent as any)?.client_secret
+            || null;
+
+        // Last resort: retrieve the invoice manually with both fields expanded
+        if (!clientSecret && latestInvoice?.id) {
+            const freshInvoice = await stripeService.retrieveInvoice(latestInvoice.id);
+            clientSecret = (freshInvoice as any).confirmation_secret?.client_secret
+                || (freshInvoice.payment_intent as any)?.client_secret
+                || null;
+        }
+
+        if (!clientSecret) {
+            throw new ApiError(
+                StatusCodes.INTERNAL_SERVER_ERROR,
+                "Could not retrieve payment client secret from Stripe. Please try again."
+            );
+        }
 
         return { subscriptionId: subscription.id, clientSecret, customerId };
+
     }
 
     async activateFreePlan(userId: string, planType: string) {
@@ -289,21 +348,63 @@ export class SubscriptionService {
     }
 
     async syncSubscription(userId: string) {
-        const sub = await prisma.subscription.findUnique({ where: { userId } });
+        let sub = await prisma.subscription.findUnique({ where: { userId } });
+
+        // If there's no subscription or no Stripe ID yet, try to find one on Stripe via the customer ID
+        if (sub && !sub.stripeSubscriptionId) {
+            const user = await prisma.user.findUnique({ where: { id: userId } });
+            const customerId = user?.stripeCustomerId || (sub as any).stripeCustomerId;
+            if (customerId) {
+                try {
+                    const stripeSubs = await stripeService.listSubscriptions({ customer: customerId, limit: 1, status: 'active' });
+                    if (stripeSubs?.data?.length > 0) {
+                        const found = stripeSubs.data[0];
+                        // Link this subscription
+                        sub = await prisma.subscription.update({
+                            where: { userId },
+                            data: {
+                                stripeSubscriptionId: found.id,
+                                stripeCustomerId: customerId,
+                                currentPeriodEnd: new Date(found.current_period_end * 1000),
+                                status: 'ACTIVE'
+                            }
+                        });
+                    }
+                } catch (e) { /* could not find from Stripe */ }
+            }
+        }
+
         if (!sub || !sub.stripeSubscriptionId) throw new ApiError(StatusCodes.NOT_FOUND, "No stripe subscription found");
 
         const stripeSub = await stripeService.retrieveSubscription(sub.stripeSubscriptionId);
+
+        // Prefer the period end from the latest PAID invoice to avoid using data from an INCOMPLETE subscription
+        // which may not have confirmed billing dates yet.
+        let confirmedPeriodEnd: Date | null = null;
+        try {
+            const latestInvoices = await stripeService.listInvoices({ subscription: sub.stripeSubscriptionId, limit: 1, status: 'paid' });
+            if (latestInvoices.data.length > 0) {
+                const latestInvoice = latestInvoices.data[0];
+                const lineEnd = latestInvoice.lines?.data?.[0]?.period?.end;
+                if (lineEnd) confirmedPeriodEnd = new Date(lineEnd * 1000);
+            }
+        } catch (e) { /* fallback to subscription current_period_end below */ }
 
         const statusMap: Record<string, string> = {
             'active': "ACTIVE", 'past_due': "PAST_DUE", 'canceled': "CANCELED",
             'unpaid': "UNPAID", 'trialing': "TRIALING", 'incomplete': "INCOMPLETE"
         };
 
+        // If the subscription is INCOMPLETE but we have confirmed period from paid invoice, use ACTIVE
+        const derivedStatus = confirmedPeriodEnd
+            ? "ACTIVE"
+            : ((stripeSub.status === 'trialing' && sub.status === 'ACTIVE') ? 'ACTIVE' : (statusMap[stripeSub.status] || "ACTIVE"));
+
         const updatedSub = await prisma.subscription.update({
             where: { userId },
             data: {
-                status: (stripeSub.status === 'trialing' && sub.status === 'ACTIVE') ? 'ACTIVE' : (statusMap[stripeSub.status] || "ACTIVE") as any,
-                currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
+                status: derivedStatus as any,
+                currentPeriodEnd: confirmedPeriodEnd || new Date(stripeSub.current_period_end * 1000),
                 plan: (stripeSub.metadata?.planType || sub.plan) as any,
                 cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
                 billingCycle: stripeSub.metadata?.period || (stripeSub.plan?.interval === 'year' ? 'YEARLY' : 'MONTHLY')
@@ -379,6 +480,12 @@ export class SubscriptionService {
 
         if (!subscriptionId) return;
 
+        // Fetch the full Stripe subscription to get currentPeriodEnd
+        const stripeSub = await stripeService.retrieveSubscription(subscriptionId);
+        const currentPeriodEnd = stripeSub?.current_period_end
+            ? new Date(stripeSub.current_period_end * 1000)
+            : null;
+
         let targetUserId = userId === 'temp' ? null : userId;
         if (!targetUserId && email) {
             const user = await prisma.user.findUnique({ where: { email } });
@@ -391,7 +498,9 @@ export class SubscriptionService {
                 if (existingSub?.stripeSubscriptionId && existingSub.stripeSubscriptionId !== subscriptionId) {
                     try {
                         await stripeService.cancelSubscription(existingSub.stripeSubscriptionId);
-                    } catch (err) { }
+                    } catch (err) {
+                        console.log("Error in Stripe subscription", err)
+                    }
                 }
 
                 await tx.user.update({
@@ -405,14 +514,16 @@ export class SubscriptionService {
                                     stripeSubscriptionId: subscriptionId,
                                     status: "ACTIVE",
                                     plan: planType as any,
-                                    billingCycle: period
+                                    billingCycle: period,
+                                    currentPeriodEnd,  // ← fix: save period end
                                 },
                                 update: {
                                     stripeCustomerId: session.customer as string,
                                     stripeSubscriptionId: subscriptionId,
                                     status: "ACTIVE",
                                     plan: planType as any,
-                                    billingCycle: period
+                                    billingCycle: period,
+                                    currentPeriodEnd,  // ← fix: save period end
                                 }
                             }
                         },
@@ -483,7 +594,11 @@ export class SubscriptionService {
             });
 
             if (invoice.amount_paid >= 0) {
-                await this.recordPayment(prisma, subscription.userId, invoice.id, invoice.amount_paid, invoice.payment_intent, subscription.plan, invoice);
+                // On Stripe API 2025-12-15.clover, payment_intent and charge are both null.
+                // The PI ID is embedded in confirmation_secret.client_secret: "pi_xxx_secret_yyy" → "pi_xxx"
+                const piIdFromSecret = (invoice as any).confirmation_secret?.client_secret?.split('_secret_')?.[0] || null;
+                const paymentRef = invoice.payment_intent || invoice.charge || piIdFromSecret || "webhook";
+                await this.recordPayment(prisma, subscription.userId, invoice.id, invoice.amount_paid, paymentRef, subscription.plan, invoice);
             }
             io.to(subscription.userId).emit("subscription_updated");
         }
@@ -586,12 +701,35 @@ export class SubscriptionService {
         if (existingBefore) return;
 
         let last4 = null;
+
+        // 1st try: use paymentIntentId directly (may be the PI ID extracted from confirmation_secret)
         try {
-            if (paymentIntentId) {
+            if (paymentIntentId && paymentIntentId !== 'webhook' && String(paymentIntentId).startsWith('pi_')) {
                 const pi: any = await stripeService.retrievePaymentIntent(paymentIntentId as string, ['payment_method']);
                 last4 = pi.payment_method?.card?.last4;
             }
-        } catch (e) { }
+        } catch (e) {
+            console.log("Error in 1st try:", e);
+        }
+
+        // 2nd try: get last4 from the charge on the invoice (present after payment succeeds)
+        if (!last4 && invoiceData?.charge) {
+            try {
+                const charge = await stripeService.retrieveCharge(invoiceData.charge as string);
+                last4 = (charge.payment_method_details as any)?.card?.last4;
+            } catch (e) { }
+        }
+
+        // 3rd try: extract PI ID from confirmation_secret.client_secret on the invoice
+        if (!last4 && invoiceData?.confirmation_secret?.client_secret) {
+            try {
+                const piId = invoiceData.confirmation_secret.client_secret.split('_secret_')?.[0];
+                if (piId?.startsWith('pi_')) {
+                    const pi: any = await stripeService.retrievePaymentIntent(piId, ['payment_method']);
+                    last4 = pi.payment_method?.card?.last4;
+                }
+            } catch (e) { }
+        }
 
         let periodStart = null;
         let periodEnd = null;
@@ -657,3 +795,5 @@ export class SubscriptionService {
         }
     }
 }
+
+

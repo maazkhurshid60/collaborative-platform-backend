@@ -8,14 +8,16 @@ export const stripeWebhookApi = async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'];
 
     if (!sig) {
+        console.error("Webhook Error: No stripe signature found");
         return res.status(400).send("No stripe signature found");
     }
 
     try {
-        await subscriptionService.handleWebhook((req as any).rawBody, sig as string, STRIPE_WEBHOOK_SECRET);
+        const rawBody = (req as any).rawBody || req.body;
+        await subscriptionService.handleWebhook(rawBody, sig as string, STRIPE_WEBHOOK_SECRET!);
         res.json({ received: true });
     } catch (error: any) {
-        console.error("Webhook Handler Error:", error);
+        console.error("Webhook Handler Error:", error.message);
         res.status(400).send(`Webhook Error: ${error.message}`);
     }
 };

@@ -46,7 +46,7 @@ const allowedOrigins = [
   "https://collaborative-platform-frontend.vercel.app",
   "https://www.collaborateme.com",
   "https://collaborateme.com",
-  "https://app.kolabme.com/"
+  "https://app.kolabme.com"
 ];
 
 app.use(
@@ -73,14 +73,14 @@ import subscriptionRouter from "./route/subscription/subscription.route";
 
 // ... previous imports
 
-// Capture raw body for Stripe Webhooks
-app.use(express.json({
-  verify: (req: any, res, buf) => {
-    if (req.originalUrl.includes('/webhook')) {
-      req.rawBody = buf;
-    }
+// Skip express.json for stripe webhooks so we can parse the raw body
+app.use((req, res, next) => {
+  if (req.originalUrl.includes('/webhook')) {
+    next();
+  } else {
+    express.json()(req, res, next);
   }
-}));
+});
 app.use(express.urlencoded({ extended: true }));
 app.use(morganMiddleware);
 

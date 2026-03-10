@@ -1,12 +1,16 @@
 import { transporter } from "./NodeMailer";
-import { getFrontendUrl } from "./getFrontendUrl";
 
-export const sendProviderSignupInviteEmail = async (
+export const sendShareChatEmail = async (
   toEmail: string,
-  invitedByName: string,
-  token: string,
+  senderName: string,
+  chatLink: string,
+  chatType: 'individual' | 'group',
+  chatName?: string
 ) => {
-  const signupUrl = `${getFrontendUrl()}/provider-signup?token=${encodeURIComponent(token)}`;
+  const isGroup = chatType === 'group';
+  const subject = isGroup
+    ? `${senderName} shared the group chat "${chatName}" with you`
+    : `${senderName} shared a chat with you`;
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -14,7 +18,7 @@ export const sendProviderSignupInviteEmail = async (
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Kolabme Invitation</title>
+      <title>${subject}</title>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
@@ -35,13 +39,14 @@ export const sendProviderSignupInviteEmail = async (
         
         .main {
           background-color: #ffffff;
-          margin: 40px auto;
+          margin: 0 auto;
           width: 100%;
           max-width: 600px;
           border-spacing: 0;
           color: #1e293b;
           border-radius: 16px;
           overflow: hidden;
+          margin-top: 40px;
           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         
@@ -57,6 +62,7 @@ export const sendProviderSignupInviteEmail = async (
           font-weight: 800;
           letter-spacing: -0.025em;
           margin-bottom: 8px;
+          text-decoration: none;
         }
         
         .header-title {
@@ -86,6 +92,36 @@ export const sendProviderSignupInviteEmail = async (
           margin: 0 0 32px 0;
         }
         
+        .chat-card {
+          background-color: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-left: 4px solid #14b8a6;
+          border-radius: 12px;
+          padding: 24px;
+          margin-bottom: 32px;
+        }
+        
+        .chat-type {
+          display: inline-block;
+          background-color: #ccfbf1;
+          color: #0f766e;
+          font-size: 11px;
+          font-weight: 700;
+          padding: 4px 10px;
+          border-radius: 9999px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          margin-bottom: 12px;
+        }
+        
+        .chat-name {
+          font-size: 18px;
+          font-weight: 700;
+          color: #1e293b;
+          margin: 0;
+          line-height: 1.4;
+        }
+        
         .cta-container {
           text-align: center;
           margin: 40px 0;
@@ -101,6 +137,7 @@ export const sendProviderSignupInviteEmail = async (
           text-decoration: none;
           display: inline-block;
           box-shadow: 0 4px 6px -1px rgba(13, 148, 136, 0.2);
+          transition: all 0.2s ease;
         }
         
         .footer {
@@ -112,6 +149,10 @@ export const sendProviderSignupInviteEmail = async (
           color: #64748b;
           font-size: 13px;
           line-height: 1.5;
+        }
+        
+        .footer strong {
+          color: #475569;
         }
         
         .highlight {
@@ -130,28 +171,35 @@ export const sendProviderSignupInviteEmail = async (
         <div class="main">
           <div class="header">
             <div class="logo">Kolabme</div>
-            <p class="header-title">Provider Invitation</p>
+            <p class="header-title">Secure Chat Invitation</p>
           </div>
           
           <div class="content">
-            <h1 class="greeting">Special Invitation</h1>
+            <h1 class="greeting">New Chat Shared</h1>
             <p class="intro-text">
-              Hello,<br><br>
-              <span class="highlight">${invitedByName}</span> has invited you to join <strong>Kolabme</strong>. Our platform makes it easy for you to chat, collaborate, and manage your workflow in one professional space.
+              <span class="highlight">${senderName}</span> has invited you to join a conversation on <strong>Kolabme</strong>. Use the link below to securely access the chat history and join the discussion.
+            </p>
+            
+            <div class="chat-card">
+              <span class="chat-type">${isGroup ? 'Group Conversation' : 'Direct Conversation'}</span>
+              <p class="chat-name">${isGroup ? chatName : `Chat with ${senderName}`}</p>
+            </div>
+            
+            <p class="intro-text" style="font-size: 15px; margin-bottom: 40px;">
+              You can view all past messages and participate in real-time. If you don't have an account, you can continue as a guest or sign up to save your progress.
             </p>
             
             <div class="cta-container">
-              <a href="${signupUrl}" class="cta-button">Create Provider Account</a>
+              <a href="${chatLink}" class="cta-button">Join Conversation</a>
             </div>
             
-            <p class="intro-text" style="font-size: 15px; margin-bottom: 0;">
-              Best regards,<br>
-              <strong>The Kolabme Team</strong>
+            <p style="font-size: 14px; color: #94a3b8; text-align: center; margin-bottom: 30px;">
+              Button not working? <a href="${chatLink}" style="color: #0d9488; text-decoration: none;">Click here to open link</a>
             </p>
 
-            <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; margin-top: 40px;">
+            <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; margin-top: 24px;">
               <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; line-height: 1.5;">
-                <strong>Security Note:</strong> If you weren't expecting this invitation, you can safely ignore this email. This is an automated message from <strong>Kolabme Collaborative Platform</strong>.
+                This is an automated invitation from <strong>Kolabme Collaborative Platform</strong>. If you weren't expecting this, you can safely ignore this email.
               </p>
             </div>
           </div>
@@ -167,10 +215,10 @@ export const sendProviderSignupInviteEmail = async (
     </html>
   `;
 
-  await transporter.sendMail({
+  return await transporter.sendMail({
     from: `"Kolabme Platform" <${process.env.NODE_MAILER_EMAIL}>`,
     to: toEmail,
-    subject: "You’ve been invited to join Kolabme",
+    subject: subject,
     html: htmlContent,
   });
 };

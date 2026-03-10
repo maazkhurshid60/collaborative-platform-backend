@@ -97,7 +97,12 @@ export class UserService {
     }
 
     async deleteMe(userId: string) {
-        const user = await prisma.user.findUnique({ where: { id: userId } });
+        const user = await prisma.user.findFirst({
+            where: {
+                id: userId,
+                role: Role.provider
+            }
+        });
         if (!user) {
             throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
         }

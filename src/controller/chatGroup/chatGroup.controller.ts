@@ -5,6 +5,8 @@ import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { uploadToS3 } from "../../utils/multer/chatMediaConfig";
 import { decryptText, encryptText } from "../../utils/encryptedMessage/EncryptedMessage";
+import { sendShareChatEmail } from "../../utils/nodeMailer/ShareChatEmail";
+import { getFrontendUrl } from "../../utils/nodeMailer/getFrontendUrl";
 
 const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
     const { groupName, membersId, createdBy } = req.body
@@ -580,5 +582,49 @@ const deleteGroupChannel = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
-export { createGroupApi, getPublicGroupMessageApi, sendMessageToGroupApi, getGroupMessageApi, getAllGroupsApi, updateGroupApi, deleteGroupChannel }
+const shareGroupChatByEmail = asyncHandler(async (req: Request, res: Response) => {
+    const { groupId, email, loginUserId } = req.body;
+
+    if (!groupId || !email || !loginUserId) {
+        return res.status(StatusCodes.BAD_REQUEST).json({
+            message: "groupId, email, and loginUserId are required",
+        });
+    }
+
+    try {
+        const group = await prisma.groupChat.findUnique({
+            where: { id: groupId },
+            select: { name: true }
+        });
+
+        if (!group) {
+            return res.status(StatusCodes.NOT_FOUND).json({ message: "Group chat not found" });
+        }
+
+        const sender = await prisma.user.findUnique({
+            where: { id: loginUserId },
+            select: { fullName: true }
+        });
+
+        const frontendUrl = getFrontendUrl();
+        const chatLink = `${frontendUrl}/invite-chat/group/${groupId}`;
+
+        await sendShareChatEmail(
+            email,
+            sender?.fullName || "A user",
+            chatLink,
+            'group',
+            group.name
+        );
+
+        return res.status(StatusCodes.OK).json(
+            new ApiResponse(StatusCodes.OK, null, "Group chat shared successfully via email")
+        );
+    } catch (error) {
+        console.error("Error sharing group chat:", error);
+        return res.status(500).json({ message: "Error sharing group chat", error });
+    }
+});
+
+export { createGroupApi, getPublicGroupMessageApi, sendMessageToGroupApi, getGroupMessageApi, getAllGroupsApi, updateGroupApi, deleteGroupChannel, shareGroupChatByEmail }
 

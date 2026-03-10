@@ -11,7 +11,6 @@ import { cookiesOptions } from "../../utils/constants";
 import { generateResetToken } from "../../utils/generateResetPasswordToken";
 import { sendResetPasswordEmail } from "../../utils/nodeMailer/ResetPassword";
 import crypto from "crypto";
-import { stripe, STRIPE_PRICES } from "../../utils/stripe/stripe";
 import { sendApprovalEmail } from "../../utils/nodeMailer/sendApprovalEmail";
 import { AuthService } from "../../services/AuthService";
 import { UserService } from "../../services/UserService";
@@ -132,7 +131,7 @@ const blockUserApi = asyncHandler(async (req: Request, res: Response) => {
     });
 
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { user: updatedUser }, "User blocked successfully")
+        new ApiResponse(StatusCodes.OK, { success: true }, "User blocked successfully")
     );
 });
 
@@ -278,6 +277,23 @@ const getAllValidUsersApi = asyncHandler(async (req: Request, res: Response) => 
             NOT: {
                 role: Role.superAdmin
             }
+        },
+        select: {
+            id: true,
+            fullName: true,
+            email: true,
+            licenseNo: true,
+            age: true,
+            contactNo: true,
+            address: true,
+            country: true,
+            state: true,
+            profileImage: true,
+            isApprove: true,
+            role: true,
+            createdAt: true,
+            client: true,
+            provider: true
         }
     })
     return res.status(StatusCodes.OK).json(
@@ -479,7 +495,7 @@ const forgotPasswordApi = asyncHandler(async (req: Request, res: Response) => {
     }
 
     return res.status(200).json(
-        new ApiResponse(200, { success: true, user: updatedUser }, "Reset link sent successfully")
+        new ApiResponse(200, { success: true }, "Reset link sent successfully")
     );
 });
 

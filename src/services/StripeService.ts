@@ -32,12 +32,22 @@ export class StripeService {
 
     async retrieveInvoice(invoiceId: string) {
         return await stripe.invoices.retrieve(invoiceId, {
+            expand: ['confirmation_secret', 'payment_intent']
+        });
+    }
+
+    async finalizeInvoice(invoiceId: string) {
+        return await stripe.invoices.finalizeInvoice(invoiceId, {
             expand: ['payment_intent']
         });
     }
 
     async listInvoices(params: Stripe.InvoiceListParams) {
         return await stripe.invoices.list(params);
+    }
+
+    async listSubscriptions(params: Stripe.SubscriptionListParams) {
+        return await stripe.subscriptions.list(params);
     }
 
     async retrieveCharge(chargeId: string) {
