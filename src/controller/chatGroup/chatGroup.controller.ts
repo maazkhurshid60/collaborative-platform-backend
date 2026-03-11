@@ -7,7 +7,6 @@ import { uploadToS3 } from "../../utils/multer/chatMediaConfig";
 import { decryptText, encryptText } from "../../utils/encryptedMessage/EncryptedMessage";
 import { sendShareChatEmail } from "../../utils/nodeMailer/ShareChatEmail";
 import { sendProviderSignupInviteEmail } from "../../utils/nodeMailer/InviteProviderSignupEmail";
-import { getFrontendUrl } from "../../utils/nodeMailer/getFrontendUrl";
 import crypto from "crypto";
 
 const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
@@ -643,7 +642,7 @@ const shareGroupChatByEmail = asyncHandler(async (req: Request, res: Response) =
             });
 
             return res.status(StatusCodes.OK).json(
-                new ApiResponse(StatusCodes.OK, null, "User was successfully added directly to the group chat.")
+                new ApiResponse(StatusCodes.OK, null, "User invited successfully")
             );
         }
 
