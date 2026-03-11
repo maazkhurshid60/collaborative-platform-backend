@@ -184,13 +184,33 @@ export class AuthService {
 
             if (invitation && invitation.email.toLowerCase() === email.toLowerCase()) {
                 const inviterUserId = invitation.invitedBy.userId;
-                if (newProviderUserId && inviterUserId && inviterUserId !== newProviderUserId) {
-                    const [a, b] = [newProviderUserId, inviterUserId].sort();
-                    await prisma.chatChannel.upsert({
-                        where: { providerAId_providerBId: { providerAId: a, providerBId: b } },
-                        update: {},
-                        create: { providerAId: a, providerBId: b }
-                    });
+
+                if (newProviderUserId) {
+                    if (invitation.groupId) {
+                        // User was invited to a specific group chat
+                        const createdMember = await prisma.groupMembers.create({
+                            data: {
+                                userId: newProviderUserId,
+                                groupChatId: invitation.groupId
+                            }
+                        });
+
+                        await prisma.groupChat.update({
+                            where: { id: invitation.groupId },
+                            data: {
+                                members: { connect: [{ id: createdMember.id }] }
+                            }
+                        }).catch(() => { /* Ignore connect errors if relation is complex, create is enough */ });
+                    } else if (inviterUserId && inviterUserId !== newProviderUserId) {
+                        // Standard provider invite -> 1-on-1 chat
+                        const [a, b] = [newProviderUserId, inviterUserId].sort();
+                        await prisma.chatChannel.upsert({
+                            where: { providerAId_providerBId: { providerAId: a, providerBId: b } },
+                            update: {},
+                            create: { providerAId: a, providerBId: b }
+                        });
+                    }
+
                     await prisma.invitation.update({ where: { id: invitation.id }, data: { status: "ACCEPTED" } });
                 }
             }

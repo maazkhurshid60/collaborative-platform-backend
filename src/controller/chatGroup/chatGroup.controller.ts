@@ -6,7 +6,9 @@ import { ApiResponse } from "../../utils/apiResponse";
 import { uploadToS3 } from "../../utils/multer/chatMediaConfig";
 import { decryptText, encryptText } from "../../utils/encryptedMessage/EncryptedMessage";
 import { sendShareChatEmail } from "../../utils/nodeMailer/ShareChatEmail";
+import { sendProviderSignupInviteEmail } from "../../utils/nodeMailer/InviteProviderSignupEmail";
 import { getFrontendUrl } from "../../utils/nodeMailer/getFrontendUrl";
+import crypto from "crypto";
 
 const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
     const { groupName, membersId, createdBy } = req.body
@@ -15,8 +17,8 @@ const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
         return res.status(StatusCodes.CONFLICT).json(
             new ApiResponse(
                 StatusCodes.CONFLICT,
-                null,
-                `Group name "${groupName}" already exists.`
+                { message: `Group name "${groupName}" already exists.` },
+                "Duplicate Error."
             )
         );
     }
@@ -594,7 +596,7 @@ const shareGroupChatByEmail = asyncHandler(async (req: Request, res: Response) =
     try {
         const group = await prisma.groupChat.findUnique({
             where: { id: groupId },
-            select: { name: true }
+            include: { members: { select: { userId: true } } }
         });
 
         if (!group) {
@@ -603,22 +605,97 @@ const shareGroupChatByEmail = asyncHandler(async (req: Request, res: Response) =
 
         const sender = await prisma.user.findUnique({
             where: { id: loginUserId },
-            select: { fullName: true }
+            include: { provider: true } // Need provider ID to set as invitedBy
         });
 
-        const frontendUrl = getFrontendUrl();
-        const chatLink = `${frontendUrl}/invite-chat/group/${groupId}`;
+        if (!sender) {
+            return res.status(StatusCodes.NOT_FOUND).json({ message: "Sender not found" });
+        }
 
-        await sendShareChatEmail(
-            email,
-            sender?.fullName || "A user",
-            chatLink,
-            'group',
-            group.name
+        // 1. Check if the email belongs to an existing user
+        const existingUser = await prisma.user.findFirst({
+            where: { email: email.toLowerCase() },
+            include: { provider: true, client: true, superAdmin: true }
+        });
+
+        if (existingUser) {
+            // Check if already in group
+            const isAlreadyMember = group.members.some(member => member.userId === existingUser.id);
+            if (isAlreadyMember) {
+                return res.status(StatusCodes.CONFLICT).json(
+                    new ApiResponse(StatusCodes.CONFLICT, null, "User is already a member of this group chat.")
+                );
+            }
+
+            // User exists but is not in the group. Add them.
+            const createGroupMember = await prisma.groupMembers.create({
+                data: {
+                    userId: existingUser.id,
+                    groupChatId: groupId
+                }
+            });
+
+            await prisma.groupChat.update({
+                where: { id: groupId },
+                data: {
+                    members: { connect: [{ id: createGroupMember.id }] }
+                }
+            });
+
+            return res.status(StatusCodes.OK).json(
+                new ApiResponse(StatusCodes.OK, null, "User was successfully added directly to the group chat.")
+            );
+        }
+
+        // 2. User completely new, create invitation
+        // First check if a pending invitation already exists for this email
+        const existingInvite = await prisma.invitation.findFirst({
+            where: { email: email.toLowerCase(), status: 'PENDING' }
+        });
+
+        let token: string;
+        let invitedById = sender.provider?.id;
+
+        // Ensure inviter is a provider, otherwise try to find first provider to act as inviter
+        if (!invitedById) {
+            const anyProvider = await prisma.provider.findFirst();
+            if (anyProvider) invitedById = anyProvider.id;
+        }
+
+        if (existingInvite) {
+            // Just update the groupId on the existing invite to make sure they join the group on signup
+            token = existingInvite.token;
+            await prisma.invitation.update({
+                where: { id: existingInvite.id },
+                data: { groupId }
+            });
+        } else {
+            // Create a new invitation 
+            if (!invitedById) {
+                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+                    new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, null, "Cannot create invitation: no provider found to act as inviter.")
+                );
+            }
+            token = crypto.randomBytes(32).toString("hex");
+            await prisma.invitation.create({
+                data: {
+                    token,
+                    email: email.toLowerCase(),
+                    invitedById,
+                    groupId
+                }
+            });
+        }
+
+        // Send the standard provider signup invite email
+        await sendProviderSignupInviteEmail(
+            email.toLowerCase(),
+            sender.fullName || "A Kolabme User",
+            token
         );
 
         return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, null, "Group chat shared successfully via email")
+            new ApiResponse(StatusCodes.OK, null, "Invitation email sent successfully. They will join the group upon signing up.")
         );
     } catch (error) {
         console.error("Error sharing group chat:", error);

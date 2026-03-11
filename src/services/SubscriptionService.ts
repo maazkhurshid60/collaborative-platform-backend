@@ -145,29 +145,37 @@ export class SubscriptionService {
                 }
             }
 
-            await prisma.$transaction([
-                prisma.subscription.update({
+            await prisma.$transaction(async (tx) => {
+                await tx.subscription.update({
                     where: { userId },
                     data: {
                         status: "CANCELED",
                         cancelAtPeriodEnd: false,
                         cancelReason: reason
                     }
-                }),
-                prisma.payment.create({
-                    data: {
-                        userId,
-                        amount: amountSnapshot,
-                        currency,
-                        status: 'CANCELED',
-                        plan: sub.plan,
-                        stripePaymentIntentId: `manual_cancel_${Date.now()}`,
-                        stripeInvoiceId: `cancel_${sub.stripeSubscriptionId}_${Date.now()}`,
-                        ...(periodStart && { periodStart }),
-                        ...(periodEnd && { periodEnd })
-                    }
-                })
-            ]);
+                });
+
+                const invoiceId = `cancel_${sub.stripeSubscriptionId}`;
+                const existingPayment = await tx.payment.findFirst({
+                    where: { stripeInvoiceId: invoiceId }
+                });
+
+                if (!existingPayment) {
+                    await tx.payment.create({
+                        data: {
+                            userId,
+                            amount: amountSnapshot,
+                            currency,
+                            status: 'CANCELED',
+                            plan: sub.plan,
+                            stripePaymentIntentId: `manual_cancel_${sub.stripeSubscriptionId}`,
+                            stripeInvoiceId: invoiceId,
+                            ...(periodStart && { periodStart }),
+                            ...(periodEnd && { periodEnd })
+                        }
+                    });
+                }
+            });
         } else {
             await prisma.subscription.update({
                 where: { userId },
@@ -327,7 +335,7 @@ export class SubscriptionService {
             amount: amountFormatted,
             status,
             plan: planName,
-            last4: payment.paymentMethodLast4 || '4242',
+            last4: payment.paymentMethodLast4 || '****',
             billTo: {
                 name: payment.user.fullName,
                 email: payment.user.email,
@@ -468,6 +476,12 @@ export class SubscriptionService {
             case 'customer.subscription.updated':
                 await this.handleSubscriptionUpdated(event.data.object as any);
                 break;
+            case 'payment_method.attached':
+                await this.handlePaymentMethodAttached(event.data.object as any);
+                break;
+            case 'charge.succeeded':
+                await this.handleChargeSucceeded(event.data.object as any);
+                break;
         }
     }
 
@@ -532,6 +546,22 @@ export class SubscriptionService {
                 });
 
             });
+
+            // Cleanup payment methods: set new as default and remove old ones
+            if (session.payment_intent) {
+                try {
+                    const pi = await stripeService.retrievePaymentIntent(session.payment_intent as string, ['payment_method']);
+                    const pmId = typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id;
+                    if (pmId) {
+                        await this.cleanupPaymentMethods(session.customer as string, pmId);
+                    }
+                } catch (err) {
+                    console.error("Error cleaning up payment methods in checkout session:", err);
+                }
+            } else if (session.setup_intent) {
+                // handle setup intent if needed
+            }
+
             io.to(targetUserId).emit("subscription_updated");
         }
     }
@@ -598,7 +628,82 @@ export class SubscriptionService {
                 // The PI ID is embedded in confirmation_secret.client_secret: "pi_xxx_secret_yyy" → "pi_xxx"
                 const piIdFromSecret = (invoice as any).confirmation_secret?.client_secret?.split('_secret_')?.[0] || null;
                 const paymentRef = invoice.payment_intent || invoice.charge || piIdFromSecret || "webhook";
+
+                // ─── DIAGNOSTIC LOGGING ───────────────────────────────────────────
+                console.log('\n========== [invoice.payment_succeeded] DIAGNOSTIC ==========');
+                console.log('invoice.id:', invoice.id);
+                console.log('invoice.amount_paid:', invoice.amount_paid);
+                console.log('invoice.payment_intent (raw):', invoice.payment_intent);
+                console.log('invoice.charge (raw):', invoice.charge);
+                console.log('confirmation_secret.client_secret:', (invoice as any).confirmation_secret?.client_secret);
+                console.log('Extracted PI ID:', paymentRef);
+
+                // Fetch the PI with latest_charge expanded to verify card details
+                let expandedLast4: string | null = null;
+                if (paymentRef && String(paymentRef).startsWith('pi_')) {
+                    try {
+                        const pi: any = await stripeService.retrievePaymentIntent(paymentRef, ['latest_charge', 'payment_method']);
+                        const charge = pi.latest_charge;
+                        expandedLast4 = charge?.payment_method_details?.card?.last4 || null;
+
+                        console.log('\n--- Expanded PaymentIntent ---');
+                        console.log('pi.id:', pi.id);
+                        console.log('pi.status:', pi.status);
+                        console.log('latest_charge.id:', charge?.id);
+                        console.log('latest_charge.status:', charge?.status);
+                        console.log('latest_charge.payment_method_details.card:', {
+                            brand: charge?.payment_method_details?.card?.brand,
+                            last4: charge?.payment_method_details?.card?.last4,
+                            exp_month: charge?.payment_method_details?.card?.exp_month,
+                            exp_year: charge?.payment_method_details?.card?.exp_year,
+                        });
+                        console.log('✅ last4 from latest_charge:', expandedLast4);
+                    } catch (e: any) {
+                        console.log('❌ Failed to expand PI:', e?.message);
+                    }
+                } else {
+                    console.log('⚠️  No valid PI ID found — last4 will rely on payment_method.attached event');
+                }
+                console.log('============================================================\n');
+                // ─────────────────────────────────────────────────────────────────
+
                 await this.recordPayment(prisma, subscription.userId, invoice.id, invoice.amount_paid, paymentRef, subscription.plan, invoice);
+
+                // If we successfully expanded the PI and got last4, immediately patch the new payment record.
+                // This closes the timing gap: charge.succeeded updates an OLD payment, invoice.payment_succeeded
+                // creates a NEW payment that may still have null last4 if recordPayment's expand failed.
+                if (expandedLast4) {
+                    try {
+                        const newPayment = await prisma.payment.findFirst({
+                            where: { stripeInvoiceId: invoice.id }
+                        });
+                        if (newPayment && !newPayment.paymentMethodLast4) {
+                            await prisma.payment.update({
+                                where: { id: newPayment.id },
+                                data: { paymentMethodLast4: expandedLast4 }
+                            });
+                            console.log(`✅ Patched new payment ${newPayment.id} with last4: ${expandedLast4}`);
+                        }
+                    } catch (e) {
+                        console.log('Failed to patch new payment with last4:', e);
+                    }
+                }
+
+                // Cleanup payment methods if we have a payment intent or charge
+                const pmId = invoice.payment_settings?.default_payment_method || invoice.default_payment_method;
+                if (pmId && typeof pmId === 'string') {
+                    await this.cleanupPaymentMethods(invoice.customer as string, pmId);
+                } else if (invoice.payment_intent && typeof invoice.payment_intent === 'string') {
+                    try {
+                        const pi = await stripeService.retrievePaymentIntent(invoice.payment_intent, ['payment_method']);
+                        const pmIdFromPi = typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id;
+                        if (pmIdFromPi) {
+                            await this.cleanupPaymentMethods(invoice.customer as string, pmIdFromPi);
+                        }
+                    } catch (e) {
+                        console.error("Error retrieving PM from PI for cleanup:", e);
+                    }
+                }
             }
             io.to(subscription.userId).emit("subscription_updated");
         }
@@ -643,26 +748,27 @@ export class SubscriptionService {
             }
 
             const invoiceId = `cancel_${subscription.id}`;
-            const existingRecord = await prisma.payment.findFirst({ where: { stripeInvoiceId: invoiceId } });
-            if (existingRecord) return;
-
-            await prisma.$transaction([
-                prisma.subscription.update({
+            await prisma.$transaction(async (tx) => {
+                await tx.subscription.update({
                     where: { id: deletedSub.id },
                     data: { status: "CANCELED", cancelAtPeriodEnd: false }
-                }),
-                prisma.payment.create({
-                    data: {
-                        userId: deletedSub.userId,
-                        amount: subscription.items?.data[0]?.plan?.amount || 0,
-                        currency: subscription.items?.data[0]?.plan?.currency || 'usd',
-                        status: 'CANCELED',
-                        plan: deletedSub.plan,
-                        stripePaymentIntentId: `stripe_cancel_${subscription.id}`,
-                        stripeInvoiceId: invoiceId
-                    }
-                })
-            ]);
+                });
+
+                const existingRecord = await tx.payment.findFirst({ where: { stripeInvoiceId: invoiceId } });
+                if (!existingRecord) {
+                    await tx.payment.create({
+                        data: {
+                            userId: deletedSub.userId,
+                            amount: subscription.items?.data[0]?.plan?.amount || 0,
+                            currency: subscription.items?.data[0]?.plan?.currency || 'usd',
+                            status: 'CANCELED',
+                            plan: deletedSub.plan,
+                            stripePaymentIntentId: `stripe_cancel_${subscription.id}`,
+                            stripeInvoiceId: invoiceId
+                        }
+                    });
+                }
+            });
             io.to(deletedSub.userId).emit("subscription_updated");
         }
     }
@@ -702,33 +808,42 @@ export class SubscriptionService {
 
         let last4 = null;
 
-        // 1st try: use paymentIntentId directly (may be the PI ID extracted from confirmation_secret)
+        // Primary: retrieve the PaymentIntent with latest_charge expanded
+        // This is the most reliable way — latest_charge always has payment_method_details.card.last4
         try {
-            if (paymentIntentId && paymentIntentId !== 'webhook' && String(paymentIntentId).startsWith('pi_')) {
-                const pi: any = await stripeService.retrievePaymentIntent(paymentIntentId as string, ['payment_method']);
-                last4 = pi.payment_method?.card?.last4;
+            let piId = paymentIntentId;
+
+            // If no direct PI ID, parse it from confirmation_secret on the invoice
+            if ((!piId || piId === 'webhook') && invoiceData?.confirmation_secret?.client_secret) {
+                piId = invoiceData.confirmation_secret.client_secret.split('_secret_')?.[0];
+            }
+
+            if (piId && String(piId).startsWith('pi_')) {
+                const pi: any = await stripeService.retrievePaymentIntent(piId as string, ['latest_charge', 'payment_method']);
+                // Best path: latest_charge always includes payment_method_details
+                last4 = (pi.latest_charge as any)?.payment_method_details?.card?.last4
+                    // Fallback: payment_method expanded on the PI
+                    || (pi.payment_method as any)?.card?.last4
+                    || null;
+                if (last4) console.log(`[recordPayment] Got last4 from PI expand: ${last4}`);
             }
         } catch (e) {
-            console.log("Error in 1st try:", e);
+            console.log('[recordPayment] PI expand failed, trying charge directly:', (e as any)?.message);
         }
 
-        // 2nd try: get last4 from the charge on the invoice (present after payment succeeds)
+        // Fallback 1: retrieve the charge directly using its ID from the invoice
         if (!last4 && invoiceData?.charge) {
             try {
                 const charge = await stripeService.retrieveCharge(invoiceData.charge as string);
-                last4 = (charge.payment_method_details as any)?.card?.last4;
+                last4 = (charge.payment_method_details as any)?.card?.last4 || null;
+                if (last4) console.log(`[recordPayment] Got last4 from charge: ${last4}`);
             } catch (e) { }
         }
 
-        // 3rd try: extract PI ID from confirmation_secret.client_secret on the invoice
-        if (!last4 && invoiceData?.confirmation_secret?.client_secret) {
-            try {
-                const piId = invoiceData.confirmation_secret.client_secret.split('_secret_')?.[0];
-                if (piId?.startsWith('pi_')) {
-                    const pi: any = await stripeService.retrievePaymentIntent(piId, ['payment_method']);
-                    last4 = pi.payment_method?.card?.last4;
-                }
-            } catch (e) { }
+        // Fallback 2: check invoice default_payment_method if already expanded as object
+        if (!last4 && invoiceData?.default_payment_method && typeof invoiceData.default_payment_method === 'object') {
+            last4 = (invoiceData.default_payment_method as any).card?.last4 || null;
+            if (last4) console.log(`[recordPayment] Got last4 from default_payment_method: ${last4}`);
         }
 
         let periodStart = null;
@@ -777,6 +892,126 @@ export class SubscriptionService {
             if (error.code !== 'P2002') {
                 throw error;
             }
+        }
+    }
+
+    private async handleChargeSucceeded(charge: any) {
+        // charge.succeeded always includes payment_method_details.card.last4 without any expansion
+        const customerId = charge.customer;
+        const last4 = charge.payment_method_details?.card?.last4;
+
+        console.log('\n========== [charge.succeeded] ==========');
+        console.log('charge.id:', charge.id);
+        console.log('charge.customer:', customerId);
+        console.log('payment_method_details.card:', {
+            brand: charge.payment_method_details?.card?.brand,
+            last4: charge.payment_method_details?.card?.last4,
+        });
+
+        if (!customerId || !last4) {
+            console.log('⚠️  Missing customerId or last4 — skipping');
+            console.log('========================================\n');
+            return;
+        }
+
+        try {
+            // Try via subscription.stripeCustomerId first, then fall back to user.stripeCustomerId
+            let user = await prisma.user.findFirst({
+                where: { subscription: { stripeCustomerId: customerId } },
+                include: { subscription: true }
+            });
+
+            if (!user) {
+                console.log('User not found via subscription.stripeCustomerId, trying user.stripeCustomerId...');
+                user = await prisma.user.findFirst({
+                    where: { stripeCustomerId: customerId },
+                    include: { subscription: true }
+                });
+            }
+
+            if (user) {
+                console.log('✅ Found user:', user.id);
+
+                const latestPayment = await prisma.payment.findFirst({
+                    where: { userId: user.id },
+                    orderBy: { createdAt: 'desc' }
+                });
+
+                if (latestPayment) {
+                    await prisma.payment.update({
+                        where: { id: latestPayment.id },
+                        data: { paymentMethodLast4: last4 }
+                    });
+                    console.log(`✅ Updated payment ${latestPayment.id} with last4: ${last4}`);
+                } else {
+                    console.log('⚠️  No payment record found for user yet — will rely on invoice.payment_succeeded');
+                }
+            } else {
+                console.log('❌ No user found for customerId:', customerId);
+            }
+        } catch (error) {
+            console.error("Error in handleChargeSucceeded:", error);
+        }
+        console.log('========================================\n');
+    }
+
+    private async handlePaymentMethodAttached(paymentMethod: any) {
+        const customerId = paymentMethod.customer;
+        const last4 = paymentMethod.card?.last4;
+        if (!customerId || !last4) return;
+
+        try {
+            const user = await prisma.user.findFirst({
+                where: { subscription: { stripeCustomerId: customerId } },
+                include: { subscription: true }
+            });
+
+            if (user) {
+                // Find the most recent payment for this user — update it with real last4 digits
+                // regardless of whether last4 was previously set to null or a placeholder
+                const latestPayment = await prisma.payment.findFirst({
+                    where: { userId: user.id },
+                    orderBy: { createdAt: 'desc' }
+                });
+
+                if (latestPayment) {
+                    await prisma.payment.update({
+                        where: { id: latestPayment.id },
+                        data: { paymentMethodLast4: last4 }
+                    });
+                    console.log(`Updated payment ${latestPayment.id} with last4: ${last4}`);
+                }
+            }
+        } catch (error) {
+            console.error("Error in handlePaymentMethodAttached:", error);
+        }
+    }
+
+    private async cleanupPaymentMethods(customerId: string, newPaymentMethodId: string) {
+        try {
+            // 1. Set the new payment method as the default for the customer
+            await stripeService.updateCustomer(customerId, {
+                invoice_settings: {
+                    default_payment_method: newPaymentMethodId,
+                },
+            });
+
+            // 2. List all card payment methods for the customer
+            const paymentMethods = await stripeService.listPaymentMethods(customerId);
+
+            // 3. Detach all other payment methods
+            for (const pm of paymentMethods.data) {
+                if (pm.id !== newPaymentMethodId) {
+                    try {
+                        await stripeService.detachPaymentMethod(pm.id);
+                        console.log(`Successfully detached old payment method: ${pm.id} for customer: ${customerId}`);
+                    } catch (detachError) {
+                        console.error(`Failed to detach payment method ${pm.id}:`, detachError);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`Error in cleanupPaymentMethods for customer ${customerId}:`, error);
         }
     }
 

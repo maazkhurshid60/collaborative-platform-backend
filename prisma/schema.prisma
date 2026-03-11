@@ -144,14 +144,15 @@ model DocumentShareWith {
 }
 
 model GroupChat {
-  id         String         @id @default(uuid())
-  name       String
-  providerId String
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-  messages   ChatMessage[]
-  provider   Provider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  members    GroupMembers[]
+  id          String         @id @default(uuid())
+  name        String
+  providerId  String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  messages    ChatMessage[]
+  provider    Provider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  members     GroupMembers[]
+  invitations Invitation[]
 }
 
 model GroupMembers {
@@ -179,9 +180,11 @@ model Invitation {
   token       String           @unique
   email       String
   invitedById String
+  groupId     String? // Add null-able groupId for group invitations
   status      InvitationStatus @default(PENDING)
   createdAt   DateTime         @default(now())
   invitedBy   Provider         @relation(fields: [invitedById], references: [id])
+  group       GroupChat?       @relation(fields: [groupId], references: [id]) // Connect to GroupChat
 }
 
 model Notification {

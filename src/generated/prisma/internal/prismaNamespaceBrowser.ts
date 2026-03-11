@@ -242,6 +242,7 @@ export const InvitationScalarFieldEnum = {
   token: 'token',
   email: 'email',
   invitedById: 'invitedById',
+  groupId: 'groupId',
   status: 'status',
   createdAt: 'createdAt'
 } as const

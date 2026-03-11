@@ -29,6 +29,7 @@ export type InvitationMinAggregateOutputType = {
   token: string | null
   email: string | null
   invitedById: string | null
+  groupId: string | null
   status: $Enums.InvitationStatus | null
   createdAt: Date | null
 }
@@ -38,6 +39,7 @@ export type InvitationMaxAggregateOutputType = {
   token: string | null
   email: string | null
   invitedById: string | null
+  groupId: string | null
   status: $Enums.InvitationStatus | null
   createdAt: Date | null
 }
@@ -47,6 +49,7 @@ export type InvitationCountAggregateOutputType = {
   token: number
   email: number
   invitedById: number
+  groupId: number
   status: number
   createdAt: number
   _all: number
@@ -58,6 +61,7 @@ export type InvitationMinAggregateInputType = {
   token?: true
   email?: true
   invitedById?: true
+  groupId?: true
   status?: true
   createdAt?: true
 }
@@ -67,6 +71,7 @@ export type InvitationMaxAggregateInputType = {
   token?: true
   email?: true
   invitedById?: true
+  groupId?: true
   status?: true
   createdAt?: true
 }
@@ -76,6 +81,7 @@ export type InvitationCountAggregateInputType = {
   token?: true
   email?: true
   invitedById?: true
+  groupId?: true
   status?: true
   createdAt?: true
   _all?: true
@@ -158,6 +164,7 @@ export type InvitationGroupByOutputType = {
   token: string
   email: string
   invitedById: string
+  groupId: string | null
   status: $Enums.InvitationStatus
   createdAt: Date
   _count: InvitationCountAggregateOutputType | null
@@ -188,9 +195,11 @@ export type InvitationWhereInput = {
   token?: Prisma.StringFilter<"Invitation"> | string
   email?: Prisma.StringFilter<"Invitation"> | string
   invitedById?: Prisma.StringFilter<"Invitation"> | string
+  groupId?: Prisma.StringNullableFilter<"Invitation"> | string | null
   status?: Prisma.EnumInvitationStatusFilter<"Invitation"> | $Enums.InvitationStatus
   createdAt?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   invitedBy?: Prisma.XOR<Prisma.ProviderScalarRelationFilter, Prisma.ProviderWhereInput>
+  group?: Prisma.XOR<Prisma.GroupChatNullableScalarRelationFilter, Prisma.GroupChatWhereInput> | null
 }
 
 export type InvitationOrderByWithRelationInput = {
@@ -198,9 +207,11 @@ export type InvitationOrderByWithRelationInput = {
   token?: Prisma.SortOrder
   email?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
+  groupId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   invitedBy?: Prisma.ProviderOrderByWithRelationInput
+  group?: Prisma.GroupChatOrderByWithRelationInput
 }
 
 export type InvitationWhereUniqueInput = Prisma.AtLeast<{
@@ -211,9 +222,11 @@ export type InvitationWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.InvitationWhereInput | Prisma.InvitationWhereInput[]
   email?: Prisma.StringFilter<"Invitation"> | string
   invitedById?: Prisma.StringFilter<"Invitation"> | string
+  groupId?: Prisma.StringNullableFilter<"Invitation"> | string | null
   status?: Prisma.EnumInvitationStatusFilter<"Invitation"> | $Enums.InvitationStatus
   createdAt?: Prisma.DateTimeFilter<"Invitation"> | Date | string
   invitedBy?: Prisma.XOR<Prisma.ProviderScalarRelationFilter, Prisma.ProviderWhereInput>
+  group?: Prisma.XOR<Prisma.GroupChatNullableScalarRelationFilter, Prisma.GroupChatWhereInput> | null
 }, "id" | "token">
 
 export type InvitationOrderByWithAggregationInput = {
@@ -221,6 +234,7 @@ export type InvitationOrderByWithAggregationInput = {
   token?: Prisma.SortOrder
   email?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
+  groupId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.InvitationCountOrderByAggregateInput
@@ -236,6 +250,7 @@ export type InvitationScalarWhereWithAggregatesInput = {
   token?: Prisma.StringWithAggregatesFilter<"Invitation"> | string
   email?: Prisma.StringWithAggregatesFilter<"Invitation"> | string
   invitedById?: Prisma.StringWithAggregatesFilter<"Invitation"> | string
+  groupId?: Prisma.StringNullableWithAggregatesFilter<"Invitation"> | string | null
   status?: Prisma.EnumInvitationStatusWithAggregatesFilter<"Invitation"> | $Enums.InvitationStatus
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Invitation"> | Date | string
 }
@@ -247,6 +262,7 @@ export type InvitationCreateInput = {
   status?: $Enums.InvitationStatus
   createdAt?: Date | string
   invitedBy: Prisma.ProviderCreateNestedOneWithoutInvitationsInput
+  group?: Prisma.GroupChatCreateNestedOneWithoutInvitationsInput
 }
 
 export type InvitationUncheckedCreateInput = {
@@ -254,6 +270,7 @@ export type InvitationUncheckedCreateInput = {
   token: string
   email: string
   invitedById: string
+  groupId?: string | null
   status?: $Enums.InvitationStatus
   createdAt?: Date | string
 }
@@ -265,6 +282,7 @@ export type InvitationUpdateInput = {
   status?: Prisma.EnumInvitationStatusFieldUpdateOperationsInput | $Enums.InvitationStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   invitedBy?: Prisma.ProviderUpdateOneRequiredWithoutInvitationsNestedInput
+  group?: Prisma.GroupChatUpdateOneWithoutInvitationsNestedInput
 }
 
 export type InvitationUncheckedUpdateInput = {
@@ -272,6 +290,7 @@ export type InvitationUncheckedUpdateInput = {
   token?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   invitedById?: Prisma.StringFieldUpdateOperationsInput | string
+  groupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumInvitationStatusFieldUpdateOperationsInput | $Enums.InvitationStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -281,6 +300,7 @@ export type InvitationCreateManyInput = {
   token: string
   email: string
   invitedById: string
+  groupId?: string | null
   status?: $Enums.InvitationStatus
   createdAt?: Date | string
 }
@@ -298,6 +318,7 @@ export type InvitationUncheckedUpdateManyInput = {
   token?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   invitedById?: Prisma.StringFieldUpdateOperationsInput | string
+  groupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumInvitationStatusFieldUpdateOperationsInput | $Enums.InvitationStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -317,6 +338,7 @@ export type InvitationCountOrderByAggregateInput = {
   token?: Prisma.SortOrder
   email?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
+  groupId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -326,6 +348,7 @@ export type InvitationMaxOrderByAggregateInput = {
   token?: Prisma.SortOrder
   email?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
+  groupId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -335,6 +358,7 @@ export type InvitationMinOrderByAggregateInput = {
   token?: Prisma.SortOrder
   email?: Prisma.SortOrder
   invitedById?: Prisma.SortOrder
+  groupId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
@@ -381,6 +405,48 @@ export type InvitationUncheckedUpdateManyWithoutInvitedByNestedInput = {
   deleteMany?: Prisma.InvitationScalarWhereInput | Prisma.InvitationScalarWhereInput[]
 }
 
+export type InvitationCreateNestedManyWithoutGroupInput = {
+  create?: Prisma.XOR<Prisma.InvitationCreateWithoutGroupInput, Prisma.InvitationUncheckedCreateWithoutGroupInput> | Prisma.InvitationCreateWithoutGroupInput[] | Prisma.InvitationUncheckedCreateWithoutGroupInput[]
+  connectOrCreate?: Prisma.InvitationCreateOrConnectWithoutGroupInput | Prisma.InvitationCreateOrConnectWithoutGroupInput[]
+  createMany?: Prisma.InvitationCreateManyGroupInputEnvelope
+  connect?: Prisma.InvitationWhereUniqueInput | Prisma.InvitationWhereUniqueInput[]
+}
+
+export type InvitationUncheckedCreateNestedManyWithoutGroupInput = {
+  create?: Prisma.XOR<Prisma.InvitationCreateWithoutGroupInput, Prisma.InvitationUncheckedCreateWithoutGroupInput> | Prisma.InvitationCreateWithoutGroupInput[] | Prisma.InvitationUncheckedCreateWithoutGroupInput[]
+  connectOrCreate?: Prisma.InvitationCreateOrConnectWithoutGroupInput | Prisma.InvitationCreateOrConnectWithoutGroupInput[]
+  createMany?: Prisma.InvitationCreateManyGroupInputEnvelope
+  connect?: Prisma.InvitationWhereUniqueInput | Prisma.InvitationWhereUniqueInput[]
+}
+
+export type InvitationUpdateManyWithoutGroupNestedInput = {
+  create?: Prisma.XOR<Prisma.InvitationCreateWithoutGroupInput, Prisma.InvitationUncheckedCreateWithoutGroupInput> | Prisma.InvitationCreateWithoutGroupInput[] | Prisma.InvitationUncheckedCreateWithoutGroupInput[]
+  connectOrCreate?: Prisma.InvitationCreateOrConnectWithoutGroupInput | Prisma.InvitationCreateOrConnectWithoutGroupInput[]
+  upsert?: Prisma.InvitationUpsertWithWhereUniqueWithoutGroupInput | Prisma.InvitationUpsertWithWhereUniqueWithoutGroupInput[]
+  createMany?: Prisma.InvitationCreateManyGroupInputEnvelope
+  set?: Prisma.InvitationWhereUniqueInput | Prisma.InvitationWhereUniqueInput[]
+  disconnect?: Prisma.InvitationWhereUniqueInput | Prisma.InvitationWhereUniqueInput[]
+  delete?: Prisma.InvitationWhereUniqueInput | Prisma.InvitationWhereUniqueInput[]
+  connect?: Prisma.InvitationWhereUniqueInput | Prisma.InvitationWhereUniqueInput[]
+  update?: Prisma.InvitationUpdateWithWhereUniqueWithoutGroupInput | Prisma.InvitationUpdateWithWhereUniqueWithoutGroupInput[]
+  updateMany?: Prisma.InvitationUpdateManyWithWhereWithoutGroupInput | Prisma.InvitationUpdateManyWithWhereWithoutGroupInput[]
+  deleteMany?: Prisma.InvitationScalarWhereInput | Prisma.InvitationScalarWhereInput[]
+}
+
+export type InvitationUncheckedUpdateManyWithoutGroupNestedInput = {
+  create?: Prisma.XOR<Prisma.InvitationCreateWithoutGroupInput, Prisma.InvitationUncheckedCreateWithoutGroupInput> | Prisma.InvitationCreateWithoutGroupInput[] | Prisma.InvitationUncheckedCreateWithoutGroupInput[]
+  connectOrCreate?: Prisma.InvitationCreateOrConnectWithoutGroupInput | Prisma.InvitationCreateOrConnectWithoutGroupInput[]
+  upsert?: Prisma.InvitationUpsertWithWhereUniqueWithoutGroupInput | Prisma.InvitationUpsertWithWhereUniqueWithoutGroupInput[]
+  createMany?: Prisma.InvitationCreateManyGroupInputEnvelope
+  set?: Prisma.InvitationWhereUniqueInput | Prisma.InvitationWhereUniqueInput[]
+  disconnect?: Prisma.InvitationWhereUniqueInput | Prisma.InvitationWhereUniqueInput[]
+  delete?: Prisma.InvitationWhereUniqueInput | Prisma.InvitationWhereUniqueInput[]
+  connect?: Prisma.InvitationWhereUniqueInput | Prisma.InvitationWhereUniqueInput[]
+  update?: Prisma.InvitationUpdateWithWhereUniqueWithoutGroupInput | Prisma.InvitationUpdateWithWhereUniqueWithoutGroupInput[]
+  updateMany?: Prisma.InvitationUpdateManyWithWhereWithoutGroupInput | Prisma.InvitationUpdateManyWithWhereWithoutGroupInput[]
+  deleteMany?: Prisma.InvitationScalarWhereInput | Prisma.InvitationScalarWhereInput[]
+}
+
 export type EnumInvitationStatusFieldUpdateOperationsInput = {
   set?: $Enums.InvitationStatus
 }
@@ -391,12 +457,14 @@ export type InvitationCreateWithoutInvitedByInput = {
   email: string
   status?: $Enums.InvitationStatus
   createdAt?: Date | string
+  group?: Prisma.GroupChatCreateNestedOneWithoutInvitationsInput
 }
 
 export type InvitationUncheckedCreateWithoutInvitedByInput = {
   id?: string
   token: string
   email: string
+  groupId?: string | null
   status?: $Enums.InvitationStatus
   createdAt?: Date | string
 }
@@ -435,14 +503,60 @@ export type InvitationScalarWhereInput = {
   token?: Prisma.StringFilter<"Invitation"> | string
   email?: Prisma.StringFilter<"Invitation"> | string
   invitedById?: Prisma.StringFilter<"Invitation"> | string
+  groupId?: Prisma.StringNullableFilter<"Invitation"> | string | null
   status?: Prisma.EnumInvitationStatusFilter<"Invitation"> | $Enums.InvitationStatus
   createdAt?: Prisma.DateTimeFilter<"Invitation"> | Date | string
+}
+
+export type InvitationCreateWithoutGroupInput = {
+  id?: string
+  token: string
+  email: string
+  status?: $Enums.InvitationStatus
+  createdAt?: Date | string
+  invitedBy: Prisma.ProviderCreateNestedOneWithoutInvitationsInput
+}
+
+export type InvitationUncheckedCreateWithoutGroupInput = {
+  id?: string
+  token: string
+  email: string
+  invitedById: string
+  status?: $Enums.InvitationStatus
+  createdAt?: Date | string
+}
+
+export type InvitationCreateOrConnectWithoutGroupInput = {
+  where: Prisma.InvitationWhereUniqueInput
+  create: Prisma.XOR<Prisma.InvitationCreateWithoutGroupInput, Prisma.InvitationUncheckedCreateWithoutGroupInput>
+}
+
+export type InvitationCreateManyGroupInputEnvelope = {
+  data: Prisma.InvitationCreateManyGroupInput | Prisma.InvitationCreateManyGroupInput[]
+  skipDuplicates?: boolean
+}
+
+export type InvitationUpsertWithWhereUniqueWithoutGroupInput = {
+  where: Prisma.InvitationWhereUniqueInput
+  update: Prisma.XOR<Prisma.InvitationUpdateWithoutGroupInput, Prisma.InvitationUncheckedUpdateWithoutGroupInput>
+  create: Prisma.XOR<Prisma.InvitationCreateWithoutGroupInput, Prisma.InvitationUncheckedCreateWithoutGroupInput>
+}
+
+export type InvitationUpdateWithWhereUniqueWithoutGroupInput = {
+  where: Prisma.InvitationWhereUniqueInput
+  data: Prisma.XOR<Prisma.InvitationUpdateWithoutGroupInput, Prisma.InvitationUncheckedUpdateWithoutGroupInput>
+}
+
+export type InvitationUpdateManyWithWhereWithoutGroupInput = {
+  where: Prisma.InvitationScalarWhereInput
+  data: Prisma.XOR<Prisma.InvitationUpdateManyMutationInput, Prisma.InvitationUncheckedUpdateManyWithoutGroupInput>
 }
 
 export type InvitationCreateManyInvitedByInput = {
   id?: string
   token: string
   email: string
+  groupId?: string | null
   status?: $Enums.InvitationStatus
   createdAt?: Date | string
 }
@@ -453,12 +567,14 @@ export type InvitationUpdateWithoutInvitedByInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumInvitationStatusFieldUpdateOperationsInput | $Enums.InvitationStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  group?: Prisma.GroupChatUpdateOneWithoutInvitationsNestedInput
 }
 
 export type InvitationUncheckedUpdateWithoutInvitedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   token?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  groupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumInvitationStatusFieldUpdateOperationsInput | $Enums.InvitationStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -467,6 +583,43 @@ export type InvitationUncheckedUpdateManyWithoutInvitedByInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   token?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
+  groupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumInvitationStatusFieldUpdateOperationsInput | $Enums.InvitationStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type InvitationCreateManyGroupInput = {
+  id?: string
+  token: string
+  email: string
+  invitedById: string
+  status?: $Enums.InvitationStatus
+  createdAt?: Date | string
+}
+
+export type InvitationUpdateWithoutGroupInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumInvitationStatusFieldUpdateOperationsInput | $Enums.InvitationStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  invitedBy?: Prisma.ProviderUpdateOneRequiredWithoutInvitationsNestedInput
+}
+
+export type InvitationUncheckedUpdateWithoutGroupInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  invitedById?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumInvitationStatusFieldUpdateOperationsInput | $Enums.InvitationStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type InvitationUncheckedUpdateManyWithoutGroupInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  token?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  invitedById?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumInvitationStatusFieldUpdateOperationsInput | $Enums.InvitationStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -478,9 +631,11 @@ export type InvitationSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   token?: boolean
   email?: boolean
   invitedById?: boolean
+  groupId?: boolean
   status?: boolean
   createdAt?: boolean
   invitedBy?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
+  group?: boolean | Prisma.Invitation$groupArgs<ExtArgs>
 }, ExtArgs["result"]["invitation"]>
 
 export type InvitationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -488,9 +643,11 @@ export type InvitationSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   token?: boolean
   email?: boolean
   invitedById?: boolean
+  groupId?: boolean
   status?: boolean
   createdAt?: boolean
   invitedBy?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
+  group?: boolean | Prisma.Invitation$groupArgs<ExtArgs>
 }, ExtArgs["result"]["invitation"]>
 
 export type InvitationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -498,9 +655,11 @@ export type InvitationSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   token?: boolean
   email?: boolean
   invitedById?: boolean
+  groupId?: boolean
   status?: boolean
   createdAt?: boolean
   invitedBy?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
+  group?: boolean | Prisma.Invitation$groupArgs<ExtArgs>
 }, ExtArgs["result"]["invitation"]>
 
 export type InvitationSelectScalar = {
@@ -508,31 +667,37 @@ export type InvitationSelectScalar = {
   token?: boolean
   email?: boolean
   invitedById?: boolean
+  groupId?: boolean
   status?: boolean
   createdAt?: boolean
 }
 
-export type InvitationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "token" | "email" | "invitedById" | "status" | "createdAt", ExtArgs["result"]["invitation"]>
+export type InvitationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "token" | "email" | "invitedById" | "groupId" | "status" | "createdAt", ExtArgs["result"]["invitation"]>
 export type InvitationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   invitedBy?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
+  group?: boolean | Prisma.Invitation$groupArgs<ExtArgs>
 }
 export type InvitationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   invitedBy?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
+  group?: boolean | Prisma.Invitation$groupArgs<ExtArgs>
 }
 export type InvitationIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   invitedBy?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
+  group?: boolean | Prisma.Invitation$groupArgs<ExtArgs>
 }
 
 export type $InvitationPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Invitation"
   objects: {
     invitedBy: Prisma.$ProviderPayload<ExtArgs>
+    group: Prisma.$GroupChatPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     token: string
     email: string
     invitedById: string
+    groupId: string | null
     status: $Enums.InvitationStatus
     createdAt: Date
   }, ExtArgs["result"]["invitation"]>
@@ -930,6 +1095,7 @@ readonly fields: InvitationFieldRefs;
 export interface Prisma__InvitationClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   invitedBy<T extends Prisma.ProviderDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProviderDefaultArgs<ExtArgs>>): Prisma.Prisma__ProviderClient<runtime.Types.Result.GetResult<Prisma.$ProviderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  group<T extends Prisma.Invitation$groupArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Invitation$groupArgs<ExtArgs>>): Prisma.Prisma__GroupChatClient<runtime.Types.Result.GetResult<Prisma.$GroupChatPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -963,6 +1129,7 @@ export interface InvitationFieldRefs {
   readonly token: Prisma.FieldRef<"Invitation", 'String'>
   readonly email: Prisma.FieldRef<"Invitation", 'String'>
   readonly invitedById: Prisma.FieldRef<"Invitation", 'String'>
+  readonly groupId: Prisma.FieldRef<"Invitation", 'String'>
   readonly status: Prisma.FieldRef<"Invitation", 'InvitationStatus'>
   readonly createdAt: Prisma.FieldRef<"Invitation", 'DateTime'>
 }
@@ -1358,6 +1525,25 @@ export type InvitationDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Limit how many Invitations to delete.
    */
   limit?: number
+}
+
+/**
+ * Invitation.group
+ */
+export type Invitation$groupArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the GroupChat
+   */
+  select?: Prisma.GroupChatSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the GroupChat
+   */
+  omit?: Prisma.GroupChatOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.GroupChatInclude<ExtArgs> | null
+  where?: Prisma.GroupChatWhereInput
 }
 
 /**

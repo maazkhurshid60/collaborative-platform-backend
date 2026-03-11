@@ -66,6 +66,25 @@ export class StripeService {
         return stripe.webhooks.constructEvent(payload, sig, secret);
     }
 
+    async listPaymentMethods(customer: string) {
+        return await stripe.paymentMethods.list({
+            customer,
+            type: 'card',
+        });
+    }
+
+    async updateCustomer(customerId: string, params: Stripe.CustomerUpdateParams) {
+        return await stripe.customers.update(customerId, params);
+    }
+
+    async detachPaymentMethod(paymentMethodId: string) {
+        return await stripe.paymentMethods.detach(paymentMethodId);
+    }
+
+    async retrievePaymentMethod(paymentMethodId: string) {
+        return await stripe.paymentMethods.retrieve(paymentMethodId);
+    }
+
     async getPaymentMethodDomain(domainId: string) {
         return await stripe.paymentMethodDomains.retrieve(domainId);
     }
