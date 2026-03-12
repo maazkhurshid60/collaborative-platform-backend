@@ -36,16 +36,26 @@ app.use(helmet());
 const limitter = rateLimit({
   max: 100000,
   windowMs: 60 * 60 * 1000,
-  message: "Too many requests from this IP please try again in an hour",
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      message: "Too many requests from this IP please try again in an hour",
+    });
+  },
   validate: true,
   skip: (req) => req.originalUrl.includes('/webhook'),
 });
 
 // Strict rate limit: 10 requests per hour for auth routes (signup/login)
 const authLimitter = rateLimit({
-  max: 10,
+  max: 100,
   windowMs: 60 * 60 * 1000,
-  message: "Too many auth requests from this IP please try again in an hour",
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      message: "Too Many Request Please Try again later",
+    });
+  },
   validate: true,
 });
 
