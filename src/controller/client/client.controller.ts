@@ -60,8 +60,32 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
         email: true,
     };
 
-    // 2. Get all clients with user info, documents, and provider list
+    // Determine visibility/ownership filter
+    const { role: loginRole } = (req as any).user;
+    let whereClause: any = {};
+
+    if (loginRole === Role.provider) {
+        // Dashboard list: Only show clients explicitly linked to this provider
+        whereClause = {
+            providerList: {
+                some: {
+                    provider: {
+                        userId: loginUserId
+                    }
+                }
+            }
+        };
+    } else if (loginRole === Role.client) {
+        // A client should only see themselves
+        whereClause = {
+            userId: loginUserId
+        };
+    }
+    // superAdmin sees all by default (empty whereClause)
+
+    // 2. Get clients with user info, documents, and provider list
     const allClients = await prisma.client.findMany({
+        where: whereClause,
         skip,
         take: limit,
         orderBy: {
@@ -448,15 +472,47 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
+    const userPayload = (req as any).user;
+
+    // Visibility Filter Logic:
+    // 1. superAdmin: see everything
+    // 2. provider: see and search clients where:
+    //    - clientShowToOthers is true (Public)
+    //    - OR they are the original creator (even if private/unlinked)
+    //    - OR they are currently linked in their list
+    // 3. client: see only themselves
+    let whereClause: any = {};
+    if (userPayload.role === Role.provider) {
+        const provider = await prisma.provider.findUnique({ where: { userId: userPayload.id } });
+        const providerId = provider?.id;
+
+        whereClause = {
+            OR: [
+                { clientShowToOthers: true },
+                { createdByProviderId: providerId },
+                {
+                    providerList: {
+                        some: {
+                            providerId: providerId
+                        }
+                    }
+                }
+            ]
+        };
+    } else if (userPayload.role === Role.client) {
+        whereClause = {
+            userId: userPayload.id
+        };
+    }
 
     const allClient = await prisma.client.findMany({
+        where: whereClause,
         include: {
-            user: true, receivedDocument: {
+            user: true,
+            receivedDocument: {
                 include: {
-
                     provider: {
                         include: {
-
                             user: {
                                 select: {
                                     address: true,
@@ -481,9 +537,11 @@ const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
                                 }
                             }
                         }
-                    }, document: true
+                    },
+                    document: true
                 }
-            }, providerList: {
+            },
+            providerList: {
                 include: {
                     provider: {
                         include: { user: true }
@@ -494,7 +552,6 @@ const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
     });
 
     res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { totalDocument: allClient.length, clients: allClient }, "All Clients fetched successfully"))
-
 })
 
 
