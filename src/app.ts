@@ -32,10 +32,20 @@ app.set("trust proxy", 1);
 
 app.use(helmet());
 
+// General rate limit: 100,000 requests per hour for all API routes
 const limitter = rateLimit({
-  max: 1000, // Reduced from 100,000 for better security
+  max: 100000,
   windowMs: 60 * 60 * 1000,
   message: "Too many requests from this IP please try again in an hour",
+  validate: true,
+  skip: (req) => req.originalUrl.includes('/webhook'),
+});
+
+// Strict rate limit: 10 requests per hour for auth routes (signup/login)
+const authLimitter = rateLimit({
+  max: 10,
+  windowMs: 60 * 60 * 1000,
+  message: "Too many auth requests from this IP please try again in an hour",
   validate: true,
 });
 
@@ -85,6 +95,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morganMiddleware);
 
 app.use("/api", limitter);
+app.use("/api/v1/auth", authLimitter);
 
 app.use("/uploads/docs", authJWT, express.static(path.join(__dirname, "..", "uploads/docs")));
 
