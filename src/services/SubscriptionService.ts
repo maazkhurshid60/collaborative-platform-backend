@@ -1,6 +1,5 @@
 import prisma from "../db/db.config";
 import { StripeService } from "./StripeService";
-import Stripe from "stripe";
 import { STRIPE_PRICES } from "../utils/stripe/stripe";
 import { ApiError } from "../utils/apiError";
 import { StatusCodes } from "http-status-codes";
@@ -12,7 +11,14 @@ export class SubscriptionService {
     async startTrial(providerId: string, invitedById?: string) {
         const provider = await prisma.provider.findUnique({
             where: { id: providerId },
-            include: { user: true }
+            include: {
+                user: {
+                    omit: {
+                        password: true,
+
+                    }
+                }
+            }
         });
 
         if (!provider) {
@@ -221,9 +227,10 @@ export class SubscriptionService {
             items: [{ price: priceId }],
             collection_method: 'charge_automatically',
             payment_behavior: 'default_incomplete',
-            payment_settings: { save_default_payment_method: 'on_subscription', payment_method_types: ['card'] },
+            payment_settings: { save_default_payment_method: 'on_subscription', payment_method_types: ['card'], },
             expand: ['latest_invoice.confirmation_secret', 'latest_invoice.payment_intent', 'pending_setup_intent'],
-            metadata: { planType, period, email, userId: user?.id || "temp" }
+            metadata: { planType, period, email, userId: user?.id || "temp" },
+
         });
 
         console.log("Subscription details", subscription)
@@ -932,19 +939,45 @@ export class SubscriptionService {
             if (user) {
                 console.log('✅ Found user:', user.id);
 
-                const latestPayment = await prisma.payment.findFirst({
-                    where: { userId: user.id },
-                    orderBy: { createdAt: 'desc' }
-                });
+                let paymentToUpdate = null;
 
-                if (latestPayment) {
+                // 1. Try finding by Stripe Invoice ID if available on the charge
+                if (charge.invoice) {
+                    paymentToUpdate = await prisma.payment.findUnique({
+                        where: { stripeInvoiceId: charge.invoice as string }
+                    });
+                    if (paymentToUpdate) console.log(`[charge.succeeded] Map to payment via invoice: ${paymentToUpdate.id}`);
+                }
+
+                // 2. Try finding by Payment Intent ID
+                if (!paymentToUpdate && charge.payment_intent) {
+                    paymentToUpdate = await prisma.payment.findFirst({
+                        where: { stripePaymentIntentId: charge.payment_intent as string }
+                    });
+                    if (paymentToUpdate) console.log(`[charge.succeeded] Map to payment via payment_intent: ${paymentToUpdate.id}`);
+                }
+
+                // 3. Fallback: Find the most recent SUCCEEDED or non-CANCELED payment for this user (within last 30 mins)
+                if (!paymentToUpdate) {
+                    paymentToUpdate = await prisma.payment.findFirst({
+                        where: {
+                            userId: user.id,
+                            status: { not: 'CANCELED' },
+                            createdAt: { gte: new Date(Date.now() - 30 * 60 * 1000) } // last 30 mins
+                        },
+                        orderBy: { createdAt: 'desc' }
+                    });
+                    if (paymentToUpdate) console.log(`[charge.succeeded] Map to most recent payment: ${paymentToUpdate.id}`);
+                }
+
+                if (paymentToUpdate) {
                     await prisma.payment.update({
-                        where: { id: latestPayment.id },
+                        where: { id: paymentToUpdate.id },
                         data: { paymentMethodLast4: last4 }
                     });
-                    console.log(`✅ Updated payment ${latestPayment.id} with last4: ${last4}`);
+                    console.log(`✅ Updated payment ${paymentToUpdate.id} with last4: ${last4}`);
                 } else {
-                    console.log('⚠️  No payment record found for user yet — will rely on invoice.payment_succeeded');
+                    console.log('⚠️  No suitable payment record found for user yet — will rely on invoice.payment_succeeded');
                 }
             } else {
                 console.log('❌ No user found for customerId:', customerId);
@@ -969,8 +1002,12 @@ export class SubscriptionService {
             if (user) {
                 // Find the most recent payment for this user — update it with real last4 digits
                 // regardless of whether last4 was previously set to null or a placeholder
+                // Skip CANCELED payments to avoid attaching digits to old cancellation records
                 const latestPayment = await prisma.payment.findFirst({
-                    where: { userId: user.id },
+                    where: {
+                        userId: user.id,
+                        status: { not: 'CANCELED' }
+                    },
                     orderBy: { createdAt: 'desc' }
                 });
 

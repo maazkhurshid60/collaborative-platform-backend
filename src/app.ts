@@ -48,7 +48,7 @@ const limitter = rateLimit({
 
 // Strict rate limit: 10 requests per hour for auth routes (signup/login)
 const authLimitter = rateLimit({
-  max: 100,
+  max: 1000,
   windowMs: 60 * 60 * 1000,
   handler: (req, res) => {
     res.status(429).json({
