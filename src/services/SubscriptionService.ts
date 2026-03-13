@@ -700,9 +700,9 @@ export class SubscriptionService {
                 const pmId = invoice.payment_settings?.default_payment_method || invoice.default_payment_method;
                 if (pmId && typeof pmId === 'string') {
                     await this.cleanupPaymentMethods(invoice.customer as string, pmId);
-                } else if (invoice.payment_intent && typeof invoice.payment_intent === 'string') {
+                } else if (paymentRef && typeof paymentRef === 'string' && paymentRef.startsWith('pi_')) {
                     try {
-                        const pi = await stripeService.retrievePaymentIntent(invoice.payment_intent, ['payment_method']);
+                        const pi = await stripeService.retrievePaymentIntent(paymentRef, ['payment_method']);
                         const pmIdFromPi = typeof pi.payment_method === 'string' ? pi.payment_method : pi.payment_method?.id;
                         if (pmIdFromPi) {
                             await this.cleanupPaymentMethods(invoice.customer as string, pmIdFromPi);
