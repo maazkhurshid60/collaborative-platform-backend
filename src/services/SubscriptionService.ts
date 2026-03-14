@@ -486,6 +486,9 @@ export class SubscriptionService {
             case 'payment_method.attached':
                 await this.handlePaymentMethodAttached(event.data.object as any);
                 break;
+            case 'charge.failed':
+                await this.handleChargeFailed(event.data.object as any);
+                break;
             case 'charge.succeeded':
                 await this.handleChargeSucceeded(event.data.object as any);
                 break;
@@ -520,7 +523,6 @@ export class SubscriptionService {
                     try {
                         await stripeService.cancelSubscription(existingSub.stripeSubscriptionId);
                     } catch (err) {
-                        console.log("Error in Stripe subscription", err)
                     }
                 }
 
@@ -902,6 +904,71 @@ export class SubscriptionService {
         }
     }
 
+    private async handleChargeFailed(charge: any) {
+        const customerId = charge.customer;
+        const last4 = charge.payment_method_details?.card?.last4;
+
+        console.log('\n========== [charge.failed] ==========');
+        console.log('charge.id:', charge.id);
+        console.log('charge.customer:', customerId);
+        console.log('payment_method_details.card:', { last4 });
+
+        if (!customerId || !last4) {
+            console.log('⚠️  Missing customerId or last4 — skipping');
+            console.log('========================================\n');
+            return;
+        }
+
+        try {
+            let user = await prisma.user.findFirst({
+                where: { subscription: { stripeCustomerId: customerId } },
+                include: { subscription: true }
+            });
+
+            if (!user) {
+                user = await prisma.user.findFirst({
+                    where: { stripeCustomerId: customerId },
+                    include: { subscription: true }
+                });
+            }
+
+            if (user) {
+                let paymentToUpdate = null;
+
+                if (charge.invoice) {
+                    paymentToUpdate = await prisma.payment.findUnique({
+                        where: { stripeInvoiceId: charge.invoice as string }
+                    });
+                }
+
+                if (!paymentToUpdate && charge.payment_intent) {
+                    paymentToUpdate = await prisma.payment.findFirst({
+                        where: { stripePaymentIntentId: charge.payment_intent as string }
+                    });
+                }
+
+                if (!paymentToUpdate) {
+                    paymentToUpdate = await prisma.payment.findFirst({
+                        where: {
+                            userId: user.id,
+                            status: 'FAILED',
+                            createdAt: { gte: new Date(Date.now() - 30 * 60 * 1000) }
+                        },
+                        orderBy: { createdAt: 'desc' }
+                    });
+                }
+
+                if (paymentToUpdate) {
+                    await prisma.payment.update({
+                        where: { id: paymentToUpdate.id },
+                        data: { paymentMethodLast4: last4 }
+                    });
+                }
+            }
+        } catch (error) {
+        }
+    }
+
     private async handleChargeSucceeded(charge: any) {
         // charge.succeeded always includes payment_method_details.card.last4 without any expansion
         const customerId = charge.customer;
@@ -916,8 +983,6 @@ export class SubscriptionService {
         });
 
         if (!customerId || !last4) {
-            console.log('⚠️  Missing customerId or last4 — skipping');
-            console.log('========================================\n');
             return;
         }
 
@@ -929,7 +994,6 @@ export class SubscriptionService {
             });
 
             if (!user) {
-                console.log('User not found via subscription.stripeCustomerId, trying user.stripeCustomerId...');
                 user = await prisma.user.findFirst({
                     where: { stripeCustomerId: customerId },
                     include: { subscription: true }
@@ -1041,14 +1105,11 @@ export class SubscriptionService {
                 if (pm.id !== newPaymentMethodId) {
                     try {
                         await stripeService.detachPaymentMethod(pm.id);
-                        console.log(`Successfully detached old payment method: ${pm.id} for customer: ${customerId}`);
                     } catch (detachError) {
-                        console.error(`Failed to detach payment method ${pm.id}:`, detachError);
                     }
                 }
             }
         } catch (error) {
-            console.error(`Error in cleanupPaymentMethods for customer ${customerId}:`, error);
         }
     }
 
