@@ -4,6 +4,7 @@ import { STRIPE_PRICES } from "../utils/stripe/stripe";
 import { ApiError } from "../utils/apiError";
 import { StatusCodes } from "http-status-codes";
 import { io } from "../socket/socket";
+import e from "cors";
 
 const stripeService = new StripeService();
 
@@ -233,7 +234,6 @@ export class SubscriptionService {
 
         });
 
-        console.log("Subscription details", subscription)
         if (user) {
             // Compute an estimated period end based on biling cycle
             // We cannot trust `subscription.current_period_end` at this point because
@@ -257,6 +257,7 @@ export class SubscriptionService {
                 },
                 update: {
                     stripeSubscriptionId: subscription.id,
+                    stripeCustomerId: customerId,
                     plan: planType as any,
                     status: 'INCOMPLETE' as any,
                     currentPeriodEnd: estimatedPeriodEnd,
@@ -428,17 +429,93 @@ export class SubscriptionService {
 
         // Sync payments
         const invoices = await stripeService.listInvoices({ subscription: sub.stripeSubscriptionId, limit: 5 });
+
+        /**
+         * Resolve last4 for Stripe API 2026-01-28.clover where invoice.charge is null.
+         *
+         * Priority:
+         *  1. Subscription default_payment_method (most reliable — set after successful payment)
+         *  2. Customer's most recent card payment method
+         *  3. inv.charge string → retrieve charge (old API fallback)
+         *  4. PI expand via payment_intent or confirmation_secret
+         */
+        const resolveCustomerLast4 = async (customerId: string, subscriptionId: string): Promise<string | null> => {
+            // 1. Retrieve subscription with default_payment_method expanded
+            try {
+                const subWithPm: any = await stripeService.retrieveSubscriptionExpanded(subscriptionId);
+                const last4 = subWithPm?.default_payment_method?.card?.last4 ?? null;
+                if (last4) { console.log(`[sync] last4 from sub.default_payment_method: ${last4}`); return last4; }
+            } catch (e) { /* fall through */ }
+
+            // 2. List customer payment methods (always has card after attachment)
+            try {
+                const pms = await stripeService.listPaymentMethods(customerId);
+                const last4 = pms.data?.[0]?.card?.last4 ?? null;
+                if (last4) { console.log(`[sync] last4 from customer PM list: ${last4}`); return last4; }
+            } catch (e) { /* fall through */ }
+
+            return null;
+        };
+
+        const resolveInvoiceLast4 = async (invoice: any, customerId: string, subscriptionId: string): Promise<string | null> => {
+            // 1. Customer/subscription level (most reliable in new API)
+            const customerLast4 = await resolveCustomerLast4(customerId, subscriptionId);
+            if (customerLast4) return customerLast4;
+
+            // 2. Direct charge on invoice (works in older API)
+            if (invoice.charge && typeof invoice.charge === 'string') {
+                try {
+                    const ch = await stripeService.retrieveCharge(invoice.charge);
+                    const l4 = (ch.payment_method_details as any)?.card?.last4 ?? null;
+                    if (l4) return l4;
+                } catch (e) { /* fall through */ }
+            }
+
+            // 3. Payment Intent with latest_charge expanded
+            let piId: string | null = invoice.payment_intent as string | null;
+            if (!piId && (invoice as any).confirmation_secret?.client_secret) {
+                piId = (invoice as any).confirmation_secret.client_secret.split('_secret_')?.[0] ?? null;
+            }
+            if (piId?.startsWith('pi_')) {
+                try {
+                    const pi: any = await stripeService.retrievePaymentIntent(piId, ['latest_charge', 'payment_method']);
+                    const l4 = pi.latest_charge?.payment_method_details?.card?.last4
+                        || pi.payment_method?.card?.last4 || null;
+                    if (l4) return l4;
+                } catch (e) { /* fall through */ }
+            }
+
+            // 4. Re-fetch invoice to get charge field, then retrieve charge
+            try {
+                const fresh = await stripeService.retrieveInvoice(invoice.id);
+                const chargeId = fresh.charge as string | null;
+                if (chargeId) {
+                    const ch = await stripeService.retrieveCharge(chargeId);
+                    return (ch.payment_method_details as any)?.card?.last4 ?? null;
+                }
+            } catch (e) { /* fall through */ }
+
+            return null;
+        };
+
+        // Get customerId for PM lookups
+        const stripeCustomerId = (stripeSub as any).customer as string | null;
+
         for (const invoice of invoices.data) {
             if (invoice.status === 'paid' && invoice.amount_paid >= 0) {
-                const existing = await prisma.payment.findFirst({ where: { stripeInvoiceId: invoice.id } });
+                const existing = await prisma.payment.findFirst({
+                    where: { stripeInvoiceId: invoice.id }
+                });
+
                 if (!existing) {
-                    let last4 = null;
+                    let last4: string | null = null;
                     try {
-                        if (invoice.charge) {
-                            const charge = await stripeService.retrieveCharge(invoice.charge as string);
-                            last4 = (charge.payment_method_details as any)?.card?.last4;
-                        }
-                    } catch (e) { }
+                        last4 = await resolveInvoiceLast4(invoice, stripeCustomerId ?? sub.stripeCustomerId ?? '', sub.stripeSubscriptionId ?? '');
+                        console.log(`[sync] new payment last4: ${last4} for invoice ${invoice.id}`);
+                    } catch (e) {
+                        console.log('[sync] last4 resolve failed:', (e as any)?.message);
+                    }
+
                     try {
                         await prisma.payment.create({
                             data: {
@@ -447,7 +524,7 @@ export class SubscriptionService {
                                 currency: invoice.currency,
                                 status: 'SUCCEEDED',
                                 plan: updatedSub.plan,
-                                stripePaymentIntentId: invoice.payment_intent as string || "synced_invoice",
+                                stripePaymentIntentId: invoice.payment_intent as string || 'synced_invoice',
                                 stripeInvoiceId: invoice.id,
                                 invoiceUrl: invoice.hosted_invoice_url,
                                 paymentMethodLast4: last4,
@@ -458,9 +535,27 @@ export class SubscriptionService {
                     } catch (err: any) {
                         if (err.code !== 'P2002') throw err;
                     }
+
+                } else if (!existing.paymentMethodLast4) {
+                    // Row exists but last4 was missing — patch it now
+                    try {
+                        const last4 = await resolveInvoiceLast4(invoice, stripeCustomerId ?? sub.stripeCustomerId ?? '', sub.stripeSubscriptionId ?? '');
+                        if (last4) {
+                            await prisma.payment.update({
+                                where: { id: existing.id },
+                                data: { paymentMethodLast4: last4 }
+                            });
+                            console.log(`[sync] patched last4 ${last4} on payment ${existing.id}`);
+                        } else {
+                            console.log(`[sync] could not resolve last4 for existing payment ${existing.id}`);
+                        }
+                    } catch (e) {
+                        console.log('[sync] patch last4 failed:', (e as any)?.message);
+                    }
                 }
             }
         }
+
         return updatedSub;
     }
 
@@ -811,97 +906,179 @@ export class SubscriptionService {
     }
 
     private async recordPayment(txClient: any, userId: string, invoiceId: string, amount: number, paymentIntentId: any, plan: string, invoiceData?: any) {
-        // Optimistic check without transaction
-        const existingBefore = await txClient.payment.findFirst({ where: { stripeInvoiceId: invoiceId } });
-        if (existingBefore) return;
+        // resolved the perid dates from the invoice
+        let periodStart: Date | null = null;
+        let periodEnd: Date | null = null;
 
-        let last4 = null;
-
-        // Primary: retrieve the PaymentIntent with latest_charge expanded
-        // This is the most reliable way — latest_charge always has payment_method_details.card.last4
-        try {
-            let piId = paymentIntentId;
-
-            // If no direct PI ID, parse it from confirmation_secret on the invoice
-            if ((!piId || piId === 'webhook') && invoiceData?.confirmation_secret?.client_secret) {
-                piId = invoiceData.confirmation_secret.client_secret.split('_secret_')?.[0];
-            }
-
-            if (piId && String(piId).startsWith('pi_')) {
-                const pi: any = await stripeService.retrievePaymentIntent(piId as string, ['latest_charge', 'payment_method']);
-                // Best path: latest_charge always includes payment_method_details
-                last4 = (pi.latest_charge as any)?.payment_method_details?.card?.last4
-                    // Fallback: payment_method expanded on the PI
-                    || (pi.payment_method as any)?.card?.last4
-                    || null;
-                if (last4) console.log(`[recordPayment] Got last4 from PI expand: ${last4}`);
-            }
-        } catch (e) {
-            console.log('[recordPayment] PI expand failed, trying charge directly:', (e as any)?.message);
-        }
-
-        // Fallback 1: retrieve the charge directly using its ID from the invoice
-        if (!last4 && invoiceData?.charge) {
-            try {
-                const charge = await stripeService.retrieveCharge(invoiceData.charge as string);
-                last4 = (charge.payment_method_details as any)?.card?.last4 || null;
-                if (last4) console.log(`[recordPayment] Got last4 from charge: ${last4}`);
-            } catch (e) { }
-        }
-
-        // Fallback 2: check invoice default_payment_method if already expanded as object
-        if (!last4 && invoiceData?.default_payment_method && typeof invoiceData.default_payment_method === 'object') {
-            last4 = (invoiceData.default_payment_method as any).card?.last4 || null;
-            if (last4) console.log(`[recordPayment] Got last4 from default_payment_method: ${last4}`);
-        }
-
-        let periodStart = null;
-        let periodEnd = null;
-        if (invoiceData) {
+        if (invoiceData.lines?.data?.[0]?.period) {
             periodStart = new Date(invoiceData.lines.data[0].period.start * 1000);
             periodEnd = new Date(invoiceData.lines.data[0].period.end * 1000);
-        } else {
+        }
+        else {
             try {
                 const inv = await stripeService.retrieveInvoice(invoiceId);
                 periodStart = new Date(inv.lines.data[0].period.start * 1000);
                 periodEnd = new Date(inv.lines.data[0].period.end * 1000);
+            }
+            catch (e) {
+
+            }
+        }
+
+        // Resolve last4 - only needed if charge.succeded has'nt written it yet
+        let last4: string | null = null;
+        try {
+            let piId = paymentIntentId;
+            if ((!piId || piId === 'webhook') && invoiceData?.confirmation_secret?.client_secret) {
+                piId = invoiceData.confirmation_secret.client_secret.split('_secret_')?.[0];
+            }
+            if (piId && String(piId).startsWith('pi_')) {
+                const pi: any = await stripeService.retrievePaymentIntent(
+                    piId, ['latest_charge', 'payment_method']
+                );
+                last4 = pi.latest_charge?.payment_method_details?.card?.last4
+                    || pi.payment_method?.card?.last4
+                    || null;
+            }
+        } catch (e) { }
+
+
+        if (!last4 && invoiceData?.charge) {
+            try {
+                const charge = await stripeService.retrieveCharge(invoiceData.charge as string);
+                last4 = (charge.payment_method_details as any)?.card?.last4 || null;
             } catch (e) { }
         }
 
-        // Execute check and insert within a serialized transaction using dummy User update as a lock
         try {
             await txClient.$transaction(async (tx: any) => {
-                // Lock user row to prevent concurrent invoice sync webhooks for the same user
-                await tx.user.update({
-                    where: { id: userId },
-                    data: { updatedAt: new Date() }
-                });
+                await tx.user.update({ where: { id: userId }, data: { updatedAt: new Date() } });
 
-                const existing = await tx.payment.findFirst({ where: { stripeInvoiceId: invoiceId } });
-                if (existing) return;
-
-                await tx.payment.create({
-                    data: {
+                await tx.payment.upsert({
+                    where: { stripeInvoiceId: invoiceId },
+                    create: {
                         userId,
                         amount,
-                        currency: 'usd',
+                        currency: invoiceData?.currency ?? 'usd',
                         status: 'SUCCEEDED',
                         plan,
-                        stripePaymentIntentId: paymentIntentId as string || "webhook",
+                        stripePaymentIntentId: paymentIntentId ?? 'webhook',
                         stripeInvoiceId: invoiceId,
                         paymentMethodLast4: last4,
+                        invoiceUrl: invoiceData?.hosted_invoice_url ?? null,
                         periodStart,
-                        periodEnd
+                        periodEnd,
+                    },
+                    update: {
+                        // Enrich the partial row charge.succeeded created
+                        amount,
+                        status: 'SUCCEEDED',
+                        plan,
+                        stripePaymentIntentId: paymentIntentId ?? 'webhook',
+                        invoiceUrl: invoiceData?.hosted_invoice_url ?? null,
+                        periodStart,
+                        periodEnd,
+                        // Only overwrite last4 if we resolved one — don't clobber what charge.succeeded wrote
+                        ...(last4 ? { paymentMethodLast4: last4 } : {}),
                     }
                 });
             });
         } catch (error: any) {
-            // P2002 is the Prisma error code for Unique constraint failed
-            // It means another webhook/sync just created this payment, so we can safely ignore it.
-            if (error.code !== 'P2002') {
-                throw error;
-            }
+            if (error.code !== 'P2002') throw error;
         }
+
+        // // Optimistic check without transaction
+
+        // const existingBefore = await txClient.payment.findFirst({ where: { stripeInvoiceId: invoiceId } });
+        // if (existingBefore) return;
+
+        // let last4 = null;
+
+        // // Primary: retrieve the PaymentIntent with latest_charge expanded
+        // // This is the most reliable way — latest_charge always has payment_method_details.card.last4
+        // try {
+        //     let piId = paymentIntentId;
+
+        //     // If no direct PI ID, parse it from confirmation_secret on the invoice
+        //     if ((!piId || piId === 'webhook') && invoiceData?.confirmation_secret?.client_secret) {
+        //         piId = invoiceData.confirmation_secret.client_secret.split('_secret_')?.[0];
+        //     }
+
+        //     if (piId && String(piId).startsWith('pi_')) {
+        //         const pi: any = await stripeService.retrievePaymentIntent(piId as string, ['latest_charge', 'payment_method']);
+        //         // Best path: latest_charge always includes payment_method_details
+        //         last4 = (pi.latest_charge as any)?.payment_method_details?.card?.last4
+        //             // Fallback: payment_method expanded on the PI
+        //             || (pi.payment_method as any)?.card?.last4
+        //             || null;
+        //         if (last4) console.log(`[recordPayment] Got last4 from PI expand: ${last4}`);
+        //     }
+        // } catch (e) {
+        //     console.log('[recordPayment] PI expand failed, trying charge directly:', (e as any)?.message);
+        // }
+
+        // // Fallback 1: retrieve the charge directly using its ID from the invoice
+        // if (!last4 && invoiceData?.charge) {
+        //     try {
+        //         const charge = await stripeService.retrieveCharge(invoiceData.charge as string);
+        //         last4 = (charge.payment_method_details as any)?.card?.last4 || null;
+        //         if (last4) console.log(`[recordPayment] Got last4 from charge: ${last4}`);
+        //     } catch (e) { }
+        // }
+
+        // // Fallback 2: check invoice default_payment_method if already expanded as object
+        // if (!last4 && invoiceData?.default_payment_method && typeof invoiceData.default_payment_method === 'object') {
+        //     last4 = (invoiceData.default_payment_method as any).card?.last4 || null;
+        //     if (last4) console.log(`[recordPayment] Got last4 from default_payment_method: ${last4}`);
+        // }
+
+        // let periodStart = null;
+        // let periodEnd = null;
+        // if (invoiceData) {
+        //     periodStart = new Date(invoiceData.lines.data[0].period.start * 1000);
+        //     periodEnd = new Date(invoiceData.lines.data[0].period.end * 1000);
+        // } else {
+        //     try {
+        //         const inv = await stripeService.retrieveInvoice(invoiceId);
+        //         periodStart = new Date(inv.lines.data[0].period.start * 1000);
+        //         periodEnd = new Date(inv.lines.data[0].period.end * 1000);
+        //     } catch (e) { }
+        // }
+
+        // // Execute check and insert within a serialized transaction using dummy User update as a lock
+        // try {
+        //     await txClient.$transaction(async (tx: any) => {
+        //         // Lock user row to prevent concurrent invoice sync webhooks for the same user
+        //         await tx.user.update({
+        //             where: { id: userId },
+        //             data: { updatedAt: new Date() }
+        //         });
+
+        //         const existing = await tx.payment.findFirst({ where: { stripeInvoiceId: invoiceId } });
+        //         if (existing) return;
+
+        //         await tx.payment.create({
+        //             data: {
+        //                 userId,
+        //                 amount,
+        //                 currency: 'usd',
+        //                 status: 'SUCCEEDED',
+        //                 plan,
+        //                 stripePaymentIntentId: paymentIntentId as string || "webhook",
+        //                 stripeInvoiceId: invoiceId,
+        //                 paymentMethodLast4: last4,
+        //                 periodStart,
+        //                 periodEnd
+        //             }
+        //         });
+        //     });
+        // } catch (error: any) {
+        //     // P2002 is the Prisma error code for Unique constraint failed
+        //     // It means another webhook/sync just created this payment, so we can safely ignore it.
+        //     if (error.code !== 'P2002') {
+        //         throw error;
+        //     }
+        // }
     }
 
     private async handleChargeFailed(charge: any) {
@@ -970,86 +1147,176 @@ export class SubscriptionService {
     }
 
     private async handleChargeSucceeded(charge: any) {
-        // charge.succeeded always includes payment_method_details.card.last4 without any expansion
         const customerId = charge.customer;
         const last4 = charge.payment_method_details?.card?.last4;
+        const invoiceId = charge.invoice as string | null;
 
-        console.log('\n========== [charge.succeeded] ==========');
-        console.log('charge.id:', charge.id);
-        console.log('charge.customer:', customerId);
-        console.log('payment_method_details.card:', {
-            brand: charge.payment_method_details?.card?.brand,
-            last4: charge.payment_method_details?.card?.last4,
-        });
+        console.log("charge succeded", last4);
 
         if (!customerId || !last4) {
+            console.log("Missing the customerid or last4 ")
             return;
         }
 
-        try {
-            // Try via subscription.stripeCustomerId first, then fall back to user.stripeCustomerId
-            let user = await prisma.user.findFirst({
-                where: { subscription: { stripeCustomerId: customerId } },
-                include: { subscription: true }
+        // find the user — try subscription.stripeCustomerId first, then user.stripeCustomerId
+        // (for new accounts the subscription row may not be linked yet when charge.succeeded fires)
+        let user = await prisma.user.findFirst({
+            where: { subscription: { stripeCustomerId: customerId } },
+            select: { id: true, subscription: true },
+        });
+
+        if (!user) {
+            user = await prisma.user.findFirst({
+                where: { stripeCustomerId: customerId },
+                select: { id: true, subscription: true },
+            });
+        }
+
+        if (!user) {
+            console.log("No customer found for this customer", customerId);
+            return;
+        }
+
+        console.log("Found the user", user.id);
+
+
+        if (invoiceId) {
+            // partial data payment data store
+
+            try {
+                await prisma.payment.upsert({
+                    where: { stripeInvoiceId: invoiceId },
+                    create: {
+                        userId: user.id,
+                        amount: charge.amount ?? 0,
+                        currency: charge.currency ?? 'usd',
+                        status: "SUCCEEDED",
+                        plan: (user as any).subscription?.plan ?? "STANDARD",
+                        stripePaymentIntentId: charge.payment_intent as string ?? charge.id,
+                        stripeInvoiceId: invoiceId,
+                        paymentMethodLast4: last4,
+                    },
+                    update: {
+                        // row already exist
+                        paymentMethodLast4: last4,
+                    }
+                });
+                // upserted for partial payment 
+                console.log(`✅ Upserted partial payment for invoice ${invoiceId} with last4: ${last4}`);
+
+            } catch (error: any) {
+                // unique contrint race on concurrent webhooks - safe ingore
+                if (error?.code !== 'P2002') console.error('Error upserting payment in charge.succeeded:', e);
+            }
+        }
+
+        else {
+            // No invoice ID — patch the most recent payment with last4
+            const recent = await prisma.payment.findFirst({
+                where: {
+                    userId: user.id,
+                    status: { not: "CANCELED" },
+                    createdAt: { gte: new Date(Date.now() - 5 * 60 * 1000) }
+                },
+                orderBy: { createdAt: "desc" },
             });
 
-            if (!user) {
-                user = await prisma.user.findFirst({
-                    where: { stripeCustomerId: customerId },
-                    include: { subscription: true }
+            console.log("Patched recent payment: ", {
+                recentid: recent?.id,
+                last4: last4,
+            });
+
+            if (recent && !recent.paymentMethodLast4) {
+                await prisma.payment.update({
+                    where: { id: recent.id },
+                    data: { paymentMethodLast4: last4 },
                 });
+                console.log(`✅ Patched recent payment ${recent.id} with last4: ${last4}`);
             }
-
-            if (user) {
-                console.log('✅ Found user:', user.id);
-
-                let paymentToUpdate = null;
-
-                // 1. Try finding by Stripe Invoice ID if available on the charge
-                if (charge.invoice) {
-                    paymentToUpdate = await prisma.payment.findUnique({
-                        where: { stripeInvoiceId: charge.invoice as string }
-                    });
-                    if (paymentToUpdate) console.log(`[charge.succeeded] Map to payment via invoice: ${paymentToUpdate.id}`);
-                }
-
-                // 2. Try finding by Payment Intent ID
-                if (!paymentToUpdate && charge.payment_intent) {
-                    paymentToUpdate = await prisma.payment.findFirst({
-                        where: { stripePaymentIntentId: charge.payment_intent as string }
-                    });
-                    if (paymentToUpdate) console.log(`[charge.succeeded] Map to payment via payment_intent: ${paymentToUpdate.id}`);
-                }
-
-                // 3. Fallback: Find the most recent SUCCEEDED or non-CANCELED payment for this user (within last 30 mins)
-                if (!paymentToUpdate) {
-                    paymentToUpdate = await prisma.payment.findFirst({
-                        where: {
-                            userId: user.id,
-                            status: { not: 'CANCELED' },
-                            createdAt: { gte: new Date(Date.now() - 30 * 60 * 1000) } // last 30 mins
-                        },
-                        orderBy: { createdAt: 'desc' }
-                    });
-                    if (paymentToUpdate) console.log(`[charge.succeeded] Map to most recent payment: ${paymentToUpdate.id}`);
-                }
-
-                if (paymentToUpdate) {
-                    await prisma.payment.update({
-                        where: { id: paymentToUpdate.id },
-                        data: { paymentMethodLast4: last4 }
-                    });
-                    console.log(`✅ Updated payment ${paymentToUpdate.id} with last4: ${last4}`);
-                } else {
-                    console.log('⚠️  No suitable payment record found for user yet — will rely on invoice.payment_succeeded');
-                }
-            } else {
-                console.log('❌ No user found for customerId:', customerId);
-            }
-        } catch (error) {
-            console.error("Error in handleChargeSucceeded:", error);
         }
-        console.log('========================================\n');
+
+
+
+        // // charge.succeeded always includes payment_method_details.card.last4 without any expansion
+        // const customerId = charge.customer;
+        // const last4 = charge.payment_method_details?.card?.last4;
+
+        // console.log('\n========== [charge.succeeded] ==========');
+        // console.log('charge.id:', charge.id);
+        // console.log('charge.customer:', customerId);
+        // console.log('payment_method_details.card:', {
+        //     brand: charge.payment_method_details?.card?.brand,
+        //     last4: charge.payment_method_details?.card?.last4,
+        // });
+
+        // if (!customerId || !last4) {
+        //     return;
+        // }
+
+        // try {
+        //     // Try via subscription.stripeCustomerId first, then fall back to user.stripeCustomerId
+        //     let user = await prisma.user.findFirst({
+        //         where: { subscription: { stripeCustomerId: customerId } },
+        //         include: { subscription: true }
+        //     });
+
+        //     if (!user) {
+        //         user = await prisma.user.findFirst({
+        //             where: { stripeCustomerId: customerId },
+        //             include: { subscription: true }
+        //         });
+        //     }
+
+        //     if (user) {
+        //         console.log('✅ Found user:', user.id);
+
+        //         let paymentToUpdate = null;
+
+        //         // 1. Try finding by Stripe Invoice ID if available on the charge
+        //         if (charge.invoice) {
+        //             paymentToUpdate = await prisma.payment.findUnique({
+        //                 where: { stripeInvoiceId: charge.invoice as string }
+        //             });
+        //             if (paymentToUpdate) console.log(`[charge.succeeded] Map to payment via invoice: ${paymentToUpdate.id}`);
+        //         }
+
+        //         // 2. Try finding by Payment Intent ID
+        //         if (!paymentToUpdate && charge.payment_intent) {
+        //             paymentToUpdate = await prisma.payment.findFirst({
+        //                 where: { stripePaymentIntentId: charge.payment_intent as string }
+        //             });
+        //             if (paymentToUpdate) console.log(`[charge.succeeded] Map to payment via payment_intent: ${paymentToUpdate.id}`);
+        //         }
+
+        //         // 3. Fallback: Find the most recent SUCCEEDED or non-CANCELED payment for this user (within last 30 mins)
+        //         if (!paymentToUpdate) {
+        //             paymentToUpdate = await prisma.payment.findFirst({
+        //                 where: {
+        //                     userId: user.id,
+        //                     status: { not: 'CANCELED' },
+        //                     createdAt: { gte: new Date(Date.now() - 30 * 60 * 1000) } // last 30 mins
+        //                 },
+        //                 orderBy: { createdAt: 'desc' }
+        //             });
+        //             if (paymentToUpdate) console.log(`[charge.succeeded] Map to most recent payment: ${paymentToUpdate.id}`);
+        //         }
+
+        //         if (paymentToUpdate) {
+        //             await prisma.payment.update({
+        //                 where: { id: paymentToUpdate.id },
+        //                 data: { paymentMethodLast4: last4 }
+        //             });
+        //             console.log(`✅ Updated payment ${paymentToUpdate.id} with last4: ${last4}`);
+        //         } else {
+        //             console.log('⚠️  No suitable payment record found for user yet — will rely on invoice.payment_succeeded');
+        //         }
+        //     } else {
+        //         console.log('❌ No user found for customerId:', customerId);
+        //     }
+        // } catch (error) {
+        //     console.error("Error in handleChargeSucceeded:", error);
+        // }
+        // console.log('========================================\n');
     }
 
     private async handlePaymentMethodAttached(paymentMethod: any) {

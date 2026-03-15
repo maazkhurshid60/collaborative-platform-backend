@@ -30,6 +30,12 @@ export class StripeService {
         return await stripe.subscriptions.retrieve(subscriptionId);
     }
 
+    async retrieveSubscriptionExpanded(subscriptionId: string) {
+        return await stripe.subscriptions.retrieve(subscriptionId, {
+            expand: ['default_payment_method']
+        });
+    }
+
     async retrieveInvoice(invoiceId: string) {
         return await stripe.invoices.retrieve(invoiceId, {
             expand: ['confirmation_secret', 'payment_intent']
