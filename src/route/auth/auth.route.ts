@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { blockUserApi, changePasswordApi, deleteMeAccountApi, getAllValidUsersApi, findByLicenseNo, forgotPasswordApi, getAllUsersApi, getMeApi, logInApi, logoutApi, resetPasswordApi, signupApi, unblockUserApi, updateMeApi, approveValidUser, rejectUser, restoreUser, startTrialApi, verifyInvitationToken, checkEmailExistsApi } from "../../controller/auth/auth.controller";
+import { blockUserApi, changePasswordApi, deleteMeAccountApi, getAllValidUsersApi, findByLicenseNo, forgotPasswordApi, getAllUsersApi, getMeApi, logInApi, logoutApi, resetPasswordApi, signupApi, unblockUserApi, updateMeApi, approveValidUser, rejectUser, restoreUser, startTrialApi, verifyInvitationToken, checkEmailExistsApi, verifyEmailApi, resendVerificationEmailApi } from "../../controller/auth/auth.controller";
 import { authJWT } from "../../middlewares/auth.middleware";
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
 const authRouter = Router()
@@ -31,6 +31,10 @@ authRouter.post("/forgot-password", forgotPasswordApi)
 authRouter.patch("/reset-password/:token", resetPasswordApi)
 authRouter.post("/start-trial", startTrialApi)
 authRouter.post("/verify-invitation", verifyInvitationToken)
+
+// Email Verification APIs
+authRouter.post("/verify-email/:token", verifyEmailApi);
+authRouter.post("/resend-verification", authJWT, resendVerificationEmailApi);
 
 
 export default authRouter

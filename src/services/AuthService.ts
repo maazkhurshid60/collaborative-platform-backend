@@ -235,6 +235,7 @@ export class AuthService {
             address: true,
             country: true,
             state: true,
+            isEmailVerified: true,
             hasUsedFreeTrial: true,
             subscription: {
                 select: {
@@ -266,6 +267,7 @@ export class AuthService {
                 address: true,
                 country: true,
                 state: true,
+                isEmailVerified: true,
                 hasUsedFreeTrial: true,
             }
         };

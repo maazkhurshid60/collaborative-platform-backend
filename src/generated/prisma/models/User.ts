@@ -59,6 +59,9 @@ export type UserMinAggregateOutputType = {
   stripeCustomerId: string | null
   resetPasswordExpires: Date | null
   resetPasswordToken: string | null
+  isEmailVerified: boolean | null
+  verifyEmailToken: string | null
+  verifyEmailExpires: Date | null
 }
 
 export type UserMaxAggregateOutputType = {
@@ -86,6 +89,9 @@ export type UserMaxAggregateOutputType = {
   stripeCustomerId: string | null
   resetPasswordExpires: Date | null
   resetPasswordToken: string | null
+  isEmailVerified: boolean | null
+  verifyEmailToken: string | null
+  verifyEmailExpires: Date | null
 }
 
 export type UserCountAggregateOutputType = {
@@ -114,6 +120,9 @@ export type UserCountAggregateOutputType = {
   stripeCustomerId: number
   resetPasswordExpires: number
   resetPasswordToken: number
+  isEmailVerified: number
+  verifyEmailToken: number
+  verifyEmailExpires: number
   _all: number
 }
 
@@ -151,6 +160,9 @@ export type UserMinAggregateInputType = {
   stripeCustomerId?: true
   resetPasswordExpires?: true
   resetPasswordToken?: true
+  isEmailVerified?: true
+  verifyEmailToken?: true
+  verifyEmailExpires?: true
 }
 
 export type UserMaxAggregateInputType = {
@@ -178,6 +190,9 @@ export type UserMaxAggregateInputType = {
   stripeCustomerId?: true
   resetPasswordExpires?: true
   resetPasswordToken?: true
+  isEmailVerified?: true
+  verifyEmailToken?: true
+  verifyEmailExpires?: true
 }
 
 export type UserCountAggregateInputType = {
@@ -206,6 +221,9 @@ export type UserCountAggregateInputType = {
   stripeCustomerId?: true
   resetPasswordExpires?: true
   resetPasswordToken?: true
+  isEmailVerified?: true
+  verifyEmailToken?: true
+  verifyEmailExpires?: true
   _all?: true
 }
 
@@ -321,6 +339,9 @@ export type UserGroupByOutputType = {
   stripeCustomerId: string | null
   resetPasswordExpires: Date | null
   resetPasswordToken: string | null
+  isEmailVerified: boolean
+  verifyEmailToken: string | null
+  verifyEmailExpires: Date | null
   _count: UserCountAggregateOutputType | null
   _avg: UserAvgAggregateOutputType | null
   _sum: UserSumAggregateOutputType | null
@@ -372,6 +393,9 @@ export type UserWhereInput = {
   stripeCustomerId?: Prisma.StringNullableFilter<"User"> | string | null
   resetPasswordExpires?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   resetPasswordToken?: Prisma.StringNullableFilter<"User"> | string | null
+  isEmailVerified?: Prisma.BoolFilter<"User"> | boolean
+  verifyEmailToken?: Prisma.StringNullableFilter<"User"> | string | null
+  verifyEmailExpires?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   chatChannelsA?: Prisma.ChatChannelListRelationFilter
   chatChannelsB?: Prisma.ChatChannelListRelationFilter
   messages?: Prisma.ChatMessageListRelationFilter
@@ -413,6 +437,9 @@ export type UserOrderByWithRelationInput = {
   stripeCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   resetPasswordExpires?: Prisma.SortOrderInput | Prisma.SortOrder
   resetPasswordToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  isEmailVerified?: Prisma.SortOrder
+  verifyEmailToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  verifyEmailExpires?: Prisma.SortOrderInput | Prisma.SortOrder
   chatChannelsA?: Prisma.ChatChannelOrderByRelationAggregateInput
   chatChannelsB?: Prisma.ChatChannelOrderByRelationAggregateInput
   messages?: Prisma.ChatMessageOrderByRelationAggregateInput
@@ -457,6 +484,9 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   hasUsedFreeTrial?: Prisma.BoolFilter<"User"> | boolean
   resetPasswordExpires?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   resetPasswordToken?: Prisma.StringNullableFilter<"User"> | string | null
+  isEmailVerified?: Prisma.BoolFilter<"User"> | boolean
+  verifyEmailToken?: Prisma.StringNullableFilter<"User"> | string | null
+  verifyEmailExpires?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   chatChannelsA?: Prisma.ChatChannelListRelationFilter
   chatChannelsB?: Prisma.ChatChannelListRelationFilter
   messages?: Prisma.ChatMessageListRelationFilter
@@ -498,6 +528,9 @@ export type UserOrderByWithAggregationInput = {
   stripeCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder
   resetPasswordExpires?: Prisma.SortOrderInput | Prisma.SortOrder
   resetPasswordToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  isEmailVerified?: Prisma.SortOrder
+  verifyEmailToken?: Prisma.SortOrderInput | Prisma.SortOrder
+  verifyEmailExpires?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
   _avg?: Prisma.UserAvgOrderByAggregateInput
   _max?: Prisma.UserMaxOrderByAggregateInput
@@ -534,6 +567,9 @@ export type UserScalarWhereWithAggregatesInput = {
   stripeCustomerId?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   resetPasswordExpires?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   resetPasswordToken?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  isEmailVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  verifyEmailToken?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  verifyEmailExpires?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
 }
 
 export type UserCreateInput = {
@@ -562,6 +598,9 @@ export type UserCreateInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
@@ -603,6 +642,9 @@ export type UserUncheckedCreateInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -644,6 +686,9 @@ export type UserUpdateInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
@@ -685,6 +730,9 @@ export type UserUncheckedUpdateInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -726,6 +774,9 @@ export type UserCreateManyInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
 }
 
 export type UserUpdateManyMutationInput = {
@@ -754,6 +805,9 @@ export type UserUpdateManyMutationInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type UserUncheckedUpdateManyInput = {
@@ -782,6 +836,9 @@ export type UserUncheckedUpdateManyInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type StringNullableListFilter<$PrismaModel = never> = {
@@ -818,6 +875,9 @@ export type UserCountOrderByAggregateInput = {
   stripeCustomerId?: Prisma.SortOrder
   resetPasswordExpires?: Prisma.SortOrder
   resetPasswordToken?: Prisma.SortOrder
+  isEmailVerified?: Prisma.SortOrder
+  verifyEmailToken?: Prisma.SortOrder
+  verifyEmailExpires?: Prisma.SortOrder
 }
 
 export type UserAvgOrderByAggregateInput = {
@@ -849,6 +909,9 @@ export type UserMaxOrderByAggregateInput = {
   stripeCustomerId?: Prisma.SortOrder
   resetPasswordExpires?: Prisma.SortOrder
   resetPasswordToken?: Prisma.SortOrder
+  isEmailVerified?: Prisma.SortOrder
+  verifyEmailToken?: Prisma.SortOrder
+  verifyEmailExpires?: Prisma.SortOrder
 }
 
 export type UserMinOrderByAggregateInput = {
@@ -876,6 +939,9 @@ export type UserMinOrderByAggregateInput = {
   stripeCustomerId?: Prisma.SortOrder
   resetPasswordExpires?: Prisma.SortOrder
   resetPasswordToken?: Prisma.SortOrder
+  isEmailVerified?: Prisma.SortOrder
+  verifyEmailToken?: Prisma.SortOrder
+  verifyEmailExpires?: Prisma.SortOrder
 }
 
 export type UserSumOrderByAggregateInput = {
@@ -1151,6 +1217,9 @@ export type UserCreateWithoutClientInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
@@ -1191,6 +1260,9 @@ export type UserUncheckedCreateWithoutClientInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1247,6 +1319,9 @@ export type UserUpdateWithoutClientInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
@@ -1287,6 +1362,9 @@ export type UserUncheckedUpdateWithoutClientInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1327,6 +1405,9 @@ export type UserCreateWithoutProviderInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
@@ -1367,6 +1448,9 @@ export type UserUncheckedCreateWithoutProviderInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1423,6 +1507,9 @@ export type UserUpdateWithoutProviderInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
@@ -1463,6 +1550,9 @@ export type UserUncheckedUpdateWithoutProviderInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1503,6 +1593,9 @@ export type UserCreateWithoutSuperAdminInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
@@ -1543,6 +1636,9 @@ export type UserUncheckedCreateWithoutSuperAdminInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1599,6 +1695,9 @@ export type UserUpdateWithoutSuperAdminInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
@@ -1639,6 +1738,9 @@ export type UserUncheckedUpdateWithoutSuperAdminInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1679,6 +1781,9 @@ export type UserCreateWithoutChatChannelsAInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -1719,6 +1824,9 @@ export type UserUncheckedCreateWithoutChatChannelsAInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -1764,6 +1872,9 @@ export type UserCreateWithoutChatChannelsBInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -1804,6 +1915,9 @@ export type UserUncheckedCreateWithoutChatChannelsBInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -1860,6 +1974,9 @@ export type UserUpdateWithoutChatChannelsAInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -1900,6 +2017,9 @@ export type UserUncheckedUpdateWithoutChatChannelsAInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -1951,6 +2071,9 @@ export type UserUpdateWithoutChatChannelsBInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -1991,6 +2114,9 @@ export type UserUncheckedUpdateWithoutChatChannelsBInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -2031,6 +2157,9 @@ export type UserCreateWithoutMessagesInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   client?: Prisma.ClientCreateNestedOneWithoutUserInput
@@ -2071,6 +2200,9 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
@@ -2127,6 +2259,9 @@ export type UserUpdateWithoutMessagesInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   client?: Prisma.ClientUpdateOneWithoutUserNestedInput
@@ -2167,6 +2302,9 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
@@ -2207,6 +2345,9 @@ export type UserCreateWithoutGroupMembershipsInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
@@ -2247,6 +2388,9 @@ export type UserUncheckedCreateWithoutGroupMembershipsInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2303,6 +2447,9 @@ export type UserUpdateWithoutGroupMembershipsInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
@@ -2343,6 +2490,9 @@ export type UserUncheckedUpdateWithoutGroupMembershipsInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -2383,6 +2533,9 @@ export type UserCreateWithoutGroupReadReceiptsInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
@@ -2423,6 +2576,9 @@ export type UserUncheckedCreateWithoutGroupReadReceiptsInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2479,6 +2635,9 @@ export type UserUpdateWithoutGroupReadReceiptsInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
@@ -2519,6 +2678,9 @@ export type UserUncheckedUpdateWithoutGroupReadReceiptsInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -2559,6 +2721,9 @@ export type UserCreateWithoutReceivedNotificationsInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
@@ -2599,6 +2764,9 @@ export type UserUncheckedCreateWithoutReceivedNotificationsInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2644,6 +2812,9 @@ export type UserCreateWithoutSentNotificationsInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
@@ -2684,6 +2855,9 @@ export type UserUncheckedCreateWithoutSentNotificationsInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2740,6 +2914,9 @@ export type UserUpdateWithoutReceivedNotificationsInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
@@ -2780,6 +2957,9 @@ export type UserUncheckedUpdateWithoutReceivedNotificationsInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -2831,6 +3011,9 @@ export type UserUpdateWithoutSentNotificationsInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
@@ -2871,6 +3054,9 @@ export type UserUncheckedUpdateWithoutSentNotificationsInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -2911,6 +3097,9 @@ export type UserCreateWithoutReadReceiptsInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
@@ -2951,6 +3140,9 @@ export type UserUncheckedCreateWithoutReadReceiptsInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3007,6 +3199,9 @@ export type UserUpdateWithoutReadReceiptsInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
@@ -3047,6 +3242,9 @@ export type UserUncheckedUpdateWithoutReadReceiptsInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3087,6 +3285,9 @@ export type UserCreateWithoutSubscriptionInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
@@ -3127,6 +3328,9 @@ export type UserUncheckedCreateWithoutSubscriptionInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3183,6 +3387,9 @@ export type UserUpdateWithoutSubscriptionInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
@@ -3223,6 +3430,9 @@ export type UserUncheckedUpdateWithoutSubscriptionInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3263,6 +3473,9 @@ export type UserCreateWithoutPaymentsInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
@@ -3303,6 +3516,9 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   stripeCustomerId?: string | null
   resetPasswordExpires?: Date | string | null
   resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
   chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3359,6 +3575,9 @@ export type UserUpdateWithoutPaymentsInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
@@ -3399,6 +3618,9 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
   chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3542,6 +3764,9 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   stripeCustomerId?: boolean
   resetPasswordExpires?: boolean
   resetPasswordToken?: boolean
+  isEmailVerified?: boolean
+  verifyEmailToken?: boolean
+  verifyEmailExpires?: boolean
   chatChannelsA?: boolean | Prisma.User$chatChannelsAArgs<ExtArgs>
   chatChannelsB?: boolean | Prisma.User$chatChannelsBArgs<ExtArgs>
   messages?: boolean | Prisma.User$messagesArgs<ExtArgs>
@@ -3584,6 +3809,9 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   stripeCustomerId?: boolean
   resetPasswordExpires?: boolean
   resetPasswordToken?: boolean
+  isEmailVerified?: boolean
+  verifyEmailToken?: boolean
+  verifyEmailExpires?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -3612,6 +3840,9 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   stripeCustomerId?: boolean
   resetPasswordExpires?: boolean
   resetPasswordToken?: boolean
+  isEmailVerified?: boolean
+  verifyEmailToken?: boolean
+  verifyEmailExpires?: boolean
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
@@ -3640,9 +3871,12 @@ export type UserSelectScalar = {
   stripeCustomerId?: boolean
   resetPasswordExpires?: boolean
   resetPasswordToken?: boolean
+  isEmailVerified?: boolean
+  verifyEmailToken?: boolean
+  verifyEmailExpires?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fullName" | "email" | "password" | "profileImage" | "gender" | "age" | "contactNo" | "address" | "status" | "role" | "isApprove" | "licenseNo" | "isLicenseValid" | "country" | "state" | "blockedMembers" | "privateKey" | "publicKey" | "createdAt" | "updatedAt" | "hasUsedFreeTrial" | "stripeCustomerId" | "resetPasswordExpires" | "resetPasswordToken", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "fullName" | "email" | "password" | "profileImage" | "gender" | "age" | "contactNo" | "address" | "status" | "role" | "isApprove" | "licenseNo" | "isLicenseValid" | "country" | "state" | "blockedMembers" | "privateKey" | "publicKey" | "createdAt" | "updatedAt" | "hasUsedFreeTrial" | "stripeCustomerId" | "resetPasswordExpires" | "resetPasswordToken" | "isEmailVerified" | "verifyEmailToken" | "verifyEmailExpires", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   chatChannelsA?: boolean | Prisma.User$chatChannelsAArgs<ExtArgs>
   chatChannelsB?: boolean | Prisma.User$chatChannelsBArgs<ExtArgs>
@@ -3705,6 +3939,9 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     stripeCustomerId: string | null
     resetPasswordExpires: Date | null
     resetPasswordToken: string | null
+    isEmailVerified: boolean
+    verifyEmailToken: string | null
+    verifyEmailExpires: Date | null
   }, ExtArgs["result"]["user"]>
   composites: {}
 }
@@ -4166,6 +4403,9 @@ export interface UserFieldRefs {
   readonly stripeCustomerId: Prisma.FieldRef<"User", 'String'>
   readonly resetPasswordExpires: Prisma.FieldRef<"User", 'DateTime'>
   readonly resetPasswordToken: Prisma.FieldRef<"User", 'String'>
+  readonly isEmailVerified: Prisma.FieldRef<"User", 'Boolean'>
+  readonly verifyEmailToken: Prisma.FieldRef<"User", 'String'>
+  readonly verifyEmailExpires: Prisma.FieldRef<"User", 'DateTime'>
 }
     
 

@@ -12,6 +12,7 @@ import { generateResetToken } from "../../utils/generateResetPasswordToken";
 import { sendResetPasswordEmail } from "../../utils/nodeMailer/ResetPassword";
 import crypto from "crypto";
 import { sendApprovalEmail } from "../../utils/nodeMailer/sendApprovalEmail";
+import { sendVerifyEmailLink } from "../../utils/nodeMailer/VerifyEmailLink";
 import { AuthService } from "../../services/AuthService";
 import { UserService } from "../../services/UserService";
 import { SubscriptionService } from "../../services/SubscriptionService";
@@ -32,6 +33,24 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
     // 2. Delegate to Service
     const completeUserData = await authService.signup(req.body);
 
+    // Generate Verification Token and start email process
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await prisma.user.update({
+        where: { id: completeUserData.user.id },
+        data: {
+            verifyEmailToken: verifyToken,
+            verifyEmailExpires: verifyExpires
+        }
+    });
+
+    try {
+        await sendVerifyEmailLink(completeUserData.user.email, completeUserData.user.fullName, verifyToken);
+    } catch (err) {
+        console.error("Failed to send verification email during signup:", err);
+    }
+
     const jwtSecret = process.env.JWT_SECRET || "default_secret";
     const token = jwt.sign(
         { userId: completeUserData.user.id, email: completeUserData.user.email, role: completeUserData.user.role },
@@ -39,8 +58,14 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
         { expiresIn: "45m" }
     );
 
+    // Update the returned object so frontend knows it's unverified natively
+    const finalUserData = {
+        ...completeUserData,
+        user: { ...completeUserData.user, isEmailVerified: false }
+    };
+
     return res.status(StatusCodes.CREATED).json(
-        new ApiResponse(StatusCodes.CREATED, { token, user: completeUserData }, "User signed up successfully")
+        new ApiResponse(StatusCodes.CREATED, { token, user: finalUserData }, "User signed up successfully")
     );
 });
 const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
@@ -631,9 +656,90 @@ const checkEmailExistsApi = asyncHandler(async (req: Request, res: Response) => 
     );
 });
 
+const verifyEmailApi = asyncHandler(async (req: Request, res: Response) => {
+    const { token } = req.params;
+
+    if (!token) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Token is required" }, "Validation failed")
+        );
+    }
+
+    const user = await prisma.user.findFirst({
+        where: { verifyEmailToken: token as string }
+    });
+
+    if (!user) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Invalid verification token" }, "Token invalid")
+        );
+    }
+
+    if (user.verifyEmailExpires && user.verifyEmailExpires < new Date()) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Token expired. Please request a new verification link." }, "Token expired")
+        );
+    }
+
+    await prisma.user.update({
+        where: { id: user.id },
+        data: {
+            isEmailVerified: true,
+            verifyEmailToken: null,
+            verifyEmailExpires: null,
+        }
+    });
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, { success: true }, "Email verified successfully")
+    );
+});
+
+const resendVerificationEmailApi = asyncHandler(async (req: Request, res: Response) => {
+    const loginUserId = (req as any).user.id;
+
+    const user = await prisma.user.findUnique({ where: { id: loginUserId } });
+
+    if (!user) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, { error: "User not found" }, "Not found")
+        );
+    }
+
+    if (user.isEmailVerified) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Email is already verified" }, "Already verified")
+        );
+    }
+
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await prisma.user.update({
+        where: { id: loginUserId },
+        data: {
+            verifyEmailToken: verifyToken,
+            verifyEmailExpires: verifyExpires
+        }
+    });
+
+    try {
+        await sendVerifyEmailLink(user.email, user.fullName, verifyToken);
+    } catch (err) {
+        console.error("Failed to resend verification email:", err);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Failed to send email" }, "Server error")
+        );
+    }
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, { success: true }, "Verification email sent successfully")
+    );
+});
+
 
 export {
     signupApi, logInApi, blockUserApi, unblockUserApi, logoutApi, updateMeApi, deleteMeAccountApi, approveValidUser, rejectUser, restoreUser,
     getMeApi, getAllUsersApi, findByLicenseNo, changePasswordApi, forgotPasswordApi, resetPasswordApi, getAllValidUsersApi, startTrialApi, verifyInvitationToken,
-    checkEmailExistsApi
+    checkEmailExistsApi, verifyEmailApi, resendVerificationEmailApi
 };
