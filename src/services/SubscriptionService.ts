@@ -732,16 +732,6 @@ export class SubscriptionService {
                 // The PI ID is embedded in confirmation_secret.client_secret: "pi_xxx_secret_yyy" → "pi_xxx"
                 const piIdFromSecret = (invoice as any).confirmation_secret?.client_secret?.split('_secret_')?.[0] || null;
                 const paymentRef = invoice.payment_intent || invoice.charge || piIdFromSecret || "webhook";
-
-                // ─── DIAGNOSTIC LOGGING ───────────────────────────────────────────
-                console.log('\n========== [invoice.payment_succeeded] DIAGNOSTIC ==========');
-                console.log('invoice.id:', invoice.id);
-                console.log('invoice.amount_paid:', invoice.amount_paid);
-                console.log('invoice.payment_intent (raw):', invoice.payment_intent);
-                console.log('invoice.charge (raw):', invoice.charge);
-                console.log('confirmation_secret.client_secret:', (invoice as any).confirmation_secret?.client_secret);
-                console.log('Extracted PI ID:', paymentRef);
-
                 // Fetch the PI with latest_charge expanded to verify card details
                 let expandedLast4: string | null = null;
                 if (paymentRef && String(paymentRef).startsWith('pi_')) {
@@ -809,6 +799,25 @@ export class SubscriptionService {
                     }
                 }
             }
+            // Emit a special event for renewal success. 
+            // We allow 'subscription_cycle' (normal renewal) 
+            // and fallback for Test Clocks which sometimes omit or use different reasons.
+            if (invoice.billing_reason === 'subscription_cycle' || invoice.subscription) {
+                const amountFormatted = `$${(invoice.amount_paid / 100).toFixed(2)}`;
+                const planNameStr = subscription.plan.charAt(0) + subscription.plan.slice(1).toLowerCase();
+                const nextBillingDateStr = new Date(invoice.lines.data[0].period.end * 1000).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+
+                io.to(subscription.userId).emit("subscription_renewal", {
+                    planName: planNameStr,
+                    amountBilled: amountFormatted,
+                    nextBillingDate: nextBillingDateStr
+                });
+            }
+
             io.to(subscription.userId).emit("subscription_updated");
         }
     }
