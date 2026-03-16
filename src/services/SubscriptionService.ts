@@ -663,7 +663,15 @@ export class SubscriptionService {
                     console.error("Error cleaning up payment methods in checkout session:", err);
                 }
             } else if (session.setup_intent) {
-                // handle setup intent if needed
+                try {
+                    const si = await stripeService.retrieveSetupIntent(session.setup_intent as string);
+                    const pmId = typeof si.payment_method === 'string' ? si.payment_method : si.payment_method?.id;
+                    if (pmId) {
+                        await this.cleanupPaymentMethods(session.customer as string, pmId);
+                    }
+                } catch (err) {
+                    console.error("Error cleaning up payment methods in checkout session (setup_intent):", err);
+                }
             }
 
             io.to(targetUserId).emit("subscription_updated");
@@ -787,6 +795,8 @@ export class SubscriptionService {
                 const pmId = invoice.payment_settings?.default_payment_method || invoice.default_payment_method;
                 if (pmId && typeof pmId === 'string') {
                     await this.cleanupPaymentMethods(invoice.customer as string, pmId);
+                } else if (pmId && typeof pmId === 'object' && pmId.id) {
+                    await this.cleanupPaymentMethods(invoice.customer as string, pmId.id);
                 } else if (paymentRef && typeof paymentRef === 'string' && paymentRef.startsWith('pi_')) {
                     try {
                         const pi = await stripeService.retrievePaymentIntent(paymentRef, ['payment_method']);
@@ -910,6 +920,13 @@ export class SubscriptionService {
                     currentPeriodEnd: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : undefined
                 }
             });
+
+            // If the subscription has a new default payment method, trigger cleanup
+            const pmId = subscription.default_payment_method;
+            if (pmId && typeof pmId === 'string') {
+                await this.cleanupPaymentMethods(subscription.customer as string, pmId);
+            }
+
             io.to(existingSub.userId).emit("subscription_updated");
         }
     }
@@ -1330,8 +1347,11 @@ export class SubscriptionService {
 
     private async handlePaymentMethodAttached(paymentMethod: any) {
         const customerId = paymentMethod.customer;
+        const pmId = paymentMethod.id;
         const last4 = paymentMethod.card?.last4;
         if (!customerId || !last4) return;
+
+        console.log(`[StripeWebhook] Payment method ${pmId} attached to customer ${customerId}`);
 
         try {
             const user = await prisma.user.findFirst({
@@ -1340,9 +1360,7 @@ export class SubscriptionService {
             });
 
             if (user) {
-                // Find the most recent payment for this user — update it with real last4 digits
-                // regardless of whether last4 was previously set to null or a placeholder
-                // Skip CANCELED payments to avoid attaching digits to old cancellation records
+                // 1. Sync last4 to recent payments
                 const latestPayment = await prisma.payment.findFirst({
                     where: {
                         userId: user.id,
@@ -1358,6 +1376,10 @@ export class SubscriptionService {
                     });
                     console.log(`Updated payment ${latestPayment.id} with last4: ${last4}`);
                 }
+
+                // 2. Trigger cleanup! If a user attaches a NEW card, we usually want it to be the only card.
+                // We'll treat this as the new default for the customer.
+                await this.cleanupPaymentMethods(customerId, pmId);
             }
         } catch (error) {
             console.error("Error in handlePaymentMethodAttached:", error);
@@ -1365,6 +1387,7 @@ export class SubscriptionService {
     }
 
     private async cleanupPaymentMethods(customerId: string, newPaymentMethodId: string) {
+        console.log(`[StripeCleanup] Starting cleanup for customer ${customerId}. New PM: ${newPaymentMethodId}`);
         try {
             // 1. Set the new payment method as the default for the customer
             await stripeService.updateCustomer(customerId, {
@@ -1372,20 +1395,27 @@ export class SubscriptionService {
                     default_payment_method: newPaymentMethodId,
                 },
             });
+            console.log(`[StripeCleanup] Set ${newPaymentMethodId} as default for ${customerId}`);
 
             // 2. List all card payment methods for the customer
             const paymentMethods = await stripeService.listPaymentMethods(customerId);
 
             // 3. Detach all other payment methods
+            let detachedCount = 0;
             for (const pm of paymentMethods.data) {
                 if (pm.id !== newPaymentMethodId) {
                     try {
                         await stripeService.detachPaymentMethod(pm.id);
-                    } catch (detachError) {
+                        console.log(`[StripeCleanup] Successfully detached old PM: ${pm.id}`);
+                        detachedCount++;
+                    } catch (detachError: any) {
+                        console.error(`[StripeCleanup] Failed to detach PM ${pm.id}:`, detachError.message);
                     }
                 }
             }
-        } catch (error) {
+            console.log(`[StripeCleanup] Cleanup complete for ${customerId}. Detached ${detachedCount} old methods.`);
+        } catch (error: any) {
+            console.error(`[StripeCleanup] CRITICAL Error during cleanup for ${customerId}:`, error.message);
         }
     }
 

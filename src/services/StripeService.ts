@@ -94,4 +94,8 @@ export class StripeService {
     async getPaymentMethodDomain(domainId: string) {
         return await stripe.paymentMethodDomains.retrieve(domainId);
     }
+
+    async retrieveSetupIntent(setupIntentId: string) {
+        return await stripe.setupIntents.retrieve(setupIntentId);
+    }
 }
