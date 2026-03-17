@@ -15,7 +15,7 @@ CREATE TYPE "NotificationType" AS ENUM ('PROFILE_UPDATE', 'PASSWORD_UPDATE', 'DO
 
 -- CreateEnum
 CREATE TYPE "PlanType" AS ENUM ('STANDARD', 'PRO');
-
+ 
 -- CreateEnum
 CREATE TYPE "SubscriptionStatus" AS ENUM ('TRIALING', 'ACTIVE', 'CANCELED', 'PAST_DUE');
 

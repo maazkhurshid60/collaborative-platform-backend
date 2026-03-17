@@ -4,6 +4,8 @@ import { STRIPE_PRICES } from "../utils/stripe/stripe";
 import { ApiError } from "../utils/apiError";
 import { StatusCodes } from "http-status-codes";
 import { io } from "../socket/socket";
+import { sendSubscriptionSuccessEmail } from "../utils/nodeMailer/SubscriptionSuccessEmail";
+import { sendSubscriptionCancellationEmail } from "../utils/nodeMailer/SubscriptionCancellationEmail";
 import e from "cors";
 
 const stripeService = new StripeService();
@@ -430,17 +432,7 @@ export class SubscriptionService {
         // Sync payments
         const invoices = await stripeService.listInvoices({ subscription: sub.stripeSubscriptionId, limit: 5 });
 
-        /**
-         * Resolve last4 for Stripe API 2026-01-28.clover where invoice.charge is null.
-         *
-         * Priority:
-         *  1. Subscription default_payment_method (most reliable — set after successful payment)
-         *  2. Customer's most recent card payment method
-         *  3. inv.charge string → retrieve charge (old API fallback)
-         *  4. PI expand via payment_intent or confirmation_secret
-         */
         const resolveCustomerLast4 = async (customerId: string, subscriptionId: string): Promise<string | null> => {
-            // 1. Retrieve subscription with default_payment_method expanded
             try {
                 const subWithPm: any = await stripeService.retrieveSubscriptionExpanded(subscriptionId);
                 const last4 = subWithPm?.default_payment_method?.card?.last4 ?? null;
@@ -660,7 +652,6 @@ export class SubscriptionService {
                         await this.cleanupPaymentMethods(session.customer as string, pmId);
                     }
                 } catch (err) {
-                    console.error("Error cleaning up payment methods in checkout session:", err);
                 }
             } else if (session.setup_intent) {
                 try {
@@ -670,11 +661,34 @@ export class SubscriptionService {
                         await this.cleanupPaymentMethods(session.customer as string, pmId);
                     }
                 } catch (err) {
-                    console.error("Error cleaning up payment methods in checkout session (setup_intent):", err);
                 }
             }
 
             io.to(targetUserId).emit("subscription_updated");
+
+            // Send custom Success Email
+            try {
+                const fullUser = await prisma.user.findUnique({ where: { id: targetUserId } });
+                if (fullUser) {
+                    const amountFormatted = `$${(session.amount_total / 100).toFixed(2)}`;
+                    const nextBillingDateStr = currentPeriodEnd ? currentPeriodEnd.toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                    }) : undefined;
+
+                    await sendSubscriptionSuccessEmail(
+                        fullUser.email,
+                        fullUser.fullName,
+                        planType,
+                        amountFormatted,
+                        period,
+                        nextBillingDateStr
+                    );
+                }
+            } catch (emailErr) {
+                console.error("Failed to send subscription success email:", emailErr);
+            }
         }
     }
 
@@ -759,15 +773,9 @@ export class SubscriptionService {
                             exp_month: charge?.payment_method_details?.card?.exp_month,
                             exp_year: charge?.payment_method_details?.card?.exp_year,
                         });
-                        console.log('✅ last4 from latest_charge:', expandedLast4);
                     } catch (e: any) {
-                        console.log('❌ Failed to expand PI:', e?.message);
                     }
-                } else {
-                    console.log('⚠️  No valid PI ID found — last4 will rely on payment_method.attached event');
                 }
-                console.log('============================================================\n');
-                // ─────────────────────────────────────────────────────────────────
 
                 await this.recordPayment(prisma, subscription.userId, invoice.id, invoice.amount_paid, paymentRef, subscription.plan, invoice);
 
@@ -809,9 +817,6 @@ export class SubscriptionService {
                     }
                 }
             }
-            // Emit a special event for renewal success. 
-            // We allow 'subscription_cycle' (normal renewal) 
-            // and fallback for Test Clocks which sometimes omit or use different reasons.
             if (invoice.billing_reason === 'subscription_cycle' || invoice.subscription) {
                 const amountFormatted = `$${(invoice.amount_paid / 100).toFixed(2)}`;
                 const planNameStr = subscription.plan.charAt(0) + subscription.plan.slice(1).toLowerCase();
@@ -826,6 +831,35 @@ export class SubscriptionService {
                     amountBilled: amountFormatted,
                     nextBillingDate: nextBillingDateStr
                 });
+            }
+
+            if (invoice.billing_reason === 'subscription_create') {
+                try {
+                    const fullUser = await prisma.user.findUnique({ where: { id: subscription.userId } });
+                    if (fullUser) {
+                        const amountFormatted = `$${(invoice.amount_paid / 100).toFixed(2)}`;
+                        const nextBillingDateStr = new Date(invoice.lines.data[0].period.end * 1000).toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+
+                        // Use derived plan and billing cycle for accuracy
+                        const planName = subscription.plan;
+                        const billingCycle = stripeSub.metadata?.period || (stripeSub.plan?.interval === 'year' ? 'YEARLY' : 'MONTHLY');
+
+                        await sendSubscriptionSuccessEmail(
+                            fullUser.email,
+                            fullUser.fullName,
+                            planName,
+                            amountFormatted,
+                            billingCycle,
+                            nextBillingDateStr
+                        );
+                    }
+                } catch (emailErr) {
+                    console.error("Failed to send subscription success email from invoice handler:", emailErr);
+                }
             }
 
             io.to(subscription.userId).emit("subscription_updated");
@@ -893,6 +927,20 @@ export class SubscriptionService {
                 }
             });
             io.to(deletedSub.userId).emit("subscription_updated");
+
+            // Send custom Cancellation Email
+            try {
+                const fullUser = await prisma.user.findUnique({ where: { id: deletedSub.userId } });
+                if (fullUser) {
+                    await sendSubscriptionCancellationEmail(
+                        fullUser.email,
+                        fullUser.fullName,
+                        deletedSub.plan
+                    );
+                }
+            } catch (emailErr) {
+                console.error("Failed to send subscription cancellation email:", emailErr);
+            }
         }
     }
 
@@ -947,7 +995,7 @@ export class SubscriptionService {
                 periodEnd = new Date(inv.lines.data[0].period.end * 1000);
             }
             catch (e) {
-
+                console.log("Error resolving period dates:", e);
             }
         }
 
@@ -1111,14 +1159,11 @@ export class SubscriptionService {
         const customerId = charge.customer;
         const last4 = charge.payment_method_details?.card?.last4;
 
-        console.log('\n========== [charge.failed] ==========');
-        console.log('charge.id:', charge.id);
-        console.log('charge.customer:', customerId);
+
         console.log('payment_method_details.card:', { last4 });
 
         if (!customerId || !last4) {
-            console.log('⚠️  Missing customerId or last4 — skipping');
-            console.log('========================================\n');
+
             return;
         }
 

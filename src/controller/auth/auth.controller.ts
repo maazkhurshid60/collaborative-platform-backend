@@ -674,6 +674,11 @@ const verifyEmailApi = asyncHandler(async (req: Request, res: Response) => {
             new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Invalid verification token" }, "Token invalid")
         );
     }
+    if (user.isEmailVerified) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Email already verified" }, "Email already verified")
+        );
+    }
 
     if (user.verifyEmailExpires && user.verifyEmailExpires < new Date()) {
         return res.status(StatusCodes.BAD_REQUEST).json(
