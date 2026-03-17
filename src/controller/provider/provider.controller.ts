@@ -151,14 +151,15 @@ const deletProvider = asyncHandler(async (req: Request, res: Response) => {
 
 const updateProvider = asyncHandler(async (req: Request, res: Response) => {
 
-    const providerData = providerSchema.safeParse(req.body);
+    const ageVal = req.body.age ? Number(req.body.age) : undefined;
+    const providerData = providerSchema.safeParse({ ...req.body, age: ageVal });
     if (!providerData.success) {
         return res.status(StatusCodes.BAD_REQUEST).json(
             new ApiResponse(StatusCodes.BAD_REQUEST, { error: providerData.error.errors }, "Validation Failed")
         );
     }
 
-    const { fullName, gender, age, contactNo, address, status, licenseNo, email, password, providerId, department } = providerData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, email, providerId, department } = providerData.data;
 
     const isProviderExist = await prisma.provider.findFirst({ where: { id: providerId } });
     if (!isProviderExist) {
@@ -203,7 +204,13 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
     }
 
     const updatedproviderData = { department };
-    const updatedUserData = { fullName, email, gender, age, contactNo, address, status, licenseNo, role: Role.provider };
+    const updatedUserData: any = { fullName, email, gender, age, contactNo, address, status, licenseNo, role: Role.provider };
+
+    if (req.file) {
+        updatedUserData.profileImage = (req.file as any).location;
+    } else if (req.body.profileImage === "null") {
+        updatedUserData.profileImage = null;
+    }
 
 
     const isUserUpdated = await prisma.user.update({

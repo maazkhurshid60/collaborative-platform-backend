@@ -84,6 +84,11 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         eSignatureUpdate = (files['eSignature'][0] as any).location;
     }
 
+    // Check if profileImage was requested to be cleared
+    if (req.body.profileImage === "null") {
+        profileImageUpdate = null;
+    }
+
     const updatedUser = await userService.updateMe(loginUserId, {
         ...req.body,
         profileImageUpdate,
