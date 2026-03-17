@@ -161,6 +161,121 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
+export const getClientById = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params as { id: string };
+    const { id: loginUserId, role: loginRole } = (req as any).user;
+
+    // 1. Get the login user details
+    const loginUser = await prisma.user.findUnique({ where: { id: loginUserId } });
+    if (!loginUser) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, { error: "User not found" }, "Validation failed")
+        );
+    }
+
+    const safeUserSelect = {
+        id: true,
+        fullName: true,
+        profileImage: true,
+        gender: true,
+        age: true,
+        contactNo: true,
+        address: true,
+        status: true,
+        isLicenseValid: true,
+        blockedMembers: true,
+        createdAt: true,
+        updatedAt: true,
+        role: true,
+        isApprove: true,
+        country: true,
+        state: true,
+        email: true,
+    };
+
+    // 2. Fetch the client with necessary includes
+    const client = await prisma.client.findUnique({
+        where: { id: id as string },
+        select: {
+            id: true,
+            clientId: true,
+            isAccountCreatedByOwnClient: true,
+            eSignature: true,
+            clientShowToOthers: true,
+            createdByProviderId: true,
+            createdAt: true,
+            updatedAt: true,
+            userId: true,
+            user: {
+                select: safeUserSelect
+            },
+            providerList: {
+                select: {
+                    id: true,
+                    clientId: true,
+                    providerId: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    provider: {
+                        select: {
+                            id: true,
+                            user: {
+                                select: safeUserSelect
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    if (!client) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, null, "Client not found")
+        );
+    }
+
+    // 3. Visibility logic
+    let isVisible = false;
+
+    if (loginRole === Role.superAdmin) {
+        isVisible = true;
+    } else if (loginRole === Role.client) {
+        isVisible = client.userId === loginUserId;
+    } else if (loginRole === Role.provider) {
+        const provider = await prisma.provider.findUnique({ where: { userId: loginUserId } });
+        const providerId = provider?.id;
+
+        // @ts-ignore
+        const isLinked = (client as any).providerList.some((p: any) => p.providerId === providerId);
+        // @ts-ignore
+        const isCreator = (client as any).createdByProviderId === providerId;
+        // @ts-ignore
+        const isPublic = (client as any).clientShowToOthers === true;
+
+        isVisible = isLinked || isCreator || isPublic;
+    }
+
+    if (!isVisible) {
+        return res.status(StatusCodes.FORBIDDEN).json(
+            new ApiResponse(StatusCodes.FORBIDDEN, null, "You do not have permission to view this client profile.")
+        );
+    }
+
+    // 4. Block check
+    // @ts-ignore
+    const isBlocked = (loginUser as any).blockedMembers.includes(client.userId) || (client.user as any).blockedMembers.includes(loginUserId);
+    if (isBlocked) {
+        return res.status(StatusCodes.FORBIDDEN).json(
+            new ApiResponse(StatusCodes.FORBIDDEN, null, "Cannot view profile due to block status.")
+        );
+    }
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, { client }, "Client fetched successfully")
+    );
+});
+
 
 
 const deletClient = asyncHandler(async (req: Request, res: Response) => {
@@ -177,23 +292,16 @@ const deletClient = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    // 2. Get the Provider ID associated with the current User
-    // The frontend sends the Token, which gives us the User ID.
-    // We must resolve the actual Provider entity ID from the User ID.
     const provider = await prisma.provider.findUnique({
         where: { userId: user.id }
     });
 
     if (!provider) {
-        // If the user is found but isn't a provider (e.g. strict role check passed but data missing), deny
-        // Or if superAdmin is trying to "unlink", that's a different flow. 
-        // Assuming this endpoint is strict for Providers unlinking their Clients.
         return res.status(StatusCodes.FORBIDDEN).json(
             new ApiResponse(StatusCodes.FORBIDDEN, { error: "Action allowed for providers only." }, "")
         );
     }
 
-    // 3. Check if the provider-client relation exists using the resolved Provider ID
     const link = await prisma.providerOnClient.findFirst({
         where: {
             clientId,
