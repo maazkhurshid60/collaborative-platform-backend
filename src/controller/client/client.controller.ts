@@ -187,6 +187,7 @@ export const getClientById = asyncHandler(async (req: Request, res: Response) =>
         createdAt: true,
         updatedAt: true,
         role: true,
+
         isApprove: true,
         country: true,
         state: true,

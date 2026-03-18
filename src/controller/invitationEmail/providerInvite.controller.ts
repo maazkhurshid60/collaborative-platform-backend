@@ -5,6 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { sendProviderSignupInviteEmail } from "../../utils/nodeMailer/InviteProviderSignupEmail";
 import crypto from "crypto";
+
 export const inviteProviderSignupApi = asyncHandler(async (req: Request, res: Response) => {
   const { invitationEmail, invitedByUserId } = req.body;
 

@@ -156,9 +156,7 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
 
   const channelIds = findAllChatChannel.map((c) => c.id);
 
-  // ===============================
-  // ✅ BULK UNREAD COUNT
-  // ===============================
+
   const unreadCounts = await prisma.chatMessage.groupBy({
     by: ["chatChannelId"],
     where: {
@@ -198,9 +196,7 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
     ]),
   );
 
-  // ===============================
-  // 🔥 FINAL ENRICHED RESPONSE
-  // ===============================
+
   const enrichedChannels = findAllChatChannel.map((channel) => ({
     ...channel,
     totalUnread: unreadMap[channel.id] || 0,
@@ -218,9 +214,6 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
-// ===============================
-// ❌ DELETE CHAT CHANNEL
-// ===============================
 const deleteChatChannel = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.body;
 

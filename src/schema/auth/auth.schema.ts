@@ -27,8 +27,8 @@ export const userSchema = z.object({
     profileImage: z.string().nullable().optional(),
     gender: z.enum(["male", "female", "other"], { message: "Gender must be either male or female or other" }).optional(),
     age: z.coerce.number()
-        .min(10, { message: "Age must be at least 10" })  // Min 2-digit number (10)
-        .max(99, { message: "Age must be at most 99" }).optional(), // Max 2-digit number (99)    
+        .min(7, { message: "Age must be at least 7" })
+        .max(150, { message: "Age must be at most 150" }).optional(),
     contactNo: z.string().nonempty({ message: "Contact no is required" }).min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }).optional(),
     address: z.string().optional(),
     status: z.enum(["active", "disable"], { message: "Status must be either active or disable" }).optional(),

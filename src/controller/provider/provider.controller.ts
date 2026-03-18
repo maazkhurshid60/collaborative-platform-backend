@@ -234,4 +234,5 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
+
 export { getAllUnblockProviders, deletProvider, updateProvider, getTotalProviders }
