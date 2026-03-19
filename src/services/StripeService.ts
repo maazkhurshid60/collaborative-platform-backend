@@ -10,6 +10,10 @@ export class StripeService {
         });
     }
 
+    async listCustomers(params: Stripe.CustomerListParams) {
+        return await stripe.customers.list(params);
+    }
+
     async deleteCustomer(customerId: string) {
         return await stripe.customers.del(customerId);
     }
@@ -26,8 +30,8 @@ export class StripeService {
         return await stripe.subscriptions.cancel(subscriptionId);
     }
 
-    async retrieveSubscription(subscriptionId: string) {
-        return await stripe.subscriptions.retrieve(subscriptionId);
+    async retrieveSubscription(subscriptionId: string, expand?: string[]) {
+        return await stripe.subscriptions.retrieve(subscriptionId, { expand });
     }
 
     async retrieveSubscriptionExpanded(subscriptionId: string) {
@@ -38,7 +42,8 @@ export class StripeService {
 
     async retrieveInvoice(invoiceId: string) {
         return await stripe.invoices.retrieve(invoiceId, {
-            expand: ['confirmation_secret', 'payment_intent']
+            expand: ['confirmation_secret', 'payment_intent'],
+
         });
     }
 

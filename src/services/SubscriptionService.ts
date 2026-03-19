@@ -206,6 +206,18 @@ export class SubscriptionService {
         let user = await prisma.user.findUnique({ where: { email } });
         let customerId = user?.stripeCustomerId;
 
+        // 1. Search Stripe for existing customer by email if not found in DB
+        if (!customerId) {
+            try {
+                const existingCustomers = await stripeService.listCustomers({ email, limit: 1 });
+                if (existingCustomers.data.length > 0) {
+                    customerId = existingCustomers.data[0].id;
+                    if (user) await prisma.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } });
+                }
+            } catch (e) { console.warn("Could not search for existing customer", e); }
+        }
+
+        // 2. Create customer if still not found
         if (!customerId) {
             const customer = await stripeService.createCustomer(email, name, {
                 userId: user?.id || "temp",
@@ -213,35 +225,71 @@ export class SubscriptionService {
             });
             customerId = customer.id;
             if (user) await prisma.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } });
-        }
-
-        // Cancel existing
-        if (user) {
-            const existingSub = await prisma.subscription.findUnique({ where: { userId: user.id } });
-            if (existingSub?.stripeSubscriptionId) {
-                try {
-                    await stripeService.cancelSubscription(existingSub.stripeSubscriptionId);
-                } catch (e) { console.warn("Could not cancel old sub", e); }
+        } else {
+            // Update name of existing customer if it changed
+            try {
+                await stripeService.updateCustomer(customerId, { name, });
+            } catch (e) {
+                console.warn("Could not update existing Stripe customer name", e);
             }
         }
 
-        const subscription = await stripeService.createSubscription({
-            customer: customerId!,
-            items: [{ price: priceId }],
-            collection_method: 'charge_automatically',
-            payment_behavior: 'default_incomplete',
-            payment_settings: { save_default_payment_method: 'on_subscription', payment_method_types: ['card'], },
-            expand: ['latest_invoice.confirmation_secret', 'latest_invoice.payment_intent', 'pending_setup_intent'],
-            metadata: { planType, period, email, userId: user?.id || "temp" },
-
+        // 3. Check for existing incomplete/trialing subscriptions for this customer to avoid creation of multiple "incomplete" subs
+        const existingStripeSubs = await stripeService.listSubscriptions({
+            customer: customerId ?? undefined,
+            status: 'all',
+            limit: 50 // Check more to clean up old mess if it exists
         });
 
+        // Try to find a reusable subscription (incomplete or trialing for the same plan)
+        let subscription = existingStripeSubs.data.find((s: any) =>
+            (s.status === 'incomplete' || s.status === 'trialing') &&
+            s.items.data[0].price.id === priceId
+        );
+
+        // Cancel other incomplete/trialing subscriptions to prevent duplicate "incomplete" rows in Stripe
+        const othersToCancel = existingStripeSubs.data.filter((s: any) =>
+            (s.status === 'incomplete' || s.status === 'trialing') &&
+            s.id !== subscription?.id
+        );
+
+        for (const subToCancel of othersToCancel) {
+            try {
+                await stripeService.cancelSubscription(subToCancel.id);
+            } catch (e) { console.warn(`Could not cancel orphaned incomplete sub ${subToCancel.id}`, e); }
+        }
+
+        // 4. Also cancel any existing ACTIVE/TRIALING subscription in DB if we are switching to a new one
+        if (user && !subscription) {
+            const existingSub = await prisma.subscription.findUnique({ where: { userId: user.id } });
+            if (existingSub?.stripeSubscriptionId && existingSub.status !== 'CANCELED') {
+                try {
+                    await stripeService.cancelSubscription(existingSub.stripeSubscriptionId);
+                } catch (e) { console.warn("Could not cancel old sub in DB", e); }
+            }
+        }
+
+        // 5. Create new subscription if none found to reuse
+        if (!subscription) {
+            subscription = await stripeService.createSubscription({
+                customer: customerId!,
+                items: [{ price: priceId }],
+                collection_method: 'charge_automatically',
+                payment_behavior: 'default_incomplete',
+                payment_settings: { save_default_payment_method: 'on_subscription', payment_method_types: ['card'], },
+                expand: ['latest_invoice.confirmation_secret', 'latest_invoice.payment_intent', 'pending_setup_intent'],
+                metadata: { planType, period, email, userId: user?.id || "temp" },
+            });
+        } else {
+            // Re-retrieve with expansion to get fresh clientSecret
+            subscription = await stripeService.retrieveSubscription(subscription.id, [
+                'latest_invoice.confirmation_secret',
+                'latest_invoice.payment_intent',
+                'pending_setup_intent'
+            ]);
+        }
+
         if (user) {
-            // Compute an estimated period end based on biling cycle
-            // We cannot trust `subscription.current_period_end` at this point because
-            // the subscription is INCOMPLETE (payment hasn't happened yet) and the date
-            // from Stripe may reflect a trial or yearly interval incorrectly.
-            // The webhook (`invoice.payment_succeeded`) will overwrite this with the real value.
             const estimatedPeriodEnd = normalizedPeriod === 'YEARLY'
                 ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
                 : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -270,17 +318,13 @@ export class SubscriptionService {
         }
 
         let clientSecret: string | null = null;
-
         const latestInvoice = subscription.latest_invoice as any;
 
-        // API 2025-12-15.clover+: confirmation_secret replaces payment_intent on Invoice
-        // Keep payment_intent as fallback for older API versions
         clientSecret = latestInvoice?.confirmation_secret?.client_secret
             || latestInvoice?.payment_intent?.client_secret
             || (subscription.pending_setup_intent as any)?.client_secret
             || null;
 
-        // Last resort: retrieve the invoice manually with both fields expanded
         if (!clientSecret && latestInvoice?.id) {
             const freshInvoice = await stripeService.retrieveInvoice(latestInvoice.id);
             clientSecret = (freshInvoice as any).confirmation_secret?.client_secret
@@ -289,14 +333,10 @@ export class SubscriptionService {
         }
 
         if (!clientSecret) {
-            throw new ApiError(
-                StatusCodes.INTERNAL_SERVER_ERROR,
-                "Could not retrieve payment client secret from Stripe. Please try again."
-            );
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Could not retrieve payment client secret. Please try again.");
         }
 
         return { subscriptionId: subscription.id, clientSecret, customerId };
-
     }
 
     async activateFreePlan(userId: string, planType: string) {
