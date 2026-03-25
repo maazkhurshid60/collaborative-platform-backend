@@ -161,12 +161,17 @@ const blockUserApi = asyncHandler(async (req: Request, res: Response) => {
     });
 
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { success: true }, "User blocked successfully")
+        new ApiResponse(StatusCodes.OK, { user: updatedUser }, "User blocked successfully")
     );
 });
 
 const getAllUsersApi = asyncHandler(async (req: Request, res: Response) => {
     const allUsers = await prisma.user.findMany({
+        where: {
+            role: {
+                not: "superAdmin"
+            }
+        },
         select: {
             id: true,
             fullName: true,
@@ -376,6 +381,29 @@ const logoutApi = asyncHandler(async (req: Request, res: Response) => {
 const deleteMeAccountApi = asyncHandler(async (req: Request, res: Response) => {
     const loginUserId = (req as any).user.id;
     await userService.deleteMe(loginUserId);
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, {}, "User deleted successfully")
+    );
+});
+
+const deleteUserByAdminApi = asyncHandler(async (req: Request, res: Response) => {
+    const { targetUserId } = req.body;
+    const requesterRole = (req as any).user.role;
+
+    if (requesterRole !== Role.superAdmin) {
+        return res.status(StatusCodes.FORBIDDEN).json(
+            new ApiResponse(StatusCodes.FORBIDDEN, null, "Only admins can delete other users")
+        );
+    }
+
+    if (!targetUserId) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, null, "Target user ID is required")
+        );
+    }
+
+    await userService.deleteUser(targetUserId);
+
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, {}, "User deleted successfully")
     );
@@ -749,7 +777,7 @@ const resendVerificationEmailApi = asyncHandler(async (req: Request, res: Respon
 
 
 export {
-    signupApi, logInApi, blockUserApi, unblockUserApi, logoutApi, updateMeApi, deleteMeAccountApi, approveValidUser, rejectUser, restoreUser,
+    signupApi, logInApi, blockUserApi, unblockUserApi, logoutApi, updateMeApi, deleteMeAccountApi, deleteUserByAdminApi, approveValidUser, rejectUser, restoreUser,
     getMeApi, getAllUsersApi, findByLicenseNo, changePasswordApi, forgotPasswordApi, resetPasswordApi, getAllValidUsersApi, startTrialApi, verifyInvitationToken,
     checkEmailExistsApi, verifyEmailApi, resendVerificationEmailApi
 };

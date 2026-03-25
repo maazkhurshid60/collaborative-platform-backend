@@ -186,8 +186,8 @@ model Invitation {
   groupId     String? // Add null-able groupId for group invitations
   status      InvitationStatus @default(PENDING)
   createdAt   DateTime         @default(now())
-  invitedBy   Provider         @relation(fields: [invitedById], references: [id])
-  group       GroupChat?       @relation(fields: [groupId], references: [id]) // Connect to GroupChat
+  invitedBy   Provider         @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+  group       GroupChat?       @relation(fields: [groupId], references: [id], onDelete: Cascade) // Connect to GroupChat
 }
 
 model Notification {

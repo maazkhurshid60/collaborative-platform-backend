@@ -16,8 +16,8 @@ const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
         return res.status(StatusCodes.CONFLICT).json(
             new ApiResponse(
                 StatusCodes.CONFLICT,
-                { message: `Group name "${groupName}" already exists.` },
-                "Duplicate Error."
+                null,
+                `A group with the name "${groupName}" already exists. Please try a different one.`
             )
         );
     }
@@ -149,7 +149,13 @@ const updateGroupApi = asyncHandler(async (req: Request, res: Response) => {
     const isMemberAlreadyInGroup = currentMembers.members.some(existingMember => existingMember.userId === memberId);
 
     if (isMemberAlreadyInGroup) {
-        return res.status(StatusCodes.CONFLICT).json(new ApiResponse(StatusCodes.CONFLICT, { message: `Member is already part of this group.` }, "Duplicate Member Error."));
+        return res.status(StatusCodes.CONFLICT).json(
+            new ApiResponse(
+                StatusCodes.CONFLICT,
+                null,
+                `The member is already a part of this group chat.`
+            )
+        );
     }
 
     // Create a new GroupMembers entry for the member
@@ -642,7 +648,7 @@ const shareGroupChatByEmail = asyncHandler(async (req: Request, res: Response) =
             });
 
             return res.status(StatusCodes.OK).json(
-                new ApiResponse(StatusCodes.OK, null, "User invited successfully")
+                new ApiResponse(StatusCodes.OK, null, "User added successfully")
             );
         }
 

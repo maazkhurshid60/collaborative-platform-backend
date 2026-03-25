@@ -117,4 +117,30 @@ export class UserService {
         await prisma.user.delete({ where: { id: userId } });
         return { success: true };
     }
+
+    async deleteUser(userId: string) {
+        const user = await prisma.user.findUnique({
+            where: { id: userId }
+        });
+
+        if (!user) {
+            throw new ApiError(StatusCodes.NOT_FOUND, "User not found");
+        }
+
+        // Only providers (and potentially clients if they have subscriptions) need Stripe cleanup
+        // But the user said: "deleting the provider means u cancel the subsription and delete the customer in stripe"
+        // We'll attempt Stripe cleanup if they have a stripeCustomerId
+        if (user.stripeCustomerId) {
+            try {
+                const subscriptionService = new SubscriptionService();
+
+                await subscriptionService.cancelStripeSubscription(userId);
+            } catch (error) {
+                console.error(`Failed to safely cancel stripe sub for user ${userId} during deletion`, error);
+            }
+        }
+
+        await prisma.user.delete({ where: { id: userId } });
+        return { success: true };
+    }
 }

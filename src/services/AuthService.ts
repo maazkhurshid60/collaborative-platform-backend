@@ -237,6 +237,7 @@ export class AuthService {
             state: true,
             isEmailVerified: true,
             hasUsedFreeTrial: true,
+            blockedMembers: true,
             subscription: {
                 select: {
                     id: true,

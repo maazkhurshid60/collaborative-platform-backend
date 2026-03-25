@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { blockUserApi, changePasswordApi, deleteMeAccountApi, getAllValidUsersApi, findByLicenseNo, forgotPasswordApi, getAllUsersApi, getMeApi, logInApi, logoutApi, resetPasswordApi, signupApi, unblockUserApi, updateMeApi, approveValidUser, rejectUser, restoreUser, startTrialApi, verifyInvitationToken, checkEmailExistsApi, verifyEmailApi, resendVerificationEmailApi } from "../../controller/auth/auth.controller";
+import { blockUserApi, changePasswordApi, deleteMeAccountApi, deleteUserByAdminApi, getAllValidUsersApi, findByLicenseNo, forgotPasswordApi, getAllUsersApi, getMeApi, logInApi, logoutApi, resetPasswordApi, signupApi, unblockUserApi, updateMeApi, approveValidUser, rejectUser, restoreUser, startTrialApi, verifyInvitationToken, checkEmailExistsApi, verifyEmailApi, resendVerificationEmailApi } from "../../controller/auth/auth.controller";
 import { authJWT } from "../../middlewares/auth.middleware";
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
 const authRouter = Router()
@@ -20,6 +20,7 @@ authRouter.patch(
     updateMeApi
 );
 authRouter.delete("/delete-me-account", authJWT, deleteMeAccountApi)
+authRouter.delete("/admin/delete-user", authJWT, deleteUserByAdminApi)
 authRouter.post("/get-me", authJWT, getMeApi)
 authRouter.get("/get-all-users", authJWT, getAllUsersApi)
 authRouter.patch("/approve-user", authJWT, approveValidUser)
