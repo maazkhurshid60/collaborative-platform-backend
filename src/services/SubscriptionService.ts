@@ -368,8 +368,10 @@ export class SubscriptionService {
     }
 
     private formatPayment(payment: any) {
-        const planName = payment.plan || payment.user.subscription?.plan || 'Standard';
-        const billingCycle = payment.user.subscription?.billingCycle || 'Monthly';
+        let planName = payment.plan || payment.user.subscription?.plan || 'Standard';
+        // Capitalize first letter of plan name
+        planName = planName.charAt(0).toUpperCase() + planName.slice(1).toLowerCase();
+        
         const amountFormatted = `$${(payment.amount / 100).toFixed(2)}`;
         const invoiceNo = payment.stripeInvoiceId || `INV-${new Date(payment.createdAt).getFullYear()}-${payment.id.split('-')[0].toUpperCase()}`;
 
@@ -393,8 +395,8 @@ export class SubscriptionService {
                 city: `${payment.user.state || ''}, ${payment.user.country || ''}`.replace(/^, /, '') || "-"
             },
             items: [{
-                description: `${planName} Plan`,
-                subtext: `${billingCycle} subscription`,
+                description: planName,
+                subtext: "Platform Access",
                 qty: "01",
                 price: amountFormatted,
                 amount: amountFormatted,
