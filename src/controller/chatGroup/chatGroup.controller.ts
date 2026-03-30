@@ -47,7 +47,7 @@ const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
     });
 
     return res.status(StatusCodes.CREATED).json(
-        new ApiResponse(StatusCodes.CREATED, { group }, 'New group has created.')
+        new ApiResponse(StatusCodes.CREATED, { group }, 'New group has been created.')
     );
 })
 
