@@ -26,7 +26,7 @@ export const clientSchema = z.object({
     isAccountCreatedByOwnClient: z.boolean().default(false),
     role: z.string().optional(),
     providerId: z.string().optional(),
-    country: z.string().min(1, "Country is required"),
+    country: z.literal("US", { message: "Only United States is supported" }),
     state: z.string().min(1, "State is required"),
 
 })

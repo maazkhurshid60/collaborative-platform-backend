@@ -169,29 +169,40 @@ const getAllUsersApi = asyncHandler(async (req: Request, res: Response) => {
     const allUsers = await prisma.user.findMany({
         where: {
             role: {
-                not: "superAdmin"
+                not: Role.superAdmin
             }
         },
-        select: {
-            id: true,
-            fullName: true,
-            email: true,
-            licenseNo: true,
-            age: true,
-            contactNo: true,
-            address: true,
-            country: true,
-            state: true,
-            profileImage: true,
-            isApprove: true,
-            role: true,
-            createdAt: true,
+        include: {
             client: true,
-            provider: true
+            provider: {
+                include: {
+                    clientList: {
+                        include: {
+                            client: {
+                                include: {
+                                    user: {
+                                        select: {
+                                            id: true,
+                                            fullName: true,
+                                            profileImage: true,
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-    })
+    });
+
+    const mappedUsers = allUsers.map((u: any) => ({
+        ...u,
+        clientList: u.provider?.clientList || []
+    }));
+
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { totalDocument: allUsers.length, user: allUsers }, "User fetched successfully")
+        new ApiResponse(StatusCodes.OK, { totalDocument: mappedUsers.length, user: mappedUsers }, "User fetched successfully")
     );
 })
 
@@ -313,26 +324,37 @@ const getAllValidUsersApi = asyncHandler(async (req: Request, res: Response) => 
                 role: Role.superAdmin
             }
         },
-        select: {
-            id: true,
-            fullName: true,
-            email: true,
-            licenseNo: true,
-            age: true,
-            contactNo: true,
-            address: true,
-            country: true,
-            state: true,
-            profileImage: true,
-            isApprove: true,
-            role: true,
-            createdAt: true,
+        include: {
             client: true,
-            provider: true
+            provider: {
+                include: {
+                    clientList: {
+                        include: {
+                            client: {
+                                include: {
+                                    user: {
+                                        select: {
+                                            id: true,
+                                            fullName: true,
+                                            profileImage: true,
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-    })
+    });
+
+    const mappedUsers = allUsers.map((u: any) => ({
+        ...u,
+        clientList: u.provider?.clientList || []
+    }));
+
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { totalDocument: allUsers.length, user: allUsers }, "User fetched successfully")
+        new ApiResponse(StatusCodes.OK, { totalDocument: mappedUsers.length, user: mappedUsers }, "User fetched successfully")
     );
 })
 

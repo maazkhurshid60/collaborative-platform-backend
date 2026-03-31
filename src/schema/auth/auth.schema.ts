@@ -37,7 +37,7 @@ export const userSchema = z.object({
     isApprove: z.string().optional(),
     email: z.string().nonempty("Email is required").email("Invalid email format"),
     password: strongPassword.optional(),
-    country: z.string().nonempty("Country is required"),
+    country: z.literal("US", { message: "Only United States is supported" }),
     state: z.string().nonempty("State is required"),
     publicKey: z.string().optional(),
     privateKey: z.string().optional(),
@@ -82,5 +82,5 @@ export const updateClientSchema = z.object({
     status: z.string().optional(),
     licenseNo: z.string().optional(),
     state: z.string().optional(),
-    country: z.string().optional(),
+    country: z.literal("US").optional(),
 });
