@@ -342,6 +342,18 @@ export class AuthService {
             throw new ApiError(StatusCodes.NOT_FOUND, `Account for ${email} is incomplete or invalid.`);
         }
 
+        // Automated Sync: If user is a provider, refresh their subscription status from Stripe on login
+        if (user.role === Role.provider) {
+            try {
+                const { SubscriptionService } = require("./SubscriptionService");
+                const subscriptionService = new SubscriptionService();
+                // fire and forget or await? Let's await to be safe for the first load
+                await subscriptionService.syncSubscription(user.id).catch((e: any) => console.error("Sync on login failed:", e.message));
+            } catch (err) {
+                console.error("Failed to initialize SubscriptionService for sync:", err);
+            }
+        }
+
         return await this.getCompleteUserData(user.id, user.role);
     }
 }

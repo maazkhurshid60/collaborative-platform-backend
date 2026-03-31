@@ -269,3 +269,24 @@ export const getProviderPaymentHistory = asyncHandler(async (req: Request, res: 
     .status(StatusCodes.OK)
     .json(new ApiResponse(StatusCodes.OK, payments, "Payment history fetched successfully"));
 });
+
+import { SubscriptionService } from "../../services/SubscriptionService";
+const subscriptionService = new SubscriptionService();
+
+export const syncProviderSubscription = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.params.userId as string;
+
+  try {
+    const updatedSub = await subscriptionService.syncSubscription(userId);
+    return res
+      .status(StatusCodes.OK)
+      .json(new ApiResponse(StatusCodes.OK, updatedSub, "Subscription synced with Stripe successfully"));
+  } catch (error: any) {
+    console.error("syncProviderSubscription error:", error);
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      success: false,
+      message: "Failed to sync with Stripe",
+      error: error?.message ?? String(error),
+    });
+  }
+});
