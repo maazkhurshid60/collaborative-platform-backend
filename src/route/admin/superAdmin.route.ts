@@ -10,6 +10,7 @@ import {
   getProviderContactInfo,
   getProviderSubscriptionInfo,
   getProviderPaymentHistory,
+  syncProviderSubscription,
 } from "../../controller/admin/superAdmin.controller";
 
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
@@ -33,5 +34,6 @@ router.delete("/subscriptions/:id", deleteSubscription);
 router.get("/provider/:userId/contact-info", getProviderContactInfo);
 router.get("/provider/:userId/subscription-info", getProviderSubscriptionInfo);
 router.get("/provider/:userId/payment-history", getProviderPaymentHistory);
+router.post("/provider/:userId/sync", syncProviderSubscription);
 
 export default router;

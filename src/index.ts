@@ -41,6 +41,10 @@ if (shouldUseCluster && cluster.isPrimary) {
     // Initialize Socket.IO with the created server
     setupSocket(server);
 
+    // Initialize Automated Background Tasks (Cron Jobs)
+    const { CronService } = require("./services/CronService");
+    CronService.init();
+
     const PORT = process.env.PORT || 3000;
 
     // Start the server
