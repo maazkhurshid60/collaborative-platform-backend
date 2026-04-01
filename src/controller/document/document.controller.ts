@@ -5,6 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { io } from "../../socket/socket";
 import { sendDocumentEmail } from "../../utils/nodeMailer/SendDocumentEmail";
+import logger from "../../utils/logger";
 
 const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
     const file = req.file as Express.Multer.File & { location: string };;
@@ -112,12 +113,7 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
 const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Response) => {
     const { providerId, clientId, documentId, senderId, clientEmail } = req.body;
-    console.log("--------------- DOCUMENT SHARE DEBUG ---------------");
-    console.log("Body:", req.body);
-    console.log("providerId:", providerId);
-    console.log("clientId:", clientId);
-    console.log("senderId:", senderId);
-    console.log("documentId list:", documentId);
+    logger.debug(`Document share request: providerId=${providerId}, clientId=${clientId}, senderId=${senderId}, documents=${documentId}`);
 
     const alreadySharedDocs = await prisma.documentShareWith.findMany({
         where: {
@@ -170,7 +166,7 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
         });
 
         if (!clientUser || !providerUser) {
-            console.warn(`⚠️ User not found for client or provider.`);
+            logger.warn(`User not found for client or provider in document sharing.`);
             continue;
         }
 
@@ -193,7 +189,7 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
             clientUser.fullName,
             providerUser.fullName
         );
-        io.to(clientUser.id).emit('new_notification', clientNotification);
+        io.to(`notification_room_${clientUser.id}`).emit('new_notification', clientNotification);
 
         // Create notification for PROVIDER
         const providerNotification = await prisma.notification.create({
@@ -206,7 +202,7 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
             }
         });
 
-        io.to(providerUser.id).emit('new_notification', providerNotification);
+        io.to(`notification_room_${providerUser.id}`).emit('new_notification', providerNotification);
     }
 
     return res.status(StatusCodes.OK).json(
@@ -222,18 +218,7 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
 
 const documentSignByClientApi = asyncHandler(async (req: Request, res: Response) => {
     const { clientId, sharedDocumentId, isAgree, senderId, eSignature } = req.body;
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>", req.body);
-    console.log(">>>>>>>", clientId, sharedDocumentId, isAgree, senderId, eSignature);
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
+    logger.debug(`Document sign request: clientId=${clientId}, sharedDocumentId=${sharedDocumentId}, isAgree=${isAgree}`);
 
 
     if (!clientId || !sharedDocumentId || !eSignature || isAgree === undefined) {
@@ -291,7 +276,10 @@ const documentSignByClientApi = asyncHandler(async (req: Request, res: Response)
             type: 'DOCUMENT_SIGNED'
         }
     });
-    io.to(providerUserId).emit('new_notification', providerNotification);
+
+    if (providerUserId !== clientUserId) {
+        io.to(`notification_room_${providerUserId}`).emit('new_notification', providerNotification);
+    }
 
     // 🔔 Create notification for Client
     const clientNotification = await prisma.notification.create({
@@ -304,7 +292,7 @@ const documentSignByClientApi = asyncHandler(async (req: Request, res: Response)
         }
     });
 
-    io.to(clientUserId).emit('new_notification', clientNotification);
+    io.to(`notification_room_${clientUserId}`).emit('new_notification', clientNotification);
 
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, {

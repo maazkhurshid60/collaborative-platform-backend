@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import Redis from 'ioredis';
 import { verifyToken } from '../utils/tokenUtils';
+import logger from '../utils/logger';
 
 let io: Server;
 
@@ -18,6 +19,7 @@ export function setupSocket(server: any) {
                 'https://collaborative-platform-frontend.vercel.app',
                 "https://www.collaborateme.com/",
                 "https://www.collaborateme.com",
+                "https://app.kolabme.com"
             ],
             credentials: true
         },
@@ -47,19 +49,19 @@ export function setupSocket(server: any) {
             (socket as any).user = decoded;
 
             next();
-        } catch (err) {
-            console.error("Socket Auth Failed:", err);
+        } catch (err: any) {
+            logger.error(`Socket Auth Failed: ${err.message}`);
             next(new Error("Authentication error: Invalid token"));
         }
     });
 
-    console.log("⚡️ Socket.IO initialized with Redis Adapter and JWT Auth");
+    logger.info("⚡️ Socket.IO initialized with Redis Adapter and JWT Auth");
 
     io.on('connection', (socket: Socket) => {
         const user = (socket as any).user;
         const userId = user?.id || user?.providerId;
 
-        console.log(`User connected: ${userId} (${user.email})`);
+        logger.info(`User connected: ${userId} (${user.email})`);
 
         // 4. Join Personal Room (Lightweight)
         // Used for notifications, direct message alerts, etc.
@@ -73,18 +75,18 @@ export function setupSocket(server: any) {
          * Only join when the user actually opens the chat window.
          */
         socket.on('join_channel', ({ chatChannelId }: { chatChannelId: string }) => {
-            console.log(`User ${userId} joining chat: ${chatChannelId}`);
+            logger.info(`User ${userId} joining chat: ${chatChannelId}`);
             socket.join(chatChannelId);
         });
 
         socket.on('leave_channel', ({ chatChannelId }: { chatChannelId: string }) => {
-            console.log(`User ${userId} leaving chat: ${chatChannelId}`);
+            logger.info(`User ${userId} leaving chat: ${chatChannelId}`);
             socket.leave(chatChannelId);
         });
 
         socket.on('disconnect', () => {
             // Redis adapter handles clean up automatically
-            console.log(`User disconnected: ${userId}`);
+            logger.info(`User disconnected: ${userId}`);
         });
     });
 }

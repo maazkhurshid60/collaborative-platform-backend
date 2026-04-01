@@ -1,5 +1,6 @@
 import { Server } from 'socket.io';
 import prisma from '../db/db.config';
+import logger from '../utils/logger';
 
 let io: Server;
 
@@ -11,6 +12,7 @@ export function setupSocket(server: any) {
                 'https://collaborative-platform-frontend.vercel.app',
                 "https://www.collaborateme.com/",
                 "https://www.collaborateme.com",
+                "https://app.kolabme.com"
             ],
         },
     });
@@ -20,36 +22,18 @@ export function setupSocket(server: any) {
         const providerId = socket.handshake.query.providerId;
         const userId = socket.handshake.query.userId;
 
-        // Join notification room
+        logger.info(`🔌 New connection: socketId=${socket.id}, userId=${userId}, providerId=${providerId}`);
+
+        // Join UNIQUE notification room
         if (userId) {
-            socket.join(userId);
+            socket.join(`notification_room_${userId.toString()}`);
+            logger.info(`👥 User joined notification room: ${userId}`);
         }
 
+        // Provider personal room for legacy events
         if (providerId) {
-            socket.join(providerId);
-
-            // Sab direct chat channels join karwa do
-            const channels = await prisma.chatChannel.findMany({
-                where: {
-                    OR: [{ providerAId: providerId.toString() }, { providerBId: providerId.toString() }],
-                },
-                select: { id: true },
-            });
-            channels.forEach(c => socket.join(c.id));
-        }
-
-        // Join provider personal room and their group chats
-        if (providerId) {
-            socket.join(providerId);
-
-            try {
-                const groups = await prisma.groupMembers.findMany({
-                    where: { userId: providerId.toString() },
-                });
-                groups.forEach(group => socket.join(group.groupChatId));
-            } catch (err) {
-                console.error('Error joining group chats:', err);
-            }
+            socket.join(providerId.toString());
+            logger.info(`👥 Provider joined room: ${providerId}`);
         }
 
 
@@ -92,14 +76,14 @@ export function setupSocket(server: any) {
                 // Unread refresh receiver ko
                 io.to(toProviderId).emit('refresh_unread', { chatChannelId: message.chatChannelId });
 
-            } catch (err) {
-                console.error('Error sending direct message:', err);
+            } catch (err: any) {
+                logger.error(`Error sending direct message: ${err.message}`);
             }
         });
 
         // Join direct chat room
         socket.on('join_channel', ({ chatChannelId }: { chatChannelId: string }) => {
-            console.log(`Socket ${socket.id} joining ROOM: ${chatChannelId}`);
+            logger.debug(`Socket ${socket.id} joining ROOM: ${chatChannelId}`);
             socket.join(chatChannelId);
         });
 
@@ -120,9 +104,9 @@ export function setupSocket(server: any) {
                 // ✅ Emit message to everyone in the group
                 io.to(message.groupId).emit('receive_group', message);
 
-                console.log('Group message emitted:');
-            } catch (err) {
-                console.error('Error in send_group:', err);
+                logger.debug('Group message emitted');
+            } catch (err: any) {
+                logger.error(`Error in send_group: ${err.message}`);
             }
         });
 
@@ -130,8 +114,8 @@ export function setupSocket(server: any) {
         socket.on('delete_direct_message', ({ chatChannelId, messageId }: { chatChannelId: string, messageId: string }) => {
             try {
                 io.to(chatChannelId).emit('message_deleted', { messageId });
-            } catch (err) {
-                console.error('Error in delete_direct_message:', err);
+            } catch (err: any) {
+                logger.error(`Error in delete_direct_message: ${err.message}`);
             }
         });
 
@@ -140,17 +124,16 @@ export function setupSocket(server: any) {
             try {
                 // Notify all sessions of the same provider
                 io.to(providerId).emit('chat_channel_deleted', { chatChannelId });
-            } catch (err) {
-                console.error('Error in delete_chat_channel:', err);
+            } catch (err: any) {
+                logger.error(`Error in delete_chat_channel: ${err.message}`);
             }
         });
 
 
         // Disconnect handling
         socket.on('disconnect', () => {
-            console.log(`Disconnected | providerId: ${providerId}`);
+            logger.info(`Disconnected | providerId: ${providerId}`);
             if (providerId) socket.leave(providerId);
-            // if (userId) socket.leave(userId);
         });
     });
 }

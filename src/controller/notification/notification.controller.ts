@@ -116,4 +116,54 @@ const deleteNotification = asyncHandler(async (req: Request, res: Response) => {
 
 
 
-export { sendNotification, getNotification, deleteNotification }
+const getUnreadNotificationCount = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.params.userId as string;
+
+    try {
+        const count = await prisma.notification.count({
+            where: {
+                recipientId: userId,
+                seen: false,
+            },
+        });
+
+        return res.status(StatusCodes.OK).json(
+            new ApiResponse(StatusCodes.OK, { unreadCount: count }, "Unread count fetched successfully")
+        );
+    } catch (err) {
+        console.error("❌ Error fetching unread count:", err);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: err }, "Internal server error")
+        );
+    }
+});
+
+const markNotificationsAsSeen = asyncHandler(async (req: Request, res: Response) => {
+    const { userId, notificationIds } = req.body;
+
+    try {
+        const whereClause: any = { recipientId: userId };
+        
+        if (notificationIds && Array.isArray(notificationIds) && notificationIds.length > 0) {
+            whereClause.id = { in: notificationIds };
+        } else {
+            whereClause.seen = false;
+        }
+
+        await prisma.notification.updateMany({
+            where: whereClause,
+            data: { seen: true },
+        });
+
+        return res.status(StatusCodes.OK).json(
+            new ApiResponse(StatusCodes.OK, {}, "Notifications marked as seen successfully")
+        );
+    } catch (err) {
+        console.error("❌ Error marking notifications as seen:", err);
+        return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+            new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: err }, "Internal server error")
+        );
+    }
+});
+
+export { sendNotification, getNotification, deleteNotification, getUnreadNotificationCount, markNotificationsAsSeen }

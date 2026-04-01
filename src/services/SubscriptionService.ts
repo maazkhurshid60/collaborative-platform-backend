@@ -6,6 +6,7 @@ import { StatusCodes } from "http-status-codes";
 import { io } from "../socket/socket";
 import { sendSubscriptionSuccessEmail } from "../utils/nodeMailer/SubscriptionSuccessEmail";
 import { sendSubscriptionCancellationEmail } from "../utils/nodeMailer/SubscriptionCancellationEmail";
+import logger from "../utils/logger";
 import e from "cors";
 
 const stripeService = new StripeService();
@@ -150,7 +151,7 @@ export class SubscriptionService {
             } catch (err: any) {
                 // "resource_missing" means subscription is already gone from Stripe — safe to continue with DB update
                 if (err?.code !== 'resource_missing') {
-                    console.warn("Could not cancel Stripe subscription:", err?.message);
+                    logger.warn(`Could not cancel Stripe subscription: ${err?.message}`);
                 }
             }
 
@@ -214,7 +215,7 @@ export class SubscriptionService {
                     customerId = existingCustomers.data[0].id;
                     if (user) await prisma.user.update({ where: { id: user.id }, data: { stripeCustomerId: customerId } });
                 }
-            } catch (e) { console.warn("Could not search for existing customer", e); }
+            } catch (e: any) { logger.warn(`Could not search for existing customer: ${e.message}`); }
         }
 
         // 2. Create customer if still not found
@@ -229,8 +230,8 @@ export class SubscriptionService {
             // Update name of existing customer if it changed
             try {
                 await stripeService.updateCustomer(customerId, { name, });
-            } catch (e) {
-                console.warn("Could not update existing Stripe customer name", e);
+            } catch (e: any) {
+                logger.warn(`Could not update existing Stripe customer name: ${e.message}`);
             }
         }
 
@@ -256,7 +257,7 @@ export class SubscriptionService {
         for (const subToCancel of othersToCancel) {
             try {
                 await stripeService.cancelSubscription(subToCancel.id);
-            } catch (e) { console.warn(`Could not cancel orphaned incomplete sub ${subToCancel.id}`, e); }
+            } catch (e: any) { logger.warn(`Could not cancel orphaned incomplete sub ${subToCancel.id}: ${e.message}`); }
         }
 
         // 4. Also cancel any existing ACTIVE/TRIALING subscription in DB if we are switching to a new one
@@ -265,7 +266,7 @@ export class SubscriptionService {
             if (existingSub?.stripeSubscriptionId && existingSub.status !== 'CANCELED') {
                 try {
                     await stripeService.cancelSubscription(existingSub.stripeSubscriptionId);
-                } catch (e) { console.warn("Could not cancel old sub in DB", e); }
+                } catch (e: any) { logger.warn(`Could not cancel old sub in DB: ${e.message}`); }
             }
         }
 
@@ -371,7 +372,7 @@ export class SubscriptionService {
         let planName = payment.plan || payment.user.subscription?.plan || 'Standard';
         // Capitalize first letter of plan name
         planName = planName.charAt(0).toUpperCase() + planName.slice(1).toLowerCase();
-        
+
         const amountFormatted = `$${(payment.amount / 100).toFixed(2)}`;
         const invoiceNo = payment.stripeInvoiceId || `INV-${new Date(payment.createdAt).getFullYear()}-${payment.id.split('-')[0].toUpperCase()}`;
 
@@ -728,8 +729,8 @@ export class SubscriptionService {
                         nextBillingDateStr
                     );
                 }
-            } catch (emailErr) {
-                console.error("Failed to send subscription success email:", emailErr);
+            } catch (emailErr: any) {
+                logger.error(`Failed to send subscription success email: ${emailErr.message}`);
             }
         }
     }
@@ -804,17 +805,7 @@ export class SubscriptionService {
                         const charge = pi.latest_charge;
                         expandedLast4 = charge?.payment_method_details?.card?.last4 || null;
 
-                        console.log('\n--- Expanded PaymentIntent ---');
-                        console.log('pi.id:', pi.id);
-                        console.log('pi.status:', pi.status);
-                        console.log('latest_charge.id:', charge?.id);
-                        console.log('latest_charge.status:', charge?.status);
-                        console.log('latest_charge.payment_method_details.card:', {
-                            brand: charge?.payment_method_details?.card?.brand,
-                            last4: charge?.payment_method_details?.card?.last4,
-                            exp_month: charge?.payment_method_details?.card?.exp_month,
-                            exp_year: charge?.payment_method_details?.card?.exp_year,
-                        });
+                        logger.debug(`Expanded PaymentIntent ID: ${pi.id}, Status: ${pi.status}, Charge ID: ${charge?.id}, Card: ${charge?.payment_method_details?.card?.brand} **** ${charge?.payment_method_details?.card?.last4}`);
                     } catch (e: any) {
                     }
                 }
@@ -854,8 +845,8 @@ export class SubscriptionService {
                         if (pmIdFromPi) {
                             await this.cleanupPaymentMethods(invoice.customer as string, pmIdFromPi);
                         }
-                    } catch (e) {
-                        console.error("Error retrieving PM from PI for cleanup:", e);
+                    } catch (e: any) {
+                        logger.error(`Error retrieving PM from PI for cleanup: ${e.message}`);
                     }
                 }
             }
@@ -899,8 +890,8 @@ export class SubscriptionService {
                             nextBillingDateStr
                         );
                     }
-                } catch (emailErr) {
-                    console.error("Failed to send subscription success email from invoice handler:", emailErr);
+                } catch (emailErr: any) {
+                    logger.error(`Failed to send subscription success email from invoice handler: ${emailErr.message}`);
                 }
             }
 
@@ -980,8 +971,8 @@ export class SubscriptionService {
                         deletedSub.plan
                     );
                 }
-            } catch (emailErr) {
-                console.error("Failed to send subscription cancellation email:", emailErr);
+            } catch (emailErr: any) {
+                logger.error(`Failed to send subscription cancellation email: ${emailErr.message}`);
             }
         }
     }
@@ -1036,8 +1027,8 @@ export class SubscriptionService {
                 periodStart = new Date(inv.lines.data[0].period.start * 1000);
                 periodEnd = new Date(inv.lines.data[0].period.end * 1000);
             }
-            catch (e) {
-                console.log("Error resolving period dates:", e);
+            catch (e: any) {
+                logger.error(`Error resolving period dates: ${e.message}`);
             }
         }
 
@@ -1202,7 +1193,7 @@ export class SubscriptionService {
         const last4 = charge.payment_method_details?.card?.last4;
 
 
-        console.log('payment_method_details.card:', { last4 });
+        logger.debug(`payment_method_details.card: last4=${last4}`);
 
         if (!customerId || !last4) {
 
@@ -1264,10 +1255,10 @@ export class SubscriptionService {
         const last4 = charge.payment_method_details?.card?.last4;
         const invoiceId = charge.invoice as string | null;
 
-        console.log("charge succeded", last4);
+        logger.info(`charge succeeded: last4=${last4}`);
 
         if (!customerId || !last4) {
-            console.log("Missing the customerid or last4 ")
+            logger.warn("Missing customerId or last4 in charge succeeded webhook");
             return;
         }
 
@@ -1286,11 +1277,11 @@ export class SubscriptionService {
         }
 
         if (!user) {
-            console.log("No customer found for this customer", customerId);
+            logger.warn(`No customer found for customerId: ${customerId}`);
             return;
         }
 
-        console.log("Found the user", user.id);
+        logger.info(`Found user for charge: ${user.id}`);
 
 
         if (invoiceId) {
@@ -1315,11 +1306,11 @@ export class SubscriptionService {
                     }
                 });
                 // upserted for partial payment 
-                console.log(`✅ Upserted partial payment for invoice ${invoiceId} with last4: ${last4}`);
+                logger.info(`✅ Upserted partial payment for invoice ${invoiceId} with last4: ${last4}`);
 
             } catch (error: any) {
                 // unique contrint race on concurrent webhooks - safe ingore
-                if (error?.code !== 'P2002') console.error('Error upserting payment in charge.succeeded:', e);
+                if (error?.code !== 'P2002') logger.error(`Error upserting payment in charge.succeeded: ${error.message}`);
             }
         }
 
@@ -1438,7 +1429,7 @@ export class SubscriptionService {
         const last4 = paymentMethod.card?.last4;
         if (!customerId || !last4) return;
 
-        console.log(`[StripeWebhook] Payment method ${pmId} attached to customer ${customerId}`);
+        logger.info(`[StripeWebhook] Payment method ${pmId} attached to customer ${customerId}`);
 
         try {
             const user = await prisma.user.findFirst({
@@ -1461,7 +1452,7 @@ export class SubscriptionService {
                         where: { id: latestPayment.id },
                         data: { paymentMethodLast4: last4 }
                     });
-                    console.log(`Updated payment ${latestPayment.id} with last4: ${last4}`);
+                    logger.info(`Updated payment ${latestPayment.id} with last4: ${last4}`);
                 }
 
                 // 2. Trigger cleanup! If a user attaches a NEW card, we usually want it to be the only card.
@@ -1474,7 +1465,7 @@ export class SubscriptionService {
     }
 
     private async cleanupPaymentMethods(customerId: string, newPaymentMethodId: string) {
-        console.log(`[StripeCleanup] Starting cleanup for customer ${customerId}. New PM: ${newPaymentMethodId}`);
+        logger.info(`[StripeCleanup] Starting cleanup for customer ${customerId}. New PM: ${newPaymentMethodId}`);
         try {
             // 1. Set the new payment method as the default for the customer
             await stripeService.updateCustomer(customerId, {
@@ -1482,7 +1473,7 @@ export class SubscriptionService {
                     default_payment_method: newPaymentMethodId,
                 },
             });
-            console.log(`[StripeCleanup] Set ${newPaymentMethodId} as default for ${customerId}`);
+            logger.info(`[StripeCleanup] Set ${newPaymentMethodId} as default for ${customerId}`);
 
             // 2. List all card payment methods for the customer
             const paymentMethods = await stripeService.listPaymentMethods(customerId);
@@ -1493,16 +1484,16 @@ export class SubscriptionService {
                 if (pm.id !== newPaymentMethodId) {
                     try {
                         await stripeService.detachPaymentMethod(pm.id);
-                        console.log(`[StripeCleanup] Successfully detached old PM: ${pm.id}`);
+                        logger.info(`[StripeCleanup] Successfully detached old PM: ${pm.id}`);
                         detachedCount++;
                     } catch (detachError: any) {
-                        console.error(`[StripeCleanup] Failed to detach PM ${pm.id}:`, detachError.message);
+                        logger.error(`[StripeCleanup] Failed to detach PM ${pm.id}: ${detachError.message}`);
                     }
                 }
             }
-            console.log(`[StripeCleanup] Cleanup complete for ${customerId}. Detached ${detachedCount} old methods.`);
+            logger.info(`[StripeCleanup] Cleanup complete for ${customerId}. Detached ${detachedCount} old methods.`);
         } catch (error: any) {
-            console.error(`[StripeCleanup] CRITICAL Error during cleanup for ${customerId}:`, error.message);
+            logger.error(`[StripeCleanup] CRITICAL Error during cleanup for ${customerId}: ${error.message}`);
         }
     }
 
@@ -1513,10 +1504,10 @@ export class SubscriptionService {
             });
             if (user && user.stripeCustomerId) {
                 await stripeService.deleteCustomer(user.stripeCustomerId);
-                console.log(`Successfully deleted Stripe customer for user: ${userId}`);
+                logger.info(`Successfully deleted Stripe customer for user: ${userId}`);
             }
-        } catch (error) {
-            console.error("Error canceling Stripe subscription for user:", userId, error);
+        } catch (error: any) {
+            logger.error(`Error canceling Stripe subscription for user: ${userId} ${error.message}`);
             // We catch so account deletion can continue even if stripe fails
         }
     }
