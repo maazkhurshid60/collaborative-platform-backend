@@ -134,15 +134,32 @@ export const sendProviderSignupInviteEmail = async (
           </div>
           
           <div class="content">
-            <h1 class="greeting">Special Invitation</h1>
-            <p class="intro-text">
+            <p class="intro-text" style="margin-bottom: 24px;">
               Hello,<br><br>
-              <span class="highlight">${invitedByName}</span> has invited you to join <strong>Kolabme</strong>. Our platform makes it easy for you to chat, collaborate, and manage your workflow in one professional space.
+              <span class="highlight">${invitedByName}</span> has invited you to join them on <strong>Kolabme</strong>.
             </p>
+
+            <p class="intro-text" style="margin-bottom: 12px;">
+              Kolabme is designed to help healthcare providers collaborate more effectively through:
+            </p>
+
+            <ul style="text-align: left; font-size: 16px; color: #475569; line-height: 1.6; margin-bottom: 32px; padding-left: 20px;">
+              <li style="margin-bottom: 8px;">Secure communication with other providers.</li>
+              <li style="margin-bottom: 8px;">Group conversations with multiple providers.</li>
+              <li style="margin-bottom: 8px;">Document sharing with providers and clients for review and signature.</li>
+            </ul>
             
-            <div class="cta-container">
+            <p class="intro-text" style="text-align: center; margin-bottom: 20px;">
+              To get started, create your account:
+            </p>
+
+            <div class="cta-container" style="margin: 20px 0;">
               <a href="${signupUrl}" class="cta-button">Create Provider Account</a>
             </div>
+            
+            <p class="intro-text" style="text-align: center; margin-bottom: 40px;">
+              You'll be guided through a quick setup to join your provider network.
+            </p>
             
             <p class="intro-text" style="font-size: 15px; margin-bottom: 0;">
               Best regards,<br>

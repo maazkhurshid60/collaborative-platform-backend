@@ -156,13 +156,13 @@ async function main() {
     for (const step of steps) {
         try {
             const result = await step.fn();
-            console.log(c.green(`  ✅ ${step.name.padEnd(16)} → ${result.count} records cleared`));
+            console.log(c.green(`${step.name.padEnd(16)} → ${result.count} records cleared`));
         } catch (err: any) {
-            console.log(`  ⚠️  ${step.name.padEnd(16)} → skipped (${err.message})`);
+            console.log(`${step.name.padEnd(16)} → skipped (${err.message})`);
         }
     }
 
-    console.log(c.bold(c.green("\n✅ Done — all records cleared, all tables intact.\n")));
+    console.log(c.bold(c.green("\nDone — all records cleared, all tables intact.\n")));
     await prisma.$disconnect();
 }
 

@@ -4,7 +4,7 @@ import { z } from "zod";
 export const providerSchema = z.object({
     department: z.string().nonempty("Department is required"),
     providerId: z.string().nonempty("Provider Id is required"),
-    email: z.string().nonempty("Email is required").email("Invalid email format"),
+    email: z.string().nonempty("Email is required").email("Enter valid email address"),
     password: z
         .string()
         .min(10, { message: "Password not less then 10letters" })
@@ -14,12 +14,8 @@ export const providerSchema = z.object({
         }),
     fullName: z.string().nonempty().min(3, { message: "Full Name not less then 3letters." }),
     profileImage: z.string().optional(),
-    gender: z.enum(["MALE", "FEMALE", "male", "female", "other"], { message: "Gender must be either male or female" }).transform((val) => {
-        if (val.toLowerCase() === 'other') return 'MALE'; // Default/Fallback or handle as error if not allowed. DB only has MALE/FEMALE. 
-        // Actually, let's just map to uppercase and trust it matches. 
-        // But 'other' is not in DB. usage of 'other' will fail DB constraint.
-        // Let's restrict to MALE/FEMALE and allow lowercase inputs.
-        return val.toUpperCase() as "MALE" | "FEMALE";
+    gender: z.enum(["MALE", "FEMALE", "PREFER_NOT_TO_SAY", "OTHER", "male", "female", "prefer_not_to_say", "other"], { message: "Gender must be either male, female, other, or prefer_not_to_say" }).transform((val) => {
+        return val.toUpperCase() as "MALE" | "FEMALE" | "PREFER_NOT_TO_SAY" | "OTHER";
     }),
     age: z.number()
         .min(10, { message: "Age must be at least 10" })  // Min 2-digit number (10)

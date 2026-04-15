@@ -26,7 +26,7 @@ export class UserService {
             role,
             email,
             password,
-            country,
+            //      country,
             state,
             profileImageUpdate,
             eSignature,
@@ -40,7 +40,9 @@ export class UserService {
         }
 
         let genderEnum: Gender = Gender.MALE;
-        if (gender === "female") genderEnum = Gender.FEMALE;
+        if (gender === "female" || gender === "FEMALE") genderEnum = Gender.FEMALE;
+        else if (gender === "prefer_not_to_say" || gender === "PREFER_NOT_TO_SAY") genderEnum = Gender.PREFER_NOT_TO_SAY;
+        else if (gender === "other" || gender === "OTHER") genderEnum = Gender.OTHER;
 
         await prisma.user.update({
             where: { id: loginUserId },
@@ -53,7 +55,7 @@ export class UserService {
                 status,
                 licenseNo,
                 role,
-                country,
+                //   country,
                 state,
                 ...(profileImageUpdate !== undefined && { profileImage: profileImageUpdate }),
                 ...(email && { email }),

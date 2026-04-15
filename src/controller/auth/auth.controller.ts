@@ -650,7 +650,7 @@ const verifyInvitationToken = asyncHandler(async (req: Request, res: Response) =
                         select: {
                             fullName: true,
                             address: true,
-                            country: true,
+                            // country: true,
                             state: true,
                             licenseNo: true
                         }

@@ -1,5 +1,20 @@
-import { stripe, STRIPE_PRICES } from "../utils/stripe/stripe";
+import { stripe } from "../utils/stripe/stripe";
 import Stripe from "stripe";
+
+// export const stripePayment = (): Promise<Stripe.Response<Stripe.Refund>> => {
+//     return stripe.refunds.create({
+//         payment_intent: "pi_3T636y2eZvKYlo2C1096868b",
+//         amount: 100,
+//         reason: "requested_by_customer",
+//         metadata: {
+//             provider: "Stripe",
+//             refundedAt: new Date().toISOString(),
+//             refundedBy: "Admin",
+//         },
+//         currency: "usd",
+//         reverse_transfer: true
+//     })
+// }
 
 export class StripeService {
     async createCustomer(email: string, name: string, metadata: any) {
@@ -9,6 +24,7 @@ export class StripeService {
             metadata
         });
     }
+
 
     async listCustomers(params: Stripe.CustomerListParams) {
         return await stripe.customers.list(params);

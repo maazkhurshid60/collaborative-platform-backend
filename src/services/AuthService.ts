@@ -18,7 +18,7 @@ export class AuthService {
             role,
             email,
             password,
-            country,
+            //         country,
             state,
             publicKey,
             privateKey,
@@ -27,7 +27,9 @@ export class AuthService {
 
         // 1. Convert gender string to Enum
         let genderEnum: Gender = Gender.MALE;
-        if (genderInput === "female") genderEnum = Gender.FEMALE;
+        if (genderInput === "female" || genderInput === "FEMALE") genderEnum = Gender.FEMALE;
+        else if (genderInput === "prefer_not_to_say" || genderInput === "PREFER_NOT_TO_SAY") genderEnum = Gender.PREFER_NOT_TO_SAY;
+        else if (genderInput === "other" || genderInput === "OTHER") genderEnum = Gender.OTHER;
 
         // 2. Check for duplicate email or licenseNo
         const existingEmail = await prisma.user.findFirst({ where: { email } });
@@ -113,7 +115,7 @@ export class AuthService {
                     licenseNo: licenseNo ?? null,
                     role,
                     isApprove: userData.subscriptionId ? Approve.APPROVED : Approve.PENDING,
-                    country,
+                    //   country,
                     state,
                     publicKey: publicKey ?? null,
                     privateKey: privateKey ?? null,
@@ -233,7 +235,7 @@ export class AuthService {
             age: true,
             contactNo: true,
             address: true,
-            country: true,
+            //      country: true,
             state: true,
             isEmailVerified: true,
             hasUsedFreeTrial: true,
@@ -266,7 +268,7 @@ export class AuthService {
                 age: true,
                 contactNo: true,
                 address: true,
-                country: true,
+                //          country: true,
                 state: true,
                 isEmailVerified: true,
                 hasUsedFreeTrial: true,

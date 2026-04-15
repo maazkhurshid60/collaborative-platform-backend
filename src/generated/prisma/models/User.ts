@@ -328,7 +328,7 @@ export type UserGroupByOutputType = {
   isApprove: $Enums.Approve
   licenseNo: string | null
   isLicenseValid: boolean
-  country: string
+  country: string | null
   state: string
   blockedMembers: string[]
   privateKey: string | null
@@ -382,7 +382,7 @@ export type UserWhereInput = {
   isApprove?: Prisma.EnumApproveFilter<"User"> | $Enums.Approve
   licenseNo?: Prisma.StringNullableFilter<"User"> | string | null
   isLicenseValid?: Prisma.BoolFilter<"User"> | boolean
-  country?: Prisma.StringFilter<"User"> | string
+  country?: Prisma.StringNullableFilter<"User"> | string | null
   state?: Prisma.StringFilter<"User"> | string
   blockedMembers?: Prisma.StringNullableListFilter<"User">
   privateKey?: Prisma.StringNullableFilter<"User"> | string | null
@@ -426,7 +426,7 @@ export type UserOrderByWithRelationInput = {
   isApprove?: Prisma.SortOrder
   licenseNo?: Prisma.SortOrderInput | Prisma.SortOrder
   isLicenseValid?: Prisma.SortOrder
-  country?: Prisma.SortOrder
+  country?: Prisma.SortOrderInput | Prisma.SortOrder
   state?: Prisma.SortOrder
   blockedMembers?: Prisma.SortOrder
   privateKey?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -474,7 +474,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
   isApprove?: Prisma.EnumApproveFilter<"User"> | $Enums.Approve
   isLicenseValid?: Prisma.BoolFilter<"User"> | boolean
-  country?: Prisma.StringFilter<"User"> | string
+  country?: Prisma.StringNullableFilter<"User"> | string | null
   state?: Prisma.StringFilter<"User"> | string
   blockedMembers?: Prisma.StringNullableListFilter<"User">
   privateKey?: Prisma.StringNullableFilter<"User"> | string | null
@@ -517,7 +517,7 @@ export type UserOrderByWithAggregationInput = {
   isApprove?: Prisma.SortOrder
   licenseNo?: Prisma.SortOrderInput | Prisma.SortOrder
   isLicenseValid?: Prisma.SortOrder
-  country?: Prisma.SortOrder
+  country?: Prisma.SortOrderInput | Prisma.SortOrder
   state?: Prisma.SortOrder
   blockedMembers?: Prisma.SortOrder
   privateKey?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -556,7 +556,7 @@ export type UserScalarWhereWithAggregatesInput = {
   isApprove?: Prisma.EnumApproveWithAggregatesFilter<"User"> | $Enums.Approve
   licenseNo?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   isLicenseValid?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
-  country?: Prisma.StringWithAggregatesFilter<"User"> | string
+  country?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   state?: Prisma.StringWithAggregatesFilter<"User"> | string
   blockedMembers?: Prisma.StringNullableListFilter<"User">
   privateKey?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -587,7 +587,7 @@ export type UserCreateInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -631,7 +631,7 @@ export type UserUncheckedCreateInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -675,7 +675,7 @@ export type UserUpdateInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -719,7 +719,7 @@ export type UserUncheckedUpdateInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -763,7 +763,7 @@ export type UserCreateManyInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -794,7 +794,7 @@ export type UserUpdateManyMutationInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -825,7 +825,7 @@ export type UserUncheckedUpdateManyInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1206,7 +1206,7 @@ export type UserCreateWithoutClientInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -1249,7 +1249,7 @@ export type UserUncheckedCreateWithoutClientInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -1308,7 +1308,7 @@ export type UserUpdateWithoutClientInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1351,7 +1351,7 @@ export type UserUncheckedUpdateWithoutClientInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1394,7 +1394,7 @@ export type UserCreateWithoutProviderInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -1437,7 +1437,7 @@ export type UserUncheckedCreateWithoutProviderInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -1496,7 +1496,7 @@ export type UserUpdateWithoutProviderInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1539,7 +1539,7 @@ export type UserUncheckedUpdateWithoutProviderInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1582,7 +1582,7 @@ export type UserCreateWithoutSuperAdminInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -1625,7 +1625,7 @@ export type UserUncheckedCreateWithoutSuperAdminInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -1684,7 +1684,7 @@ export type UserUpdateWithoutSuperAdminInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1727,7 +1727,7 @@ export type UserUncheckedUpdateWithoutSuperAdminInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1770,7 +1770,7 @@ export type UserCreateWithoutChatChannelsAInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -1813,7 +1813,7 @@ export type UserUncheckedCreateWithoutChatChannelsAInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -1861,7 +1861,7 @@ export type UserCreateWithoutChatChannelsBInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -1904,7 +1904,7 @@ export type UserUncheckedCreateWithoutChatChannelsBInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -1963,7 +1963,7 @@ export type UserUpdateWithoutChatChannelsAInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2006,7 +2006,7 @@ export type UserUncheckedUpdateWithoutChatChannelsAInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2060,7 +2060,7 @@ export type UserUpdateWithoutChatChannelsBInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2103,7 +2103,7 @@ export type UserUncheckedUpdateWithoutChatChannelsBInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2146,7 +2146,7 @@ export type UserCreateWithoutMessagesInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -2189,7 +2189,7 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -2248,7 +2248,7 @@ export type UserUpdateWithoutMessagesInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2291,7 +2291,7 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2334,7 +2334,7 @@ export type UserCreateWithoutGroupMembershipsInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -2377,7 +2377,7 @@ export type UserUncheckedCreateWithoutGroupMembershipsInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -2436,7 +2436,7 @@ export type UserUpdateWithoutGroupMembershipsInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2479,7 +2479,7 @@ export type UserUncheckedUpdateWithoutGroupMembershipsInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2522,7 +2522,7 @@ export type UserCreateWithoutGroupReadReceiptsInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -2565,7 +2565,7 @@ export type UserUncheckedCreateWithoutGroupReadReceiptsInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -2624,7 +2624,7 @@ export type UserUpdateWithoutGroupReadReceiptsInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2667,7 +2667,7 @@ export type UserUncheckedUpdateWithoutGroupReadReceiptsInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2710,7 +2710,7 @@ export type UserCreateWithoutReceivedNotificationsInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -2753,7 +2753,7 @@ export type UserUncheckedCreateWithoutReceivedNotificationsInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -2801,7 +2801,7 @@ export type UserCreateWithoutSentNotificationsInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -2844,7 +2844,7 @@ export type UserUncheckedCreateWithoutSentNotificationsInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -2903,7 +2903,7 @@ export type UserUpdateWithoutReceivedNotificationsInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -2946,7 +2946,7 @@ export type UserUncheckedUpdateWithoutReceivedNotificationsInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3000,7 +3000,7 @@ export type UserUpdateWithoutSentNotificationsInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3043,7 +3043,7 @@ export type UserUncheckedUpdateWithoutSentNotificationsInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3086,7 +3086,7 @@ export type UserCreateWithoutReadReceiptsInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -3129,7 +3129,7 @@ export type UserUncheckedCreateWithoutReadReceiptsInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -3188,7 +3188,7 @@ export type UserUpdateWithoutReadReceiptsInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3231,7 +3231,7 @@ export type UserUncheckedUpdateWithoutReadReceiptsInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3274,7 +3274,7 @@ export type UserCreateWithoutSubscriptionInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -3317,7 +3317,7 @@ export type UserUncheckedCreateWithoutSubscriptionInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -3376,7 +3376,7 @@ export type UserUpdateWithoutSubscriptionInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3419,7 +3419,7 @@ export type UserUncheckedUpdateWithoutSubscriptionInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3462,7 +3462,7 @@ export type UserCreateWithoutPaymentsInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -3505,7 +3505,7 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   isApprove?: $Enums.Approve
   licenseNo?: string | null
   isLicenseValid?: boolean
-  country: string
+  country?: string | null
   state: string
   blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
   privateKey?: string | null
@@ -3564,7 +3564,7 @@ export type UserUpdateWithoutPaymentsInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3607,7 +3607,7 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
   licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  country?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.StringFieldUpdateOperationsInput | string
   blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
   privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -3928,7 +3928,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     isApprove: $Enums.Approve
     licenseNo: string | null
     isLicenseValid: boolean
-    country: string
+    country: string | null
     state: string
     blockedMembers: string[]
     privateKey: string | null

@@ -15,7 +15,8 @@ const prisma = new PrismaClient({
     log: process.env.NODE_ENV === 'development'
         ? ["warn", "error"] // Only show warnings and errors in development
         : ["error"], // Only show errors in production
-    errorFormat: 'minimal'
+    errorFormat: 'minimal',
+
 })
 
 // Graceful shutdown

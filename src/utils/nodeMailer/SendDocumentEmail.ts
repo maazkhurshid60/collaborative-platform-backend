@@ -4,8 +4,9 @@ export const sendDocumentEmail = async (
   toEmail: string,
   clientName: string,
   providerName: string,
+  clientId: string
 ) => {
-  const loginUrl = `${process.env.NODE_ENV === "DEVELOPMENT" ? process.env.FRONTEND_LOCAL_URL : process.env.FRONTEND_AWS_URL}/signup-with-client-id/`;
+  const loginUrl = `${process.env.NODE_ENV === "development" ? process.env.FRONTEND_LOCAL_URL : process.env.FRONTEND_AWS_URL}/signup-with-client-id/`;
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -84,6 +85,29 @@ export const sendDocumentEmail = async (
           line-height: 1.6;
           margin: 0 0 32px 0;
         }
+
+        .client-info-box {
+          background-color: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 32px;
+          text-align: center;
+        }
+
+        .client-info-text {
+          font-size: 15px;
+          color: #334155;
+          margin: 0 0 8px 0;
+        }
+
+        .client-id {
+          font-size: 18px;
+          font-family: monospace;
+          color: #0d9488;
+          font-weight: bold;
+          margin: 0;
+        }
         
         .cta-container {
           text-align: center;
@@ -142,6 +166,15 @@ export const sendDocumentEmail = async (
             <p class="intro-text">
               Please login to your dashboard to review and sign them.
             </p>
+
+            <div class="client-info-box">
+              <p class="client-info-text">If you don't have an account yet, please follow these steps:</p>
+              <ul style="text-align: left; font-size: 14px; color: #334155; margin-bottom: 20px;">
+                <li><strong>Step 1:</strong> Click the <strong>Login to View</strong> button below and enter your <strong>Client ID</strong>: <span class="client-id">${clientId}</span></li>
+                <li><strong>Step 2:</strong> Enter your remaining details to complete the setup.</li>
+                <li><strong>Step 3:</strong> Once successful, you will be redirected to the login screen where you can enter your real credentials.</li>
+              </ul>
+            </div>
 
             <div class="cta-container">
               <a href="${loginUrl}" class="cta-button">Login to View</a>

@@ -46,7 +46,7 @@ const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) 
                     licenseNo: true,
                     role: true,
                     isApprove: true,
-                    country: true,
+                    //           country: true,
                     state: true,
                     blockedMembers: true,
                 }
@@ -98,7 +98,7 @@ const getTotalProviders = asyncHandler(async (req: Request, res: Response) => {
                     licenseNo: true,
                     role: true,
                     isApprove: true,
-                    country: true,
+                    //         country: true,
                     state: true,
                     blockedMembers: true,
                 }

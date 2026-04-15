@@ -393,7 +393,8 @@ export class SubscriptionService {
                 name: payment.user.fullName,
                 email: payment.user.email,
                 address: payment.user.address || "-",
-                city: `${payment.user.state || ''}, ${payment.user.country || ''}`.replace(/^, /, '') || "-"
+                city: `${payment.user.state || ''}, 
+                 ${payment.user.country || ''}`.replace(/^, /, '') || "-"
             },
             items: [{
                 description: planName,

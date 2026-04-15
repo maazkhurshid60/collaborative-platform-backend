@@ -55,7 +55,7 @@ export const updateSuperAdminById = asyncHandler(async (req: Request, res: Respo
     licenseNumber,
     age,
     address,
-    country,
+    // country,
     state,
     email,
     contactNo,
@@ -69,7 +69,7 @@ export const updateSuperAdminById = asyncHandler(async (req: Request, res: Respo
   if (licenseNumber !== undefined) userUpdate.licenseNo = licenseNumber;
   if (age !== undefined) userUpdate.age = Number(age);
   if (address !== undefined) userUpdate.address = address;
-  if (country !== undefined) userUpdate.country = country;
+  // if (country !== undefined) userUpdate.country = country;
   if (state !== undefined) userUpdate.state = state;
   if (contactNo !== undefined) userUpdate.contactNo = contactNo;
   if (gender !== undefined) userUpdate.gender = gender.toUpperCase();

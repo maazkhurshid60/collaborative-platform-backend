@@ -25,9 +25,9 @@ export const licenseNoValidator = z
 export const userSchema = z.object({
     fullName: fullNameValidator,
     profileImage: z.string().nullable().optional(),
-    gender: z.enum(["male", "female", "other"], { message: "Gender must be either male or female or other" }).optional(),
+    gender: z.enum(["male", "female", "other", "prefer_not_to_say"], { message: "Gender must be either male, female, other, or prefer_not_to_say" }).optional(),
     age: z.coerce.number()
-        .min(7, { message: "Age must be at least 7" })
+        .min(0, { message: "Age must be a valid number" })
         .max(150, { message: "Age must be at most 150" }).optional(),
     contactNo: z.string().nonempty({ message: "Contact no is required" }).min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }).optional(),
     address: z.string().optional(),
@@ -35,10 +35,10 @@ export const userSchema = z.object({
     licenseNo: z.string().optional(),
     role: z.enum(["client", "provider", "superAdmin"], { message: "Role must be either client or provider" }),
     isApprove: z.string().optional(),
-    email: z.string().nonempty("Email is required").email("Invalid email format"),
+    email: z.string().nonempty("Email is required").email("Enter a valid Email"),
     password: strongPassword.optional(),
-    country: z.literal("US", { message: "Only United States is supported" }),
-    state: z.string().nonempty("State is required"),
+    // country: z.literal("US", { message: "Only United States is supported" }),
+    state: z.string().nonempty("State must be selected"),
     publicKey: z.string().optional(),
     privateKey: z.string().optional(),
 })
@@ -60,7 +60,7 @@ export const superAdminSchema = userSchema.extend({
 })
 // Login Schema
 export const loginSchema = z.object({
-    email: z.string().nonempty("Email is required").email("Invalid email format"),
+    email: z.string().nonempty("Email is required").email("Enter a valid Email"),
     password: z.string().nonempty("Password is required"),
 })
 

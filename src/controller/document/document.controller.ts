@@ -187,7 +187,8 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
         await sendDocumentEmail(
             clientUser.email,
             clientUser.fullName,
-            providerUser.fullName
+            providerUser.fullName,
+            doc.client.clientId || ""
         );
         io.to(`notification_room_${clientUser.id}`).emit('new_notification', clientNotification);
 

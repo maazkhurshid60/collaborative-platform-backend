@@ -54,7 +54,7 @@ export const inviteProviderSignupApi = asyncHandler(async (req: Request, res: Re
         select: {
           fullName: true,
           address: true,
-          country: true,
+          //     country: true,
           state: true,
           licenseNo: true,
         }

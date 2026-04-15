@@ -3,6 +3,14 @@ import prisma from "./src/db/db.config";
 
 async function main() {
     const userEmail = process.argv[2] || "muhammadjunaid9394@gmail.com";
+
+
+
+
+    const userEmails = await prisma.$queryRaw`SELECT email from "User" where email = ${userEmail}`;
+
+    console.log(userEmails);
+
     console.log(`Fetching history for ${userEmail}...`);
 
     const user = await prisma.user.findUnique({
@@ -33,6 +41,7 @@ async function main() {
         console.log(`[${i + 1}] ID: ${p.id} | UserID: ${p.userId} | Amount: $${p.amount / 100} | Status: ${p.status} | Invoice: ${p.stripeInvoiceId}`);
     });
 }
+
 
 main()
     .catch(e => console.error(e))

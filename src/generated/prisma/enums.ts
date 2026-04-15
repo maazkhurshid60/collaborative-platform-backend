@@ -23,7 +23,9 @@ export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
 
 export const Gender = {
   MALE: 'MALE',
-  FEMALE: 'FEMALE'
+  FEMALE: 'FEMALE',
+  PREFER_NOT_TO_SAY: 'PREFER_NOT_TO_SAY',
+  OTHER: 'OTHER'
 } as const
 
 export type Gender = (typeof Gender)[keyof typeof Gender]

@@ -16,7 +16,7 @@ export const authorizeRoles = (...allowedRoles: string[]) => {
                 return;
             }
             return next();
-        }
+        }   
 
         // 2. Fallback: Verify token if not already verified (standalone usage)
         const authHeader = req.headers.authorization;

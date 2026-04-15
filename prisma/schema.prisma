@@ -22,7 +22,7 @@ model User {
   isApprove             Approve            @default(PENDING)
   licenseNo             String?            @unique
   isLicenseValid        Boolean            @default(false)
-  country               String
+  country               String?
   state                 String
   blockedMembers        String[]           @default([])
   privateKey            String?
@@ -277,6 +277,8 @@ enum PaymentStatus {
 enum Gender {
   MALE
   FEMALE
+  PREFER_NOT_TO_SAY
+  OTHER
 }
 
 enum Role {

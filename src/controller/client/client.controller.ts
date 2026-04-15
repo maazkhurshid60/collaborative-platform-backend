@@ -55,7 +55,7 @@ const getAllClients = asyncHandler(async (req: Request, res: Response) => {
         updatedAt: true,
         role: true,
         isApprove: true,
-        country: true,
+        // country: true,
         state: true,
         email: true,
     };
@@ -189,7 +189,7 @@ export const getClientById = asyncHandler(async (req: Request, res: Response) =>
         role: true,
 
         isApprove: true,
-        country: true,
+        // country: true,
         state: true,
         email: true,
     };
@@ -508,7 +508,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
         clientId,
         clientShowToOthers,
         state,
-        country,
+        // country,
         eSignature
     } = clientData.data;
 
@@ -549,7 +549,7 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
                     address,
                     status,
                     state,
-                    country,
+                    // country,
                     profileImage: req.file
                         ? (req.file as any).location
                         : req.body.profileImage === "null"
@@ -634,7 +634,7 @@ const getTotalClient = asyncHandler(async (req: Request, res: Response) => {
                                     id: true,
                                     age: true,
                                     gender: true,
-                                    country: true,
+                                    // country: true,
                                     state: true,
                                     isLicenseValid: true,
                                     blockedMembers: true,
@@ -700,7 +700,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
         address,
         status = "active",
         isApprove,
-        country,
+        //country,
         state,
     } = userParsed.data;
 
@@ -738,7 +738,7 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
                     contactNo,
                     address,
                     status,
-                    country,
+                    //          country,
                     state,
                     role: Role.client,
                     isApprove: isApprove ? isApprove.toUpperCase() as Approve : Approve.PENDING,
@@ -804,7 +804,10 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
         );
     }
 
-    const { fullName, gender = "male", age, contactNo, address, status = "active", role, isApprove, country, state } = userParsedData.data;
+    const { fullName, gender = "male", age, contactNo, address, status = "active", role, isApprove,
+        //country, 
+
+        state } = userParsedData.data;
     const { email, password, isAccountCreatedByOwnClient, providerId, clientShowToOthers } = req.body;
 
     const normalizedEmail = String(email).trim().toLowerCase();
@@ -880,7 +883,8 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
             status,
             role,
             isApprove: isApprove ? isApprove.toUpperCase() as Approve : Approve.PENDING,
-            country, state,
+            // country,
+            state,
             profileImage: profileImageUrl,
             email: normalizedEmail,
             password: hashedPassword
@@ -1019,7 +1023,7 @@ const updateExistingClientOnLicenseNo = asyncHandler(async (req: Request, res: R
     // No Client update needed for email/password. 
 
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, null, "Client updated successfully")
+        new ApiResponse(StatusCodes.OK, null, "Account Updated Successfully")
     );
 
 

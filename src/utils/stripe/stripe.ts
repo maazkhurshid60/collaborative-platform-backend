@@ -11,6 +11,7 @@ export const stripe: any =
 
 
 
+
 if (!apiKey) {
     console.warn("⚠️ STRIPE_SECRET_KEY is missing from .env. Stripe integration will be mocked.");
 } else {
