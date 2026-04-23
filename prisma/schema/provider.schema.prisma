@@ -4,7 +4,7 @@ model Provider {
   password       String
   userId         String              @unique
   createdAt      DateTime            @default(now())
-  department     String
+  specialty      String
   updatedAt      DateTime            @default(now())
   chatChannelsA  ChatChannel[]       @relation("chatA")
   chatChannelsB  ChatChannel[]       @relation("chatB")

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 // provider Schema (Extends User)
 export const providerSchema = z.object({
-    department: z.string().nonempty("Department is required"),
+    specialty: z.string().nonempty("Specialty is required"),
     providerId: z.string().nonempty("Provider Id is required"),
     email: z.string().nonempty("Email is required").email("Invalid email format"),
     password: z

@@ -78,7 +78,7 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const { fullName, gender, age, contactNo, address, status, licenseNo, email, password, providerId, department } = providerData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, email, password, providerId, specialty } = providerData.data;
 
     const isProviderExist = await prisma.provider.findFirst({ where: { id: providerId } });
     if (!isProviderExist) {
@@ -122,7 +122,7 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const updatedproviderData = { email, department };
+    const updatedproviderData = { email, specialty };
     const updatedUserData = { fullName, gender, age, contactNo, address, status, licenseNo, role: Role.provider };
 
 

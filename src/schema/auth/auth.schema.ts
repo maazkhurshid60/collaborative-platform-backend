@@ -43,7 +43,7 @@ export const providerSchema = userSchema.extend({
     password: z.string().optional(),
 
 
-    department: z.string().nonempty("Department is required"),
+    specialty: z.string().nonempty("Specialty is required"),
 
 
 })

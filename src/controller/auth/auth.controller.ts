@@ -84,7 +84,7 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
             );
         }
 
-        const { department, email, password } = providerParsed.data;
+        const { specialty, email, password } = providerParsed.data;
         const existingUserByEmail = await prisma.provider.findFirst({ where: { email } });
         if (existingUserByEmail) {
             return res.status(StatusCodes.CONFLICT).json(
@@ -100,7 +100,7 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
             );
         }
 
-        const providerCreated = await prisma.provider.create({ data: { userId: userCreated.id, department, email, password: hashedPassword }, include: { user: true } });
+        const providerCreated = await prisma.provider.create({ data: { userId: userCreated.id, specialty, email, password: hashedPassword }, include: { user: true } });
         return res.status(StatusCodes.CREATED).json(
             new ApiResponse(StatusCodes.CREATED, providerCreated, "Your account has been sent to the super admin for verification. You will receive a verification email once approved, after which you'll be able to log in.")
         );
@@ -276,7 +276,7 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
             );
         }
 
-        const { email, password, department } = providerParsed.data;
+        const { email, password, specialty } = providerParsed.data;
 
         const existingProvider = await prisma.provider.findFirst({
             where: { email, NOT: { userId: loginUserId } }
@@ -290,7 +290,7 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
 
         const updateData: any = {
             email,
-            department,
+            specialty,
         };
 
         if (password && password.trim() !== "") {
