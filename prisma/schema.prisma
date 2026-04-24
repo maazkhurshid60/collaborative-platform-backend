@@ -70,7 +70,7 @@ model Client {
 model Provider {
   id             String              @id @default(uuid())
   userId         String              @unique
-  department     String
+  speciality     String
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
   createdClients Client[]            @relation("ClientCreator")

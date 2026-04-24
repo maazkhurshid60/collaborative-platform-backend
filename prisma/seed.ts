@@ -76,7 +76,7 @@ async function main() {
         await tx.provider.create({
             data: {
                 userId: user.id,
-                department: 'General Medicine',
+                speciality: 'General Medicine',
             },
         });
     });
@@ -146,7 +146,7 @@ async function main() {
                 },
             });
             const provider = await tx.provider.create({
-                data: { userId: user.id, department: 'General Medicine' },
+                data: { userId: user.id, speciality: 'General Medicine' },
             });
             createdProviderIds.push(provider.id);
         });

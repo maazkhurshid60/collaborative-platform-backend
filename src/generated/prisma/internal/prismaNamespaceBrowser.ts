@@ -138,7 +138,7 @@ export type ClientScalarFieldEnum = (typeof ClientScalarFieldEnum)[keyof typeof 
 export const ProviderScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
-  department: 'department',
+  speciality: 'speciality',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

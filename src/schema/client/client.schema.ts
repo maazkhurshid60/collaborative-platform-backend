@@ -17,8 +17,8 @@ export const clientSchema = z.object({
     profileImage: z.string().optional(),
     gender: z.enum(["male", "female", "other", "prefer_not_to_say"], { message: "Gender must be either male, female, other, or prefer_not_to_say" }),
     age: z.number()
-        .min(10, { message: "Age must be at least 10" })  // Min 2-digit number (10)
-        .max(99, { message: "Age must be at most 99" }), // Max 2-digit number (99)    
+        .min(0, { message: "Age must be a valid number." })  // Min 2-digit number (10)
+        .max(150, { message: "Age must be a valid number." }), // Max 2-digit number (99)    
     contactNo: z.string().nonempty().min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }),
     address: z.string().nonempty().min(1, { message: "Not less then 10letters" }),
     status: z.enum(["active", "disable"], { message: "Status must be either active or disable" }),

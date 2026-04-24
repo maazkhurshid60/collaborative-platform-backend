@@ -157,7 +157,7 @@ export class AuthService {
                 });
             } else if (role === Role.provider) {
                 roleRecord = await tx.provider.create({
-                    data: { userId: userCreated.id, department: userData.department },
+                    data: { userId: userCreated.id, speciality: userData.speciality },
                     include: { user: true }
                 });
             } else if (role === Role.superAdmin) {
@@ -227,6 +227,7 @@ export class AuthService {
             id: true,
             fullName: true,
             email: true,
+            gender: true,
             profileImage: true,
             role: true,
             status: true,
@@ -260,6 +261,7 @@ export class AuthService {
                 id: true,
                 fullName: true,
                 email: true,
+                gender: true,
                 profileImage: true,
                 role: true,
                 status: true,

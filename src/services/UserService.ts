@@ -31,7 +31,7 @@ export class UserService {
             profileImageUpdate,
             eSignature,
             eSignatureAction,
-            department
+            speciality
         } = updateData;
 
         let newPassword = undefined;
@@ -81,7 +81,7 @@ export class UserService {
         } else if (role === Role.provider) {
             const providerUpdate = await prisma.provider.update({
                 where: { userId: loginUserId },
-                data: { department },
+                data: { speciality },
                 include: { user: { include: { subscription: true } } }
             });
             if (providerUpdate?.user) delete (providerUpdate.user as any).password;

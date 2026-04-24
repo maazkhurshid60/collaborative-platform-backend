@@ -29,7 +29,7 @@ export const userSchema = z.object({
     age: z.coerce.number()
         .min(0, { message: "Age must be a valid number" })
         .max(150, { message: "Age must be at most 150" }).optional(),
-    contactNo: z.string().nonempty({ message: "Contact no is required" }).min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }).optional(),
+    contactNo: z.string().nonempty({ message: "Contact Number is required" }).min(8, { message: "Contact no not less then 8digits" }).max(20, { message: "Contact no not more then 20digits" }).optional(),
     address: z.string().optional(),
     status: z.enum(["active", "disable"], { message: "Status must be either active or disable" }).optional(),
     licenseNo: z.string().optional(),
@@ -50,7 +50,7 @@ export const clientSchema = userSchema.extend({
 })
 // Provider Schema (Extends User)
 export const providerSchema = userSchema.extend({
-    department: z.string().nonempty("Department is required"),
+    speciality: z.string().nonempty("Speciality is required"),
     inviteToken: z.string().optional(),
     licenseNo: licenseNoValidator.optional(),
 })

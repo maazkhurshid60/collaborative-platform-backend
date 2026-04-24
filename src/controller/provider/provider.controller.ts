@@ -29,7 +29,7 @@ const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) 
         },
         select: {
             id: true,
-            department: true,
+            speciality: true,
             createdAt: true,
             updatedAt: true,
             user: {
@@ -81,7 +81,7 @@ const getTotalProviders = asyncHandler(async (req: Request, res: Response) => {
         take: 1000,
         select: {
             id: true,
-            department: true,
+            speciality: true,
             createdAt: true,
             updatedAt: true,
             user: {
@@ -159,7 +159,7 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const { fullName, gender, age, contactNo, address, status, licenseNo, email, providerId, department } = providerData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, email, providerId, speciality } = providerData.data;
 
     const isProviderExist = await prisma.provider.findFirst({ where: { id: providerId } });
     if (!isProviderExist) {
@@ -203,7 +203,7 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const updatedproviderData = { department };
+    const updatedproviderData = { speciality };
     const updatedUserData: any = { fullName, email, gender, age, contactNo, address, status, licenseNo, role: Role.provider };
 
     if (req.file) {
