@@ -40,6 +40,29 @@ export class SubscriptionService {
             ?? null;
     }
 
+    /**
+     * Derive the billing cycle ("MONTHLY" | "YEARLY") from a Stripe subscription.
+     * Prefers the actual price interval (the source of truth — what Stripe is really billing)
+     * over metadata.period (which can drift if a sub was migrated, modified in the dashboard,
+     * or originally created with the wrong period). Metadata is used only as a last resort.
+     */
+    private resolveBillingCycle(stripeSub: any, fallbackPeriod?: string): string {
+        const interval =
+            stripeSub?.items?.data?.[0]?.price?.recurring?.interval
+            ?? stripeSub?.items?.data?.[0]?.plan?.interval
+            ?? stripeSub?.plan?.interval
+            ?? null;
+
+        if (interval === 'year') return 'YEARLY';
+        if (interval === 'month') return 'MONTHLY';
+
+        // Last resort: trust the metadata / explicit fallback
+        const meta = stripeSub?.metadata?.period;
+        if (meta) return String(meta).toUpperCase();
+        if (fallbackPeriod) return String(fallbackPeriod).toUpperCase();
+        return 'MONTHLY';
+    }
+
     async startTrial(providerId: string, invitedById?: string) {
         const provider = await prisma.provider.findUnique({
             where: { id: providerId },
@@ -504,7 +527,7 @@ export class SubscriptionService {
                 currentPeriodEnd: confirmedPeriodEnd || fallbackPeriodEnd,
                 plan: (stripeSub.metadata?.planType || sub.plan) as any,
                 cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
-                billingCycle: stripeSub.metadata?.period || (stripeSub.plan?.interval === 'year' ? 'YEARLY' : 'MONTHLY')
+                billingCycle: this.resolveBillingCycle(stripeSub, sub.billingCycle ?? undefined)
             }
         });
 
@@ -702,7 +725,7 @@ export class SubscriptionService {
                                     stripeSubscriptionId: subscriptionId,
                                     status: "ACTIVE",
                                     plan: planType as any,
-                                    billingCycle: period,
+                                    billingCycle: this.resolveBillingCycle(stripeSub, period),
                                     currentPeriodEnd,  // ← fix: save period end
                                 },
                                 update: {
@@ -710,7 +733,7 @@ export class SubscriptionService {
                                     stripeSubscriptionId: subscriptionId,
                                     status: "ACTIVE",
                                     plan: planType as any,
-                                    billingCycle: period,
+                                    billingCycle: this.resolveBillingCycle(stripeSub, period),
                                     currentPeriodEnd,  // ← fix: save period end
                                 }
                             }
@@ -803,7 +826,7 @@ export class SubscriptionService {
                         status: "ACTIVE",
                         plan: (planType || "STANDARD") as any,
                         currentPeriodEnd: subPeriodEnd,
-                        billingCycle: period || (stripeSub.plan?.interval === 'year' ? 'YEARLY' : 'MONTHLY')
+                        billingCycle: this.resolveBillingCycle(stripeSub, period)
                     },
                     update: {
                         stripeSubscriptionId: subscriptionId,
@@ -837,7 +860,7 @@ export class SubscriptionService {
                     status: "ACTIVE",
                     ...(periodEnd && { currentPeriodEnd: periodEnd }),
                     cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
-                    billingCycle: stripeSub.metadata?.period || (stripeSub.plan?.interval === 'year' ? 'YEARLY' : 'MONTHLY')
+                    billingCycle: this.resolveBillingCycle(stripeSub)
                 }
             });
 
