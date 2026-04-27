@@ -12,6 +12,34 @@ import e from "cors";
 const stripeService = new StripeService();
 
 export class SubscriptionService {
+    // ─────────────────────────────────────────────────────────────────
+    // Stripe API 2025-12-15.clover compatibility helpers
+    // In newer API versions, several fields moved:
+    //   - invoice.subscription   → invoice.parent.subscription_details.subscription
+    //   - sub.current_period_end → sub.items.data[0].current_period_end
+    // These helpers fall back to the old locations so we keep working
+    // for any older subs created before the API upgrade.
+    // ─────────────────────────────────────────────────────────────────
+    private resolveInvoiceSubscriptionId(invoice: any): string | null {
+        const fromTop = typeof invoice?.subscription === 'string' ? invoice.subscription : null;
+        const fromParent = invoice?.parent?.subscription_details?.subscription ?? null;
+        const fromLine = invoice?.lines?.data?.[0]?.subscription ?? null;
+        const fromLineParent = invoice?.lines?.data?.[0]?.parent?.subscription_item_details?.subscription ?? null;
+        return fromTop || fromParent || fromLine || fromLineParent || null;
+    }
+
+    private getSubPeriodEnd(stripeSub: any): number | null {
+        return stripeSub?.items?.data?.[0]?.current_period_end
+            ?? stripeSub?.current_period_end
+            ?? null;
+    }
+
+    private getSubPeriodStart(stripeSub: any): number | null {
+        return stripeSub?.items?.data?.[0]?.current_period_start
+            ?? stripeSub?.current_period_start
+            ?? null;
+    }
+
     async startTrial(providerId: string, invitedById?: string) {
         const provider = await prisma.provider.findUnique({
             where: { id: providerId },
@@ -140,11 +168,14 @@ export class SubscriptionService {
                 currency = stripeSub.items.data[0].plan.currency || 'usd';
 
                 // current_period_start/end are null on INCOMPLETE subscriptions — guard against NaN dates
-                if (stripeSub.current_period_start) {
-                    periodStart = new Date(stripeSub.current_period_start * 1000);
+                // In Stripe API 2025-12-15.clover these fields moved to items.data[i] — read with fallback
+                const periodStartUnix = this.getSubPeriodStart(stripeSub);
+                const periodEndUnix = this.getSubPeriodEnd(stripeSub);
+                if (periodStartUnix) {
+                    periodStart = new Date(periodStartUnix * 1000);
                 }
-                if (stripeSub.current_period_end) {
-                    periodEnd = new Date(stripeSub.current_period_end * 1000);
+                if (periodEndUnix) {
+                    periodEnd = new Date(periodEndUnix * 1000);
                 }
 
                 await stripeService.cancelSubscription(sub.stripeSubscriptionId);
@@ -193,7 +224,7 @@ export class SubscriptionService {
             });
         }
 
-        io.to(userId).emit("subscription_updated");
+        io.to(`notification_room_${userId}`).emit("subscription_updated");
         return { success: true };
     }
 
@@ -421,13 +452,14 @@ export class SubscriptionService {
                     const stripeSubs = await stripeService.listSubscriptions({ customer: customerId, limit: 1, status: 'active' });
                     if (stripeSubs?.data?.length > 0) {
                         const found = stripeSubs.data[0];
+                        const foundEndUnix = this.getSubPeriodEnd(found);
                         // Link this subscription
                         sub = await prisma.subscription.update({
                             where: { userId },
                             data: {
                                 stripeSubscriptionId: found.id,
                                 stripeCustomerId: customerId,
-                                currentPeriodEnd: new Date(found.current_period_end * 1000),
+                                ...(foundEndUnix && { currentPeriodEnd: new Date(foundEndUnix * 1000) }),
                                 status: 'ACTIVE'
                             }
                         });
@@ -462,11 +494,14 @@ export class SubscriptionService {
             ? "ACTIVE"
             : ((stripeSub.status === 'trialing' && sub.status === 'ACTIVE') ? 'ACTIVE' : (statusMap[stripeSub.status] || "ACTIVE"));
 
+        const stripeSubEndUnix = this.getSubPeriodEnd(stripeSub);
+        const fallbackPeriodEnd = stripeSubEndUnix ? new Date(stripeSubEndUnix * 1000) : sub.currentPeriodEnd;
+
         const updatedSub = await prisma.subscription.update({
             where: { userId },
             data: {
                 status: derivedStatus as any,
-                currentPeriodEnd: confirmedPeriodEnd || new Date(stripeSub.current_period_end * 1000),
+                currentPeriodEnd: confirmedPeriodEnd || fallbackPeriodEnd,
                 plan: (stripeSub.metadata?.planType || sub.plan) as any,
                 cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
                 billingCycle: stripeSub.metadata?.period || (stripeSub.plan?.interval === 'year' ? 'YEARLY' : 'MONTHLY')
@@ -637,9 +672,8 @@ export class SubscriptionService {
 
         // Fetch the full Stripe subscription to get currentPeriodEnd
         const stripeSub = await stripeService.retrieveSubscription(subscriptionId);
-        const currentPeriodEnd = stripeSub?.current_period_end
-            ? new Date(stripeSub.current_period_end * 1000)
-            : null;
+        const periodEndUnix = this.getSubPeriodEnd(stripeSub);
+        const currentPeriodEnd = periodEndUnix ? new Date(periodEndUnix * 1000) : null;
 
         let targetUserId = userId === 'temp' ? null : userId;
         if (!targetUserId && email) {
@@ -708,7 +742,7 @@ export class SubscriptionService {
                 }
             }
 
-            io.to(targetUserId).emit("subscription_updated");
+            io.to(`notification_room_${targetUserId}`).emit("subscription_updated");
 
             // Send custom Success Email
             try {
@@ -737,8 +771,11 @@ export class SubscriptionService {
     }
 
     private async handleInvoicePaymentSucceeded(invoice: any) {
-        const subscriptionId = invoice.subscription as string;
-        if (!subscriptionId) return;
+        const subscriptionId = this.resolveInvoiceSubscriptionId(invoice);
+        if (!subscriptionId) {
+            logger.warn(`[invoice.payment_succeeded] No subscription ID resolvable on invoice ${invoice?.id}. Skipping.`);
+            return;
+        }
 
         let subscription = await prisma.subscription.findUnique({ where: { stripeSubscriptionId: subscriptionId } });
 
@@ -754,6 +791,9 @@ export class SubscriptionService {
             }
 
             if (targetUserId) {
+                const subPeriodEndUnix = this.getSubPeriodEnd(stripeSub);
+                const subPeriodEnd = subPeriodEndUnix ? new Date(subPeriodEndUnix * 1000) : undefined;
+
                 subscription = await prisma.subscription.upsert({
                     where: { userId: targetUserId },
                     create: {
@@ -762,13 +802,13 @@ export class SubscriptionService {
                         stripeSubscriptionId: subscriptionId,
                         status: "ACTIVE",
                         plan: (planType || "STANDARD") as any,
-                        currentPeriodEnd: new Date(stripeSub.current_period_end * 1000),
+                        currentPeriodEnd: subPeriodEnd,
                         billingCycle: period || (stripeSub.plan?.interval === 'year' ? 'YEARLY' : 'MONTHLY')
                     },
                     update: {
                         stripeSubscriptionId: subscriptionId,
                         status: "ACTIVE",
-                        currentPeriodEnd: new Date(stripeSub.current_period_end * 1000)
+                        ...(subPeriodEnd && { currentPeriodEnd: subPeriodEnd })
                     }
                 });
                 await prisma.user.update({
@@ -783,11 +823,19 @@ export class SubscriptionService {
 
         if (subscription) {
             const stripeSub = await stripeService.retrieveSubscription(subscriptionId);
+
+            // Prefer line-item period.end (always present on a paid invoice).
+            // Fall back to the subscription's per-item current_period_end.
+            const lineEndUnix = invoice?.lines?.data?.[0]?.period?.end ?? null;
+            const subEndUnix = this.getSubPeriodEnd(stripeSub);
+            const periodEndUnix = lineEndUnix ?? subEndUnix;
+            const periodEnd = periodEndUnix ? new Date(periodEndUnix * 1000) : undefined;
+
             await prisma.subscription.update({
                 where: { id: subscription.id },
                 data: {
                     status: "ACTIVE",
-                    currentPeriodEnd: new Date(invoice.lines.data[0].period.end * 1000),
+                    ...(periodEnd && { currentPeriodEnd: periodEnd }),
                     cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
                     billingCycle: stripeSub.metadata?.period || (stripeSub.plan?.interval === 'year' ? 'YEARLY' : 'MONTHLY')
                 }
@@ -851,16 +899,19 @@ export class SubscriptionService {
                     }
                 }
             }
-            if (invoice.billing_reason === 'subscription_cycle' || invoice.subscription) {
+            if (invoice.billing_reason === 'subscription_cycle' || subscriptionId) {
                 const amountFormatted = `$${(invoice.amount_paid / 100).toFixed(2)}`;
                 const planNameStr = subscription.plan.charAt(0) + subscription.plan.slice(1).toLowerCase();
-                const nextBillingDateStr = new Date(invoice.lines.data[0].period.end * 1000).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric'
-                });
+                const nextBillingUnix = invoice?.lines?.data?.[0]?.period?.end ?? this.getSubPeriodEnd(stripeSub);
+                const nextBillingDateStr = nextBillingUnix
+                    ? new Date(nextBillingUnix * 1000).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                    })
+                    : '';
 
-                io.to(subscription.userId).emit("subscription_renewal", {
+                io.to(`notification_room_${subscription.userId}`).emit("subscription_renewal", {
                     planName: planNameStr,
                     amountBilled: amountFormatted,
                     nextBillingDate: nextBillingDateStr
@@ -872,11 +923,14 @@ export class SubscriptionService {
                     const fullUser = await prisma.user.findUnique({ where: { id: subscription.userId } });
                     if (fullUser) {
                         const amountFormatted = `$${(invoice.amount_paid / 100).toFixed(2)}`;
-                        const nextBillingDateStr = new Date(invoice.lines.data[0].period.end * 1000).toLocaleDateString('en-US', {
-                            month: 'long',
-                            day: 'numeric',
-                            year: 'numeric'
-                        });
+                        const nextBillingUnix = invoice?.lines?.data?.[0]?.period?.end ?? this.getSubPeriodEnd(stripeSub);
+                        const nextBillingDateStr = nextBillingUnix
+                            ? new Date(nextBillingUnix * 1000).toLocaleDateString('en-US', {
+                                month: 'long',
+                                day: 'numeric',
+                                year: 'numeric'
+                            })
+                            : '';
 
                         // Use derived plan and billing cycle for accuracy
                         const planName = subscription.plan;
@@ -896,13 +950,16 @@ export class SubscriptionService {
                 }
             }
 
-            io.to(subscription.userId).emit("subscription_updated");
+            io.to(`notification_room_${subscription.userId}`).emit("subscription_updated");
         }
     }
 
     private async handleInvoicePaymentFailed(invoice: any) {
-        const subscriptionId = invoice.subscription as string;
-        if (!subscriptionId) return;
+        const subscriptionId = this.resolveInvoiceSubscriptionId(invoice);
+        if (!subscriptionId) {
+            logger.warn(`[invoice.payment_failed] No subscription ID resolvable on invoice ${invoice?.id}. Skipping.`);
+            return;
+        }
 
         await prisma.subscription.updateMany({
             where: { stripeSubscriptionId: subscriptionId },
@@ -923,7 +980,7 @@ export class SubscriptionService {
                     invoiceUrl: invoice.hosted_invoice_url
                 }
             });
-            io.to(sub.userId).emit("subscription_updated");
+            io.to(`notification_room_${sub.userId}`).emit("subscription_updated");
         }
     }
 
@@ -960,7 +1017,7 @@ export class SubscriptionService {
                     });
                 }
             });
-            io.to(deletedSub.userId).emit("subscription_updated");
+            io.to(`notification_room_${deletedSub.userId}`).emit("subscription_updated");
 
             // Send custom Cancellation Email
             try {
@@ -994,12 +1051,15 @@ export class SubscriptionService {
                 newStatus = 'ACTIVE';
             }
 
+            const periodEndUnix = this.getSubPeriodEnd(subscription);
+            const periodEnd = periodEndUnix ? new Date(periodEndUnix * 1000) : undefined;
+
             await prisma.subscription.update({
                 where: { id: existingSub.id },
                 data: {
                     status: newStatus as any,
                     cancelAtPeriodEnd: subscription.cancel_at_period_end,
-                    currentPeriodEnd: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : undefined
+                    ...(periodEnd && { currentPeriodEnd: periodEnd })
                 }
             });
 
@@ -1009,7 +1069,7 @@ export class SubscriptionService {
                 await this.cleanupPaymentMethods(subscription.customer as string, pmId);
             }
 
-            io.to(existingSub.userId).emit("subscription_updated");
+            io.to(`notification_room_${existingSub.userId}`).emit("subscription_updated");
         }
     }
 
