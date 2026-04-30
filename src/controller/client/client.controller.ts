@@ -840,6 +840,33 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
             );
         }
 
+        // ─── Free-trial gate ───────────────────────────────────────────────
+        // Trial providers can only add their OWN newly-created clients.
+        // Attaching a client created by another provider is a paid-tier
+        // collaboration feature. The frontend already shows a friendly toast
+        // before this call, but we guard server-side too because the client
+        // can be bypassed.
+        //
+        // We only enforce this when the existing client was created by a
+        // DIFFERENT provider — a trial provider re-adding a client they
+        // themselves originally created shouldn't be punished.
+        const callingUserId = (req as any).user?.id;
+        if (callingUserId && existingClient.createdByProviderId !== providerId) {
+            const callerSubscription = await prisma.subscription.findUnique({
+                where: { userId: callingUserId },
+                select: { status: true },
+            });
+            if (callerSubscription?.status === "TRIALING") {
+                return res.status(StatusCodes.FORBIDDEN).json(
+                    new ApiResponse(
+                        StatusCodes.FORBIDDEN,
+                        null,
+                        "Adding another provider's client is a premium feature. Upgrade your plan to collaborate on shared clients."
+                    )
+                );
+            }
+        }
+
         const alreadyLinked = await prisma.providerOnClient.findFirst({
             where: {
                 clientId: existingClient.id,

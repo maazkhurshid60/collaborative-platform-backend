@@ -57,10 +57,27 @@ export class SubscriptionService {
         if (interval === 'month') return 'MONTHLY';
 
         // Last resort: trust the metadata / explicit fallback
-        const meta = stripeSub?.metadata?.period;
+        const meta = stripeSub?.metadata?.period || stripeSub?.metadata?.billingCycle;
         if (meta) return String(meta).toUpperCase();
         if (fallbackPeriod) return String(fallbackPeriod).toUpperCase();
         return 'MONTHLY';
+    }
+
+    /**
+     * Derive the Plan Type ("STANDARD" | "PRO" etc) from the Stripe Price ID.
+     */
+    private resolvePlanType(stripeSub: any, fallbackPlan?: string): string {
+        const priceId = stripeSub?.items?.data?.[0]?.price?.id || stripeSub?.plan?.id;
+
+        if (priceId === STRIPE_PRICES.STANDARD.MONTHLY || priceId === STRIPE_PRICES.STANDARD.YEARLY) {
+            return 'STANDARD';
+        }
+
+        // Fallback to metadata if price ID isn't recognized (e.g. manual Stripe dashboard changes)
+        const meta = stripeSub?.metadata?.planType;
+        if (meta) return String(meta).toUpperCase();
+
+        return fallbackPlan || 'STANDARD';
     }
 
     async startTrial(providerId: string, invitedById?: string) {
@@ -251,8 +268,8 @@ export class SubscriptionService {
         return { success: true };
     }
 
-    async createSubscriptionIntent(data: { email: string, name: string, planType: string, period: string }) {
-        const { email, name, planType, period } = data;
+    async createSubscriptionIntent(data: { email: string, name: string, planType: string, period: string, isUpgrade?: boolean }) {
+        const { email, name, planType, period, isUpgrade } = data;
         const normalizedPlan = planType.toUpperCase();
         const normalizedPeriod = period.toUpperCase();
         const priceId = (STRIPE_PRICES as any)[normalizedPlan]?.[normalizedPeriod];
@@ -334,8 +351,15 @@ export class SubscriptionService {
                 payment_settings: { save_default_payment_method: 'on_subscription', payment_method_types: ['card'], },
                 expand: ['latest_invoice.confirmation_secret', 'latest_invoice.payment_intent', 'pending_setup_intent'],
                 metadata: { planType, period, email, userId: user?.id || "temp" },
+                // If it's an upgrade, end trial immediately to force payment
+                ...(isUpgrade && { trial_end: 'now' })
             });
         } else {
+            // If reusing a subscription that has a trial, end it now if this is an upgrade
+            if (isUpgrade && (subscription.status === 'trialing' || (subscription as any).trial_end)) {
+                await stripeService.updateSubscription(subscription.id, { trial_end: 'now' });
+            }
+
             // Re-retrieve with expansion to get fresh clientSecret
             subscription = await stripeService.retrieveSubscription(subscription.id, [
                 'latest_invoice.confirmation_secret',
@@ -714,6 +738,12 @@ export class SubscriptionService {
                     }
                 }
 
+                const statusMap: Record<string, string> = {
+                    'active': "ACTIVE", 'past_due': "PAST_DUE", 'canceled': "CANCELED",
+                    'unpaid': "UNPAID", 'trialing': "TRIALING", 'incomplete': "INCOMPLETE"
+                };
+                const derivedStatus = statusMap[stripeSub.status] || "ACTIVE";
+
                 await tx.user.update({
                     where: { id: targetUserId },
                     data: {
@@ -723,18 +753,18 @@ export class SubscriptionService {
                                 create: {
                                     stripeCustomerId: session.customer as string,
                                     stripeSubscriptionId: subscriptionId,
-                                    status: "ACTIVE",
+                                    status: derivedStatus as any,
                                     plan: planType as any,
                                     billingCycle: this.resolveBillingCycle(stripeSub, period),
-                                    currentPeriodEnd,  // ← fix: save period end
+                                    currentPeriodEnd,
                                 },
                                 update: {
                                     stripeCustomerId: session.customer as string,
                                     stripeSubscriptionId: subscriptionId,
-                                    status: "ACTIVE",
+                                    status: derivedStatus as any,
                                     plan: planType as any,
                                     billingCycle: this.resolveBillingCycle(stripeSub, period),
-                                    currentPeriodEnd,  // ← fix: save period end
+                                    currentPeriodEnd,
                                 }
                             }
                         },
@@ -854,13 +884,20 @@ export class SubscriptionService {
             const periodEndUnix = lineEndUnix ?? subEndUnix;
             const periodEnd = periodEndUnix ? new Date(periodEndUnix * 1000) : undefined;
 
+            const statusMap: Record<string, string> = {
+                'active': "ACTIVE", 'past_due': "PAST_DUE", 'canceled': "CANCELED",
+                'unpaid': "UNPAID", 'trialing': "TRIALING", 'incomplete': "INCOMPLETE"
+            };
+            const derivedStatus = statusMap[stripeSub.status] || "ACTIVE";
+
             await prisma.subscription.update({
                 where: { id: subscription.id },
                 data: {
-                    status: "ACTIVE",
+                    status: derivedStatus as any,
+                    plan: this.resolvePlanType(stripeSub, subscription.plan) as any,
+                    billingCycle: this.resolveBillingCycle(stripeSub, subscription.billingCycle ?? undefined),
                     ...(periodEnd && { currentPeriodEnd: periodEnd }),
                     cancelAtPeriodEnd: stripeSub.cancel_at_period_end,
-                    billingCycle: this.resolveBillingCycle(stripeSub)
                 }
             });
 
@@ -1059,9 +1096,17 @@ export class SubscriptionService {
     }
 
     private async handleSubscriptionUpdated(subscription: any) {
-        const existingSub = await prisma.subscription.findUnique({
+        let existingSub = await prisma.subscription.findUnique({
             where: { stripeSubscriptionId: subscription.id }
         });
+
+        // Fallback: if subscription ID changed (e.g. during certain upgrade paths), 
+        // find by customer ID to ensure the user's data is updated.
+        if (!existingSub && subscription.customer) {
+            existingSub = await prisma.subscription.findFirst({
+                where: { stripeCustomerId: subscription.customer as string }
+            });
+        }
 
         if (existingSub) {
             const statusMap: Record<string, string> = {
@@ -1081,6 +1126,8 @@ export class SubscriptionService {
                 where: { id: existingSub.id },
                 data: {
                     status: newStatus as any,
+                    plan: this.resolvePlanType(subscription, existingSub.plan) as any,
+                    billingCycle: this.resolveBillingCycle(subscription, existingSub.billingCycle ?? undefined),
                     cancelAtPeriodEnd: subscription.cancel_at_period_end,
                     ...(periodEnd && { currentPeriodEnd: periodEnd })
                 }

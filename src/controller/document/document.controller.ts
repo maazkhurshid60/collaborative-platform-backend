@@ -353,4 +353,107 @@ const deleteDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
 })
 
-export { addDocumentApi, getAllDocumentApi, documentSharedWithClientApi, documentSignByClientApi, getAllSharedDocumentWithClientApi, deleteDocumentApi }
+/**
+ * Paginated recipients for a single document, scoped to the calling provider.
+ *
+ * Drives the "Document Recipients" modal in the provider-side Document Sharing
+ * tab. Rows are sorted awaiting-first (so the provider sees outstanding work
+ * before completed signatures), then by recency.
+ *
+ * Query params:
+ *   - providerId  required — which provider's shares to consider
+ *   - page        default 1
+ *   - limit       default 10 (capped server-side at 100)
+ *   - status      optional: "signed" | "awaiting" — narrows the list
+ */
+const getDocumentRecipientsApi = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const providerId = (req.query.providerId as string) || (req.body?.providerId as string) || undefined;
+    const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 100);
+    const status = (req.query.status as string | undefined)?.toLowerCase();
+
+    if (!id) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Document ID is required" }, "Bad Request")
+        );
+    }
+    if (!providerId) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "providerId is required" }, "Bad Request")
+        );
+    }
+
+    const where: any = { documentId: id, providerId };
+    if (status === "signed") where.eSignature = { not: null };
+    else if (status === "awaiting") where.eSignature = null;
+
+    const [rows, total] = await Promise.all([
+        prisma.documentShareWith.findMany({
+            where,
+            include: { client: { include: { user: true } } },
+            // Awaiting (eSignature null) sorts before signed when we asc-order by eSignature
+            // (Prisma + Postgres: NULLS FIRST for asc by default; for SQLite the same holds).
+            // Tie-break by most-recently-updated so the active items rise to the top.
+            orderBy: [{ eSignature: "asc" }, { updatedAt: "desc" }],
+            skip: (page - 1) * limit,
+            take: limit,
+        }),
+        prisma.documentShareWith.count({ where }),
+    ]);
+
+    const recipients = rows.map((r: any) => ({
+        id: r.id,
+        clientId: r.clientId,
+        fullName: r.client?.user?.fullName ?? "Unnamed client",
+        email: r.client?.user?.email ?? null,
+        isSigned: Boolean(r.eSignature),
+        eSignature: r.eSignature ?? null,
+        updatedAt: r.updatedAt,
+    }));
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, {
+            message: "Recipients fetched successfully.",
+            data: {
+                recipients,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.max(Math.ceil(total / limit), 1),
+                },
+            },
+        }, "Fetched.")
+    );
+});
+
+/**
+ * Returns the master document catalog with `sharedWith` rows joined in.
+ * Optionally scoped to a single provider so `sharedWith` only contains shares
+ * that belong to the calling provider — keeps the per-(doc, client) status
+ * derivation clean on the frontend.
+ *
+ * Used by the provider-side "Document Sharing" tab to drive a doc-first view.
+ */
+const getAllMasterDocumentsApi = asyncHandler(async (req: Request, res: Response) => {
+    const providerId = (req.query.providerId as string) || (req.body?.providerId as string) || undefined;
+
+    const documents = await prisma.document.findMany({
+        include: {
+            sharedWith: providerId
+                ? { where: { providerId } }
+                : true,
+        },
+        orderBy: { createdAt: 'desc' },
+    });
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, {
+            message: "Documents fetched successfully.",
+            data: { documents },
+        }, "Fetched.")
+    );
+});
+
+export { addDocumentApi, getAllDocumentApi, documentSharedWithClientApi, documentSignByClientApi, getAllSharedDocumentWithClientApi, deleteDocumentApi, getAllMasterDocumentsApi, getDocumentRecipientsApi }

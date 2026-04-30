@@ -46,6 +46,10 @@ export class StripeService {
         return await stripe.subscriptions.cancel(subscriptionId);
     }
 
+    async updateSubscription(subscriptionId: string, params: Stripe.SubscriptionUpdateParams) {
+        return await stripe.subscriptions.update(subscriptionId, params);
+    }
+
     async retrieveSubscription(subscriptionId: string, expand?: string[]) {
         return await stripe.subscriptions.retrieve(subscriptionId, { expand });
     }
