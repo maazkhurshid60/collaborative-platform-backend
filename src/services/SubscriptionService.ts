@@ -688,7 +688,7 @@ export class SubscriptionService {
         const userId = session.metadata?.userId;
         const email = session.metadata?.email;
         const subscriptionId = session.subscription as string;
-        const planType = session.metadata?.planType || 'PRO';
+        const planType = session.metadata?.planType || 'STANDARD';
         const period = session.metadata?.period || 'MONTHLY';
 
         if (!subscriptionId) return;
