@@ -191,6 +191,156 @@ const updateGroupApi = asyncHandler(async (req: Request, res: Response) => {
 });
 
 
+/**
+ * Add one or more on-platform providers to an existing group chat without
+ * the email-invite round-trip. Used by the "Add Member" affordance in the
+ * chat header.
+ *
+ * Body: { groupId: string, providerIds: string[] }   (Provider record ids, not user ids)
+ *
+ * Authorization: the caller must already be a member of the group. We
+ * silently skip providers who are already in the group (rather than failing
+ * the whole batch) so the UI can add multiple at once without flickering.
+ */
+const addExistingProvidersToGroupApi = asyncHandler(async (req: Request, res: Response) => {
+    const { groupId, providerIds } = req.body as { groupId?: string; providerIds?: string[] };
+    const callerUserId = (req as any).user?.id as string | undefined;
+
+    if (!groupId || !Array.isArray(providerIds) || providerIds.length === 0) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, null, "groupId and providerIds[] are required")
+        );
+    }
+
+    // 1. Group must exist + load current members so we can dedupe.
+    //    Also pull the creator's userId so we can enforce the
+    //    "only-creator-can-invite" restriction below.
+    const group = await prisma.groupChat.findUnique({
+        where: { id: groupId },
+        include: {
+            members: { select: { userId: true } },
+            provider: { select: { userId: true } }
+        }
+    });
+    if (!group) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, null, "Group not found")
+        );
+    }
+
+    // 2. Caller must be a member of the group.
+    if (!callerUserId || !group.members.some(m => m.userId === callerUserId)) {
+        return res.status(StatusCodes.FORBIDDEN).json(
+            new ApiResponse(StatusCodes.FORBIDDEN, null, "Only group members can add others to this group")
+        );
+    }
+
+    // 2b. If the creator has locked the group with `membersCanInvite=false`,
+    //     only the creator themselves can add members. Source-of-truth
+    //     enforcement so a stale/tampered frontend can't bypass the rule.
+    const creatorUserId = group.provider?.userId;
+    const isCreator = !!creatorUserId && creatorUserId === callerUserId;
+    if (!group.membersCanInvite && !isCreator) {
+        return res.status(StatusCodes.FORBIDDEN).json(
+            new ApiResponse(
+                StatusCodes.FORBIDDEN,
+                null,
+                "Only the group admin can add members to this group"
+            )
+        );
+    }
+
+    // 3. Resolve Provider records → userIds. Reject the request if any id
+    //    doesn't map to a real provider so the frontend gets a clear signal.
+    const providers = await prisma.provider.findMany({
+        where: { id: { in: providerIds } },
+        select: { id: true, userId: true, user: { select: { fullName: true } } }
+    });
+    if (providers.length !== providerIds.length) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, null, "One or more providers are invalid")
+        );
+    }
+
+    // 4. Skip providers who are already in the group.
+    const existingUserIds = new Set(group.members.map(m => m.userId));
+    const toAdd = providers.filter(p => !existingUserIds.has(p.userId));
+
+    if (toAdd.length === 0) {
+        return res.status(StatusCodes.CONFLICT).json(
+            new ApiResponse(StatusCodes.CONFLICT, null, "All selected providers are already in this group")
+        );
+    }
+
+    // 5. Insert the new GroupMembers rows atomically.
+    await prisma.$transaction(
+        toAdd.map(p =>
+            prisma.groupMembers.create({
+                data: { userId: p.userId, groupChatId: groupId }
+            })
+        )
+    );
+
+    const addedNames = toAdd.map(p => p.user?.fullName).filter(Boolean);
+    const skippedCount = providerIds.length - toAdd.length;
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, {
+            addedCount: toAdd.length,
+            skippedCount,
+            addedNames,
+            groupId,
+        }, `Added ${toAdd.length} member${toAdd.length === 1 ? "" : "s"} to the group`)
+    );
+});
+
+/**
+ * Update group permissions. Currently the only permission is `membersCanInvite`,
+ * a toggle that lets the group creator restrict who can invite/add members.
+ *
+ * Body: { groupId: string, membersCanInvite: boolean }
+ *
+ * Authorization: only the group creator (group.provider.userId === caller)
+ * may flip this. Other members get 403 — even regular members of the group.
+ */
+const updateGroupPermissionsApi = asyncHandler(async (req: Request, res: Response) => {
+    const { groupId, membersCanInvite } = req.body as { groupId?: string; membersCanInvite?: boolean };
+    const callerUserId = (req as any).user?.id as string | undefined;
+
+    if (!groupId || typeof membersCanInvite !== "boolean") {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, null, "groupId and membersCanInvite (boolean) are required")
+        );
+    }
+
+    const group = await prisma.groupChat.findUnique({
+        where: { id: groupId },
+        include: { provider: { select: { userId: true } } }
+    });
+    if (!group) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, null, "Group not found")
+        );
+    }
+
+    // Only the creator can change group permissions.
+    if (!callerUserId || group.provider?.userId !== callerUserId) {
+        return res.status(StatusCodes.FORBIDDEN).json(
+            new ApiResponse(StatusCodes.FORBIDDEN, null, "Only the group admin can change permissions")
+        );
+    }
+
+    const updated = await prisma.groupChat.update({
+        where: { id: groupId },
+        data: { membersCanInvite },
+        select: { id: true, membersCanInvite: true }
+    });
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, updated, "Group permissions updated")
+    );
+});
+
 const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) => {
     const { groupId, senderId, message, type } = req.body;
     const files = req.files as Express.Multer.File[];
@@ -601,7 +751,10 @@ const shareGroupChatByEmail = asyncHandler(async (req: Request, res: Response) =
     try {
         const group = await prisma.groupChat.findUnique({
             where: { id: groupId },
-            include: { members: { select: { userId: true } } }
+            include: {
+                members: { select: { userId: true } },
+                provider: { select: { userId: true } }
+            }
         });
 
         if (!group) {
@@ -615,6 +768,16 @@ const shareGroupChatByEmail = asyncHandler(async (req: Request, res: Response) =
 
         if (!sender) {
             return res.status(StatusCodes.NOT_FOUND).json({ message: "Sender not found" });
+        }
+
+        // Same gate as the direct-add endpoint: when the creator has locked
+        // the group, only they can send invites (email or otherwise).
+        const creatorUserId = group.provider?.userId;
+        const isSenderCreator = !!creatorUserId && creatorUserId === loginUserId;
+        if (!group.membersCanInvite && !isSenderCreator) {
+            return res.status(StatusCodes.FORBIDDEN).json({
+                message: "Only the group admin can invite members to this group"
+            });
         }
 
         // 1. Check if the email belongs to an existing user
@@ -708,5 +871,5 @@ const shareGroupChatByEmail = asyncHandler(async (req: Request, res: Response) =
     }
 });
 
-export { createGroupApi, getPublicGroupMessageApi, sendMessageToGroupApi, getGroupMessageApi, getAllGroupsApi, updateGroupApi, deleteGroupChannel, shareGroupChatByEmail }
+export { createGroupApi, getPublicGroupMessageApi, sendMessageToGroupApi, getGroupMessageApi, getAllGroupsApi, updateGroupApi, deleteGroupChannel, shareGroupChatByEmail, addExistingProvidersToGroupApi, updateGroupPermissionsApi }
 

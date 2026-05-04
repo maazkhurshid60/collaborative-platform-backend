@@ -62,7 +62,8 @@ export const NotificationType = {
   PROFILE_UPDATE: 'PROFILE_UPDATE',
   PASSWORD_UPDATE: 'PASSWORD_UPDATE',
   DOCUMENT_SHARED: 'DOCUMENT_SHARED',
-  DOCUMENT_SIGNED: 'DOCUMENT_SIGNED'
+  DOCUMENT_SIGNED: 'DOCUMENT_SIGNED',
+  MENTIONED_IN_CHAT: 'MENTIONED_IN_CHAT'
 } as const
 
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]

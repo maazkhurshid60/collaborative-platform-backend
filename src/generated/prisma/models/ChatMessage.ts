@@ -211,6 +211,7 @@ export type ChatMessageWhereInput = {
   sender?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   groupReadReceipts?: Prisma.GroupReadReceiptListRelationFilter
   readReceipts?: Prisma.ReadReceiptListRelationFilter
+  mentions?: Prisma.UserListRelationFilter
 }
 
 export type ChatMessageOrderByWithRelationInput = {
@@ -227,6 +228,7 @@ export type ChatMessageOrderByWithRelationInput = {
   sender?: Prisma.UserOrderByWithRelationInput
   groupReadReceipts?: Prisma.GroupReadReceiptOrderByRelationAggregateInput
   readReceipts?: Prisma.ReadReceiptOrderByRelationAggregateInput
+  mentions?: Prisma.UserOrderByRelationAggregateInput
 }
 
 export type ChatMessageWhereUniqueInput = Prisma.AtLeast<{
@@ -246,6 +248,7 @@ export type ChatMessageWhereUniqueInput = Prisma.AtLeast<{
   sender?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   groupReadReceipts?: Prisma.GroupReadReceiptListRelationFilter
   readReceipts?: Prisma.ReadReceiptListRelationFilter
+  mentions?: Prisma.UserListRelationFilter
 }, "id">
 
 export type ChatMessageOrderByWithAggregationInput = {
@@ -287,6 +290,7 @@ export type ChatMessageCreateInput = {
   sender: Prisma.UserCreateNestedOneWithoutMessagesInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutMessageInput
+  mentions?: Prisma.UserCreateNestedManyWithoutMentionedInInput
 }
 
 export type ChatMessageUncheckedCreateInput = {
@@ -300,6 +304,7 @@ export type ChatMessageUncheckedCreateInput = {
   createdAt?: Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutMessageInput
+  mentions?: Prisma.UserUncheckedCreateNestedManyWithoutMentionedInInput
 }
 
 export type ChatMessageUpdateInput = {
@@ -313,6 +318,7 @@ export type ChatMessageUpdateInput = {
   sender?: Prisma.UserUpdateOneRequiredWithoutMessagesNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutMessageNestedInput
+  mentions?: Prisma.UserUpdateManyWithoutMentionedInNestedInput
 }
 
 export type ChatMessageUncheckedUpdateInput = {
@@ -326,6 +332,7 @@ export type ChatMessageUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
+  mentions?: Prisma.UserUncheckedUpdateManyWithoutMentionedInNestedInput
 }
 
 export type ChatMessageCreateManyInput = {
@@ -413,10 +420,22 @@ export type ChatMessageCreateNestedManyWithoutSenderInput = {
   connect?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
 }
 
+export type ChatMessageCreateNestedManyWithoutMentionsInput = {
+  create?: Prisma.XOR<Prisma.ChatMessageCreateWithoutMentionsInput, Prisma.ChatMessageUncheckedCreateWithoutMentionsInput> | Prisma.ChatMessageCreateWithoutMentionsInput[] | Prisma.ChatMessageUncheckedCreateWithoutMentionsInput[]
+  connectOrCreate?: Prisma.ChatMessageCreateOrConnectWithoutMentionsInput | Prisma.ChatMessageCreateOrConnectWithoutMentionsInput[]
+  connect?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
+}
+
 export type ChatMessageUncheckedCreateNestedManyWithoutSenderInput = {
   create?: Prisma.XOR<Prisma.ChatMessageCreateWithoutSenderInput, Prisma.ChatMessageUncheckedCreateWithoutSenderInput> | Prisma.ChatMessageCreateWithoutSenderInput[] | Prisma.ChatMessageUncheckedCreateWithoutSenderInput[]
   connectOrCreate?: Prisma.ChatMessageCreateOrConnectWithoutSenderInput | Prisma.ChatMessageCreateOrConnectWithoutSenderInput[]
   createMany?: Prisma.ChatMessageCreateManySenderInputEnvelope
+  connect?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
+}
+
+export type ChatMessageUncheckedCreateNestedManyWithoutMentionsInput = {
+  create?: Prisma.XOR<Prisma.ChatMessageCreateWithoutMentionsInput, Prisma.ChatMessageUncheckedCreateWithoutMentionsInput> | Prisma.ChatMessageCreateWithoutMentionsInput[] | Prisma.ChatMessageUncheckedCreateWithoutMentionsInput[]
+  connectOrCreate?: Prisma.ChatMessageCreateOrConnectWithoutMentionsInput | Prisma.ChatMessageCreateOrConnectWithoutMentionsInput[]
   connect?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
 }
 
@@ -434,6 +453,19 @@ export type ChatMessageUpdateManyWithoutSenderNestedInput = {
   deleteMany?: Prisma.ChatMessageScalarWhereInput | Prisma.ChatMessageScalarWhereInput[]
 }
 
+export type ChatMessageUpdateManyWithoutMentionsNestedInput = {
+  create?: Prisma.XOR<Prisma.ChatMessageCreateWithoutMentionsInput, Prisma.ChatMessageUncheckedCreateWithoutMentionsInput> | Prisma.ChatMessageCreateWithoutMentionsInput[] | Prisma.ChatMessageUncheckedCreateWithoutMentionsInput[]
+  connectOrCreate?: Prisma.ChatMessageCreateOrConnectWithoutMentionsInput | Prisma.ChatMessageCreateOrConnectWithoutMentionsInput[]
+  upsert?: Prisma.ChatMessageUpsertWithWhereUniqueWithoutMentionsInput | Prisma.ChatMessageUpsertWithWhereUniqueWithoutMentionsInput[]
+  set?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
+  disconnect?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
+  delete?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
+  connect?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
+  update?: Prisma.ChatMessageUpdateWithWhereUniqueWithoutMentionsInput | Prisma.ChatMessageUpdateWithWhereUniqueWithoutMentionsInput[]
+  updateMany?: Prisma.ChatMessageUpdateManyWithWhereWithoutMentionsInput | Prisma.ChatMessageUpdateManyWithWhereWithoutMentionsInput[]
+  deleteMany?: Prisma.ChatMessageScalarWhereInput | Prisma.ChatMessageScalarWhereInput[]
+}
+
 export type ChatMessageUncheckedUpdateManyWithoutSenderNestedInput = {
   create?: Prisma.XOR<Prisma.ChatMessageCreateWithoutSenderInput, Prisma.ChatMessageUncheckedCreateWithoutSenderInput> | Prisma.ChatMessageCreateWithoutSenderInput[] | Prisma.ChatMessageUncheckedCreateWithoutSenderInput[]
   connectOrCreate?: Prisma.ChatMessageCreateOrConnectWithoutSenderInput | Prisma.ChatMessageCreateOrConnectWithoutSenderInput[]
@@ -445,6 +477,19 @@ export type ChatMessageUncheckedUpdateManyWithoutSenderNestedInput = {
   connect?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
   update?: Prisma.ChatMessageUpdateWithWhereUniqueWithoutSenderInput | Prisma.ChatMessageUpdateWithWhereUniqueWithoutSenderInput[]
   updateMany?: Prisma.ChatMessageUpdateManyWithWhereWithoutSenderInput | Prisma.ChatMessageUpdateManyWithWhereWithoutSenderInput[]
+  deleteMany?: Prisma.ChatMessageScalarWhereInput | Prisma.ChatMessageScalarWhereInput[]
+}
+
+export type ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput = {
+  create?: Prisma.XOR<Prisma.ChatMessageCreateWithoutMentionsInput, Prisma.ChatMessageUncheckedCreateWithoutMentionsInput> | Prisma.ChatMessageCreateWithoutMentionsInput[] | Prisma.ChatMessageUncheckedCreateWithoutMentionsInput[]
+  connectOrCreate?: Prisma.ChatMessageCreateOrConnectWithoutMentionsInput | Prisma.ChatMessageCreateOrConnectWithoutMentionsInput[]
+  upsert?: Prisma.ChatMessageUpsertWithWhereUniqueWithoutMentionsInput | Prisma.ChatMessageUpsertWithWhereUniqueWithoutMentionsInput[]
+  set?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
+  disconnect?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
+  delete?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
+  connect?: Prisma.ChatMessageWhereUniqueInput | Prisma.ChatMessageWhereUniqueInput[]
+  update?: Prisma.ChatMessageUpdateWithWhereUniqueWithoutMentionsInput | Prisma.ChatMessageUpdateWithWhereUniqueWithoutMentionsInput[]
+  updateMany?: Prisma.ChatMessageUpdateManyWithWhereWithoutMentionsInput | Prisma.ChatMessageUpdateManyWithWhereWithoutMentionsInput[]
   deleteMany?: Prisma.ChatMessageScalarWhereInput | Prisma.ChatMessageScalarWhereInput[]
 }
 
@@ -570,6 +615,7 @@ export type ChatMessageCreateWithoutSenderInput = {
   group?: Prisma.GroupChatCreateNestedOneWithoutMessagesInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutMessageInput
+  mentions?: Prisma.UserCreateNestedManyWithoutMentionedInInput
 }
 
 export type ChatMessageUncheckedCreateWithoutSenderInput = {
@@ -582,6 +628,7 @@ export type ChatMessageUncheckedCreateWithoutSenderInput = {
   createdAt?: Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutMessageInput
+  mentions?: Prisma.UserUncheckedCreateNestedManyWithoutMentionedInInput
 }
 
 export type ChatMessageCreateOrConnectWithoutSenderInput = {
@@ -592,6 +639,37 @@ export type ChatMessageCreateOrConnectWithoutSenderInput = {
 export type ChatMessageCreateManySenderInputEnvelope = {
   data: Prisma.ChatMessageCreateManySenderInput | Prisma.ChatMessageCreateManySenderInput[]
   skipDuplicates?: boolean
+}
+
+export type ChatMessageCreateWithoutMentionsInput = {
+  id?: string
+  message: string
+  mediaUrl?: string | null
+  type: string
+  createdAt?: Date | string
+  chatChannel?: Prisma.ChatChannelCreateNestedOneWithoutMessagesInput
+  group?: Prisma.GroupChatCreateNestedOneWithoutMessagesInput
+  sender: Prisma.UserCreateNestedOneWithoutMessagesInput
+  groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutMessageInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutMessageInput
+}
+
+export type ChatMessageUncheckedCreateWithoutMentionsInput = {
+  id?: string
+  chatChannelId?: string | null
+  groupId?: string | null
+  senderId: string
+  message: string
+  mediaUrl?: string | null
+  type: string
+  createdAt?: Date | string
+  groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutMessageInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutMessageInput
+}
+
+export type ChatMessageCreateOrConnectWithoutMentionsInput = {
+  where: Prisma.ChatMessageWhereUniqueInput
+  create: Prisma.XOR<Prisma.ChatMessageCreateWithoutMentionsInput, Prisma.ChatMessageUncheckedCreateWithoutMentionsInput>
 }
 
 export type ChatMessageUpsertWithWhereUniqueWithoutSenderInput = {
@@ -624,6 +702,22 @@ export type ChatMessageScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"ChatMessage"> | Date | string
 }
 
+export type ChatMessageUpsertWithWhereUniqueWithoutMentionsInput = {
+  where: Prisma.ChatMessageWhereUniqueInput
+  update: Prisma.XOR<Prisma.ChatMessageUpdateWithoutMentionsInput, Prisma.ChatMessageUncheckedUpdateWithoutMentionsInput>
+  create: Prisma.XOR<Prisma.ChatMessageCreateWithoutMentionsInput, Prisma.ChatMessageUncheckedCreateWithoutMentionsInput>
+}
+
+export type ChatMessageUpdateWithWhereUniqueWithoutMentionsInput = {
+  where: Prisma.ChatMessageWhereUniqueInput
+  data: Prisma.XOR<Prisma.ChatMessageUpdateWithoutMentionsInput, Prisma.ChatMessageUncheckedUpdateWithoutMentionsInput>
+}
+
+export type ChatMessageUpdateManyWithWhereWithoutMentionsInput = {
+  where: Prisma.ChatMessageScalarWhereInput
+  data: Prisma.XOR<Prisma.ChatMessageUpdateManyMutationInput, Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsInput>
+}
+
 export type ChatMessageCreateWithoutChatChannelInput = {
   id?: string
   message: string
@@ -634,6 +728,7 @@ export type ChatMessageCreateWithoutChatChannelInput = {
   sender: Prisma.UserCreateNestedOneWithoutMessagesInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutMessageInput
+  mentions?: Prisma.UserCreateNestedManyWithoutMentionedInInput
 }
 
 export type ChatMessageUncheckedCreateWithoutChatChannelInput = {
@@ -646,6 +741,7 @@ export type ChatMessageUncheckedCreateWithoutChatChannelInput = {
   createdAt?: Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutMessageInput
+  mentions?: Prisma.UserUncheckedCreateNestedManyWithoutMentionedInInput
 }
 
 export type ChatMessageCreateOrConnectWithoutChatChannelInput = {
@@ -684,6 +780,7 @@ export type ChatMessageCreateWithoutGroupInput = {
   sender: Prisma.UserCreateNestedOneWithoutMessagesInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutMessageInput
+  mentions?: Prisma.UserCreateNestedManyWithoutMentionedInInput
 }
 
 export type ChatMessageUncheckedCreateWithoutGroupInput = {
@@ -696,6 +793,7 @@ export type ChatMessageUncheckedCreateWithoutGroupInput = {
   createdAt?: Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutMessageInput
+  mentions?: Prisma.UserUncheckedCreateNestedManyWithoutMentionedInInput
 }
 
 export type ChatMessageCreateOrConnectWithoutGroupInput = {
@@ -734,6 +832,7 @@ export type ChatMessageCreateWithoutGroupReadReceiptsInput = {
   group?: Prisma.GroupChatCreateNestedOneWithoutMessagesInput
   sender: Prisma.UserCreateNestedOneWithoutMessagesInput
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutMessageInput
+  mentions?: Prisma.UserCreateNestedManyWithoutMentionedInInput
 }
 
 export type ChatMessageUncheckedCreateWithoutGroupReadReceiptsInput = {
@@ -746,6 +845,7 @@ export type ChatMessageUncheckedCreateWithoutGroupReadReceiptsInput = {
   type: string
   createdAt?: Date | string
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutMessageInput
+  mentions?: Prisma.UserUncheckedCreateNestedManyWithoutMentionedInInput
 }
 
 export type ChatMessageCreateOrConnectWithoutGroupReadReceiptsInput = {
@@ -774,6 +874,7 @@ export type ChatMessageUpdateWithoutGroupReadReceiptsInput = {
   group?: Prisma.GroupChatUpdateOneWithoutMessagesNestedInput
   sender?: Prisma.UserUpdateOneRequiredWithoutMessagesNestedInput
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutMessageNestedInput
+  mentions?: Prisma.UserUpdateManyWithoutMentionedInNestedInput
 }
 
 export type ChatMessageUncheckedUpdateWithoutGroupReadReceiptsInput = {
@@ -786,6 +887,7 @@ export type ChatMessageUncheckedUpdateWithoutGroupReadReceiptsInput = {
   type?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
+  mentions?: Prisma.UserUncheckedUpdateManyWithoutMentionedInNestedInput
 }
 
 export type ChatMessageCreateWithoutReadReceiptsInput = {
@@ -798,6 +900,7 @@ export type ChatMessageCreateWithoutReadReceiptsInput = {
   group?: Prisma.GroupChatCreateNestedOneWithoutMessagesInput
   sender: Prisma.UserCreateNestedOneWithoutMessagesInput
   groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutMessageInput
+  mentions?: Prisma.UserCreateNestedManyWithoutMentionedInInput
 }
 
 export type ChatMessageUncheckedCreateWithoutReadReceiptsInput = {
@@ -810,6 +913,7 @@ export type ChatMessageUncheckedCreateWithoutReadReceiptsInput = {
   type: string
   createdAt?: Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutMessageInput
+  mentions?: Prisma.UserUncheckedCreateNestedManyWithoutMentionedInInput
 }
 
 export type ChatMessageCreateOrConnectWithoutReadReceiptsInput = {
@@ -838,6 +942,7 @@ export type ChatMessageUpdateWithoutReadReceiptsInput = {
   group?: Prisma.GroupChatUpdateOneWithoutMessagesNestedInput
   sender?: Prisma.UserUpdateOneRequiredWithoutMessagesNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutMessageNestedInput
+  mentions?: Prisma.UserUpdateManyWithoutMentionedInNestedInput
 }
 
 export type ChatMessageUncheckedUpdateWithoutReadReceiptsInput = {
@@ -850,6 +955,7 @@ export type ChatMessageUncheckedUpdateWithoutReadReceiptsInput = {
   type?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
+  mentions?: Prisma.UserUncheckedUpdateManyWithoutMentionedInNestedInput
 }
 
 export type ChatMessageCreateManySenderInput = {
@@ -872,6 +978,7 @@ export type ChatMessageUpdateWithoutSenderInput = {
   group?: Prisma.GroupChatUpdateOneWithoutMessagesNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutMessageNestedInput
+  mentions?: Prisma.UserUpdateManyWithoutMentionedInNestedInput
 }
 
 export type ChatMessageUncheckedUpdateWithoutSenderInput = {
@@ -884,12 +991,50 @@ export type ChatMessageUncheckedUpdateWithoutSenderInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
+  mentions?: Prisma.UserUncheckedUpdateManyWithoutMentionedInNestedInput
 }
 
 export type ChatMessageUncheckedUpdateManyWithoutSenderInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   chatChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   groupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  message?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ChatMessageUpdateWithoutMentionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  message?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  chatChannel?: Prisma.ChatChannelUpdateOneWithoutMessagesNestedInput
+  group?: Prisma.GroupChatUpdateOneWithoutMessagesNestedInput
+  sender?: Prisma.UserUpdateOneRequiredWithoutMessagesNestedInput
+  groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutMessageNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutMessageNestedInput
+}
+
+export type ChatMessageUncheckedUpdateWithoutMentionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  chatChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  groupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  senderId?: Prisma.StringFieldUpdateOperationsInput | string
+  message?: Prisma.StringFieldUpdateOperationsInput | string
+  mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
+}
+
+export type ChatMessageUncheckedUpdateManyWithoutMentionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  chatChannelId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  groupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  senderId?: Prisma.StringFieldUpdateOperationsInput | string
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
@@ -916,6 +1061,7 @@ export type ChatMessageUpdateWithoutChatChannelInput = {
   sender?: Prisma.UserUpdateOneRequiredWithoutMessagesNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutMessageNestedInput
+  mentions?: Prisma.UserUpdateManyWithoutMentionedInNestedInput
 }
 
 export type ChatMessageUncheckedUpdateWithoutChatChannelInput = {
@@ -928,6 +1074,7 @@ export type ChatMessageUncheckedUpdateWithoutChatChannelInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
+  mentions?: Prisma.UserUncheckedUpdateManyWithoutMentionedInNestedInput
 }
 
 export type ChatMessageUncheckedUpdateManyWithoutChatChannelInput = {
@@ -960,6 +1107,7 @@ export type ChatMessageUpdateWithoutGroupInput = {
   sender?: Prisma.UserUpdateOneRequiredWithoutMessagesNestedInput
   groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutMessageNestedInput
+  mentions?: Prisma.UserUpdateManyWithoutMentionedInNestedInput
 }
 
 export type ChatMessageUncheckedUpdateWithoutGroupInput = {
@@ -972,6 +1120,7 @@ export type ChatMessageUncheckedUpdateWithoutGroupInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
+  mentions?: Prisma.UserUncheckedUpdateManyWithoutMentionedInNestedInput
 }
 
 export type ChatMessageUncheckedUpdateManyWithoutGroupInput = {
@@ -992,11 +1141,13 @@ export type ChatMessageUncheckedUpdateManyWithoutGroupInput = {
 export type ChatMessageCountOutputType = {
   groupReadReceipts: number
   readReceipts: number
+  mentions: number
 }
 
 export type ChatMessageCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   groupReadReceipts?: boolean | ChatMessageCountOutputTypeCountGroupReadReceiptsArgs
   readReceipts?: boolean | ChatMessageCountOutputTypeCountReadReceiptsArgs
+  mentions?: boolean | ChatMessageCountOutputTypeCountMentionsArgs
 }
 
 /**
@@ -1023,6 +1174,13 @@ export type ChatMessageCountOutputTypeCountReadReceiptsArgs<ExtArgs extends runt
   where?: Prisma.ReadReceiptWhereInput
 }
 
+/**
+ * ChatMessageCountOutputType without action
+ */
+export type ChatMessageCountOutputTypeCountMentionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserWhereInput
+}
+
 
 export type ChatMessageSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1038,6 +1196,7 @@ export type ChatMessageSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   sender?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   groupReadReceipts?: boolean | Prisma.ChatMessage$groupReadReceiptsArgs<ExtArgs>
   readReceipts?: boolean | Prisma.ChatMessage$readReceiptsArgs<ExtArgs>
+  mentions?: boolean | Prisma.ChatMessage$mentionsArgs<ExtArgs>
   _count?: boolean | Prisma.ChatMessageCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["chatMessage"]>
 
@@ -1087,6 +1246,7 @@ export type ChatMessageInclude<ExtArgs extends runtime.Types.Extensions.Internal
   sender?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   groupReadReceipts?: boolean | Prisma.ChatMessage$groupReadReceiptsArgs<ExtArgs>
   readReceipts?: boolean | Prisma.ChatMessage$readReceiptsArgs<ExtArgs>
+  mentions?: boolean | Prisma.ChatMessage$mentionsArgs<ExtArgs>
   _count?: boolean | Prisma.ChatMessageCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ChatMessageIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1108,6 +1268,7 @@ export type $ChatMessagePayload<ExtArgs extends runtime.Types.Extensions.Interna
     sender: Prisma.$UserPayload<ExtArgs>
     groupReadReceipts: Prisma.$GroupReadReceiptPayload<ExtArgs>[]
     readReceipts: Prisma.$ReadReceiptPayload<ExtArgs>[]
+    mentions: Prisma.$UserPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1517,6 +1678,7 @@ export interface Prisma__ChatMessageClient<T, Null = never, ExtArgs extends runt
   sender<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   groupReadReceipts<T extends Prisma.ChatMessage$groupReadReceiptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ChatMessage$groupReadReceiptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GroupReadReceiptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   readReceipts<T extends Prisma.ChatMessage$readReceiptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ChatMessage$readReceiptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReadReceiptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  mentions<T extends Prisma.ChatMessage$mentionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ChatMessage$mentionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2033,6 +2195,30 @@ export type ChatMessage$readReceiptsArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.ReadReceiptScalarFieldEnum | Prisma.ReadReceiptScalarFieldEnum[]
+}
+
+/**
+ * ChatMessage.mentions
+ */
+export type ChatMessage$mentionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
+  orderBy?: Prisma.UserOrderByWithRelationInput | Prisma.UserOrderByWithRelationInput[]
+  cursor?: Prisma.UserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserScalarFieldEnum | Prisma.UserScalarFieldEnum[]
 }
 
 /**

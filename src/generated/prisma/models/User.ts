@@ -409,6 +409,7 @@ export type UserWhereInput = {
   readReceipts?: Prisma.ReadReceiptListRelationFilter
   subscription?: Prisma.XOR<Prisma.SubscriptionNullableScalarRelationFilter, Prisma.SubscriptionWhereInput> | null
   superAdmin?: Prisma.XOR<Prisma.SuperAdminNullableScalarRelationFilter, Prisma.SuperAdminWhereInput> | null
+  mentionedIn?: Prisma.ChatMessageListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -453,6 +454,7 @@ export type UserOrderByWithRelationInput = {
   readReceipts?: Prisma.ReadReceiptOrderByRelationAggregateInput
   subscription?: Prisma.SubscriptionOrderByWithRelationInput
   superAdmin?: Prisma.SuperAdminOrderByWithRelationInput
+  mentionedIn?: Prisma.ChatMessageOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -500,6 +502,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   readReceipts?: Prisma.ReadReceiptListRelationFilter
   subscription?: Prisma.XOR<Prisma.SubscriptionNullableScalarRelationFilter, Prisma.SubscriptionWhereInput> | null
   superAdmin?: Prisma.XOR<Prisma.SuperAdminNullableScalarRelationFilter, Prisma.SuperAdminWhereInput> | null
+  mentionedIn?: Prisma.ChatMessageListRelationFilter
 }, "id" | "email" | "licenseNo" | "stripeCustomerId">
 
 export type UserOrderByWithAggregationInput = {
@@ -614,6 +617,7 @@ export type UserCreateInput = {
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -658,6 +662,7 @@ export type UserUncheckedCreateInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUpdateInput = {
@@ -702,6 +707,7 @@ export type UserUpdateInput = {
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -746,6 +752,7 @@ export type UserUncheckedUpdateInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -953,6 +960,16 @@ export type UserScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput
 }
 
+export type UserListRelationFilter = {
+  every?: Prisma.UserWhereInput
+  some?: Prisma.UserWhereInput
+  none?: Prisma.UserWhereInput
+}
+
+export type UserOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
+}
+
 export type UserNullableScalarRelationFilter = {
   is?: Prisma.UserWhereInput | null
   isNot?: Prisma.UserWhereInput | null
@@ -1083,12 +1100,50 @@ export type UserCreateNestedOneWithoutMessagesInput = {
   connect?: Prisma.UserWhereUniqueInput
 }
 
+export type UserCreateNestedManyWithoutMentionedInInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutMentionedInInput, Prisma.UserUncheckedCreateWithoutMentionedInInput> | Prisma.UserCreateWithoutMentionedInInput[] | Prisma.UserUncheckedCreateWithoutMentionedInInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMentionedInInput | Prisma.UserCreateOrConnectWithoutMentionedInInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
+export type UserUncheckedCreateNestedManyWithoutMentionedInInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutMentionedInInput, Prisma.UserUncheckedCreateWithoutMentionedInInput> | Prisma.UserCreateWithoutMentionedInInput[] | Prisma.UserUncheckedCreateWithoutMentionedInInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMentionedInInput | Prisma.UserCreateOrConnectWithoutMentionedInInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+}
+
 export type UserUpdateOneRequiredWithoutMessagesNestedInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutMessagesInput, Prisma.UserUncheckedCreateWithoutMessagesInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutMessagesInput
   upsert?: Prisma.UserUpsertWithoutMessagesInput
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutMessagesInput, Prisma.UserUpdateWithoutMessagesInput>, Prisma.UserUncheckedUpdateWithoutMessagesInput>
+}
+
+export type UserUpdateManyWithoutMentionedInNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutMentionedInInput, Prisma.UserUncheckedCreateWithoutMentionedInInput> | Prisma.UserCreateWithoutMentionedInInput[] | Prisma.UserUncheckedCreateWithoutMentionedInInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMentionedInInput | Prisma.UserCreateOrConnectWithoutMentionedInInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutMentionedInInput | Prisma.UserUpsertWithWhereUniqueWithoutMentionedInInput[]
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutMentionedInInput | Prisma.UserUpdateWithWhereUniqueWithoutMentionedInInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutMentionedInInput | Prisma.UserUpdateManyWithWhereWithoutMentionedInInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+}
+
+export type UserUncheckedUpdateManyWithoutMentionedInNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutMentionedInInput, Prisma.UserUncheckedCreateWithoutMentionedInInput> | Prisma.UserCreateWithoutMentionedInInput[] | Prisma.UserUncheckedCreateWithoutMentionedInInput[]
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutMentionedInInput | Prisma.UserCreateOrConnectWithoutMentionedInInput[]
+  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutMentionedInInput | Prisma.UserUpsertWithWhereUniqueWithoutMentionedInInput[]
+  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+  update?: Prisma.UserUpdateWithWhereUniqueWithoutMentionedInInput | Prisma.UserUpdateWithWhereUniqueWithoutMentionedInInput[]
+  updateMany?: Prisma.UserUpdateManyWithWhereWithoutMentionedInInput | Prisma.UserUpdateManyWithWhereWithoutMentionedInInput[]
+  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
 }
 
 export type UserCreateNestedOneWithoutGroupMembershipsInput = {
@@ -1232,6 +1287,7 @@ export type UserCreateWithoutClientInput = {
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutClientInput = {
@@ -1275,6 +1331,7 @@ export type UserUncheckedCreateWithoutClientInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutClientInput = {
@@ -1334,6 +1391,7 @@ export type UserUpdateWithoutClientInput = {
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutClientInput = {
@@ -1377,6 +1435,7 @@ export type UserUncheckedUpdateWithoutClientInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserCreateWithoutProviderInput = {
@@ -1420,6 +1479,7 @@ export type UserCreateWithoutProviderInput = {
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutProviderInput = {
@@ -1463,6 +1523,7 @@ export type UserUncheckedCreateWithoutProviderInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutProviderInput = {
@@ -1522,6 +1583,7 @@ export type UserUpdateWithoutProviderInput = {
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutProviderInput = {
@@ -1565,6 +1627,7 @@ export type UserUncheckedUpdateWithoutProviderInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserCreateWithoutSuperAdminInput = {
@@ -1608,6 +1671,7 @@ export type UserCreateWithoutSuperAdminInput = {
   provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutSuperAdminInput = {
@@ -1651,6 +1715,7 @@ export type UserUncheckedCreateWithoutSuperAdminInput = {
   provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutSuperAdminInput = {
@@ -1710,6 +1775,7 @@ export type UserUpdateWithoutSuperAdminInput = {
   provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSuperAdminInput = {
@@ -1753,6 +1819,7 @@ export type UserUncheckedUpdateWithoutSuperAdminInput = {
   provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserCreateWithoutChatChannelsAInput = {
@@ -1796,6 +1863,7 @@ export type UserCreateWithoutChatChannelsAInput = {
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutChatChannelsAInput = {
@@ -1839,6 +1907,7 @@ export type UserUncheckedCreateWithoutChatChannelsAInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutChatChannelsAInput = {
@@ -1887,6 +1956,7 @@ export type UserCreateWithoutChatChannelsBInput = {
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutChatChannelsBInput = {
@@ -1930,6 +2000,7 @@ export type UserUncheckedCreateWithoutChatChannelsBInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutChatChannelsBInput = {
@@ -1989,6 +2060,7 @@ export type UserUpdateWithoutChatChannelsAInput = {
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutChatChannelsAInput = {
@@ -2032,6 +2104,7 @@ export type UserUncheckedUpdateWithoutChatChannelsAInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUpsertWithoutChatChannelsBInput = {
@@ -2086,6 +2159,7 @@ export type UserUpdateWithoutChatChannelsBInput = {
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutChatChannelsBInput = {
@@ -2129,6 +2203,7 @@ export type UserUncheckedUpdateWithoutChatChannelsBInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserCreateWithoutMessagesInput = {
@@ -2172,6 +2247,7 @@ export type UserCreateWithoutMessagesInput = {
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutMessagesInput = {
@@ -2215,11 +2291,105 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutMessagesInput = {
   where: Prisma.UserWhereUniqueInput
   create: Prisma.XOR<Prisma.UserCreateWithoutMessagesInput, Prisma.UserUncheckedCreateWithoutMessagesInput>
+}
+
+export type UserCreateWithoutMentionedInInput = {
+  id?: string
+  fullName: string
+  email: string
+  password: string
+  profileImage?: string | null
+  gender?: $Enums.Gender
+  age?: number | null
+  contactNo?: string | null
+  address?: string | null
+  status: string
+  role: $Enums.Role
+  isApprove?: $Enums.Approve
+  licenseNo?: string | null
+  isLicenseValid?: boolean
+  country?: string | null
+  state: string
+  blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
+  privateKey?: string | null
+  publicKey?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
+  chatChannelsA?: Prisma.ChatChannelCreateNestedManyWithoutProviderAInput
+  chatChannelsB?: Prisma.ChatChannelCreateNestedManyWithoutProviderBInput
+  messages?: Prisma.ChatMessageCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientCreateNestedOneWithoutUserInput
+  groupMemberships?: Prisma.GroupMembersCreateNestedManyWithoutUserInput
+  groupReadReceipts?: Prisma.GroupReadReceiptCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationCreateNestedManyWithoutSenderInput
+  payments?: Prisma.PaymentCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutMentionedInInput = {
+  id?: string
+  fullName: string
+  email: string
+  password: string
+  profileImage?: string | null
+  gender?: $Enums.Gender
+  age?: number | null
+  contactNo?: string | null
+  address?: string | null
+  status: string
+  role: $Enums.Role
+  isApprove?: $Enums.Approve
+  licenseNo?: string | null
+  isLicenseValid?: boolean
+  country?: string | null
+  state: string
+  blockedMembers?: Prisma.UserCreateblockedMembersInput | string[]
+  privateKey?: string | null
+  publicKey?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  hasUsedFreeTrial?: boolean
+  stripeCustomerId?: string | null
+  resetPasswordExpires?: Date | string | null
+  resetPasswordToken?: string | null
+  isEmailVerified?: boolean
+  verifyEmailToken?: string | null
+  verifyEmailExpires?: Date | string | null
+  chatChannelsA?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderAInput
+  chatChannelsB?: Prisma.ChatChannelUncheckedCreateNestedManyWithoutProviderBInput
+  messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutSenderInput
+  client?: Prisma.ClientUncheckedCreateNestedOneWithoutUserInput
+  groupMemberships?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutUserInput
+  groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  receivedNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutRecipientInput
+  sentNotifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutSenderInput
+  payments?: Prisma.PaymentUncheckedCreateNestedManyWithoutUserInput
+  provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
+  readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
+  subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
+  superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutMentionedInInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutMentionedInInput, Prisma.UserUncheckedCreateWithoutMentionedInInput>
 }
 
 export type UserUpsertWithoutMessagesInput = {
@@ -2274,6 +2444,7 @@ export type UserUpdateWithoutMessagesInput = {
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMessagesInput = {
@@ -2317,6 +2488,57 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
+}
+
+export type UserUpsertWithWhereUniqueWithoutMentionedInInput = {
+  where: Prisma.UserWhereUniqueInput
+  update: Prisma.XOR<Prisma.UserUpdateWithoutMentionedInInput, Prisma.UserUncheckedUpdateWithoutMentionedInInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutMentionedInInput, Prisma.UserUncheckedCreateWithoutMentionedInInput>
+}
+
+export type UserUpdateWithWhereUniqueWithoutMentionedInInput = {
+  where: Prisma.UserWhereUniqueInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutMentionedInInput, Prisma.UserUncheckedUpdateWithoutMentionedInInput>
+}
+
+export type UserUpdateManyWithWhereWithoutMentionedInInput = {
+  where: Prisma.UserScalarWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutMentionedInInput>
+}
+
+export type UserScalarWhereInput = {
+  AND?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  OR?: Prisma.UserScalarWhereInput[]
+  NOT?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+  id?: Prisma.StringFilter<"User"> | string
+  fullName?: Prisma.StringFilter<"User"> | string
+  email?: Prisma.StringFilter<"User"> | string
+  password?: Prisma.StringFilter<"User"> | string
+  profileImage?: Prisma.StringNullableFilter<"User"> | string | null
+  gender?: Prisma.EnumGenderFilter<"User"> | $Enums.Gender
+  age?: Prisma.IntNullableFilter<"User"> | number | null
+  contactNo?: Prisma.StringNullableFilter<"User"> | string | null
+  address?: Prisma.StringNullableFilter<"User"> | string | null
+  status?: Prisma.StringFilter<"User"> | string
+  role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  isApprove?: Prisma.EnumApproveFilter<"User"> | $Enums.Approve
+  licenseNo?: Prisma.StringNullableFilter<"User"> | string | null
+  isLicenseValid?: Prisma.BoolFilter<"User"> | boolean
+  country?: Prisma.StringNullableFilter<"User"> | string | null
+  state?: Prisma.StringFilter<"User"> | string
+  blockedMembers?: Prisma.StringNullableListFilter<"User">
+  privateKey?: Prisma.StringNullableFilter<"User"> | string | null
+  publicKey?: Prisma.StringNullableFilter<"User"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
+  hasUsedFreeTrial?: Prisma.BoolFilter<"User"> | boolean
+  stripeCustomerId?: Prisma.StringNullableFilter<"User"> | string | null
+  resetPasswordExpires?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  resetPasswordToken?: Prisma.StringNullableFilter<"User"> | string | null
+  isEmailVerified?: Prisma.BoolFilter<"User"> | boolean
+  verifyEmailToken?: Prisma.StringNullableFilter<"User"> | string | null
+  verifyEmailExpires?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
 }
 
 export type UserCreateWithoutGroupMembershipsInput = {
@@ -2360,6 +2582,7 @@ export type UserCreateWithoutGroupMembershipsInput = {
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutGroupMembershipsInput = {
@@ -2403,6 +2626,7 @@ export type UserUncheckedCreateWithoutGroupMembershipsInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutGroupMembershipsInput = {
@@ -2462,6 +2686,7 @@ export type UserUpdateWithoutGroupMembershipsInput = {
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutGroupMembershipsInput = {
@@ -2505,6 +2730,7 @@ export type UserUncheckedUpdateWithoutGroupMembershipsInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserCreateWithoutGroupReadReceiptsInput = {
@@ -2548,6 +2774,7 @@ export type UserCreateWithoutGroupReadReceiptsInput = {
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutGroupReadReceiptsInput = {
@@ -2591,6 +2818,7 @@ export type UserUncheckedCreateWithoutGroupReadReceiptsInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutGroupReadReceiptsInput = {
@@ -2650,6 +2878,7 @@ export type UserUpdateWithoutGroupReadReceiptsInput = {
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutGroupReadReceiptsInput = {
@@ -2693,6 +2922,7 @@ export type UserUncheckedUpdateWithoutGroupReadReceiptsInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserCreateWithoutReceivedNotificationsInput = {
@@ -2736,6 +2966,7 @@ export type UserCreateWithoutReceivedNotificationsInput = {
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutReceivedNotificationsInput = {
@@ -2779,6 +3010,7 @@ export type UserUncheckedCreateWithoutReceivedNotificationsInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutReceivedNotificationsInput = {
@@ -2827,6 +3059,7 @@ export type UserCreateWithoutSentNotificationsInput = {
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutSentNotificationsInput = {
@@ -2870,6 +3103,7 @@ export type UserUncheckedCreateWithoutSentNotificationsInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutSentNotificationsInput = {
@@ -2929,6 +3163,7 @@ export type UserUpdateWithoutReceivedNotificationsInput = {
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReceivedNotificationsInput = {
@@ -2972,6 +3207,7 @@ export type UserUncheckedUpdateWithoutReceivedNotificationsInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUpsertWithoutSentNotificationsInput = {
@@ -3026,6 +3262,7 @@ export type UserUpdateWithoutSentNotificationsInput = {
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSentNotificationsInput = {
@@ -3069,6 +3306,7 @@ export type UserUncheckedUpdateWithoutSentNotificationsInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserCreateWithoutReadReceiptsInput = {
@@ -3112,6 +3350,7 @@ export type UserCreateWithoutReadReceiptsInput = {
   provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutReadReceiptsInput = {
@@ -3155,6 +3394,7 @@ export type UserUncheckedCreateWithoutReadReceiptsInput = {
   provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutReadReceiptsInput = {
@@ -3214,6 +3454,7 @@ export type UserUpdateWithoutReadReceiptsInput = {
   provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutReadReceiptsInput = {
@@ -3257,6 +3498,7 @@ export type UserUncheckedUpdateWithoutReadReceiptsInput = {
   provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserCreateWithoutSubscriptionInput = {
@@ -3300,6 +3542,7 @@ export type UserCreateWithoutSubscriptionInput = {
   provider?: Prisma.ProviderCreateNestedOneWithoutUserInput
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutSubscriptionInput = {
@@ -3343,6 +3586,7 @@ export type UserUncheckedCreateWithoutSubscriptionInput = {
   provider?: Prisma.ProviderUncheckedCreateNestedOneWithoutUserInput
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutSubscriptionInput = {
@@ -3402,6 +3646,7 @@ export type UserUpdateWithoutSubscriptionInput = {
   provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSubscriptionInput = {
@@ -3445,6 +3690,7 @@ export type UserUncheckedUpdateWithoutSubscriptionInput = {
   provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserCreateWithoutPaymentsInput = {
@@ -3488,6 +3734,7 @@ export type UserCreateWithoutPaymentsInput = {
   readReceipts?: Prisma.ReadReceiptCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageCreateNestedManyWithoutMentionsInput
 }
 
 export type UserUncheckedCreateWithoutPaymentsInput = {
@@ -3531,6 +3778,7 @@ export type UserUncheckedCreateWithoutPaymentsInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutUserInput
   subscription?: Prisma.SubscriptionUncheckedCreateNestedOneWithoutUserInput
   superAdmin?: Prisma.SuperAdminUncheckedCreateNestedOneWithoutUserInput
+  mentionedIn?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutMentionsInput
 }
 
 export type UserCreateOrConnectWithoutPaymentsInput = {
@@ -3590,6 +3838,7 @@ export type UserUpdateWithoutPaymentsInput = {
   readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUpdateManyWithoutMentionsNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPaymentsInput = {
@@ -3633,6 +3882,126 @@ export type UserUncheckedUpdateWithoutPaymentsInput = {
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
   subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
   superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+  mentionedIn?: Prisma.ChatMessageUncheckedUpdateManyWithoutMentionsNestedInput
+}
+
+export type UserUpdateWithoutMentionedInInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.EnumGenderFieldUpdateOperationsInput | $Enums.Gender
+  age?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contactNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
+  licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.StringFieldUpdateOperationsInput | string
+  blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
+  privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  chatChannelsA?: Prisma.ChatChannelUpdateManyWithoutProviderANestedInput
+  chatChannelsB?: Prisma.ChatChannelUpdateManyWithoutProviderBNestedInput
+  messages?: Prisma.ChatMessageUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUpdateOneWithoutUserNestedInput
+  groupMemberships?: Prisma.GroupMembersUpdateManyWithoutUserNestedInput
+  groupReadReceipts?: Prisma.GroupReadReceiptUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUpdateManyWithoutSenderNestedInput
+  payments?: Prisma.PaymentUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutMentionedInInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.EnumGenderFieldUpdateOperationsInput | $Enums.Gender
+  age?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contactNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
+  licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.StringFieldUpdateOperationsInput | string
+  blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
+  privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  chatChannelsA?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderANestedInput
+  chatChannelsB?: Prisma.ChatChannelUncheckedUpdateManyWithoutProviderBNestedInput
+  messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutSenderNestedInput
+  client?: Prisma.ClientUncheckedUpdateOneWithoutUserNestedInput
+  groupMemberships?: Prisma.GroupMembersUncheckedUpdateManyWithoutUserNestedInput
+  groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  receivedNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutRecipientNestedInput
+  sentNotifications?: Prisma.NotificationUncheckedUpdateManyWithoutSenderNestedInput
+  payments?: Prisma.PaymentUncheckedUpdateManyWithoutUserNestedInput
+  provider?: Prisma.ProviderUncheckedUpdateOneWithoutUserNestedInput
+  readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutUserNestedInput
+  subscription?: Prisma.SubscriptionUncheckedUpdateOneWithoutUserNestedInput
+  superAdmin?: Prisma.SuperAdminUncheckedUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateManyWithoutMentionedInInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  fullName?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  password?: Prisma.StringFieldUpdateOperationsInput | string
+  profileImage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gender?: Prisma.EnumGenderFieldUpdateOperationsInput | $Enums.Gender
+  age?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  contactNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  address?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  isApprove?: Prisma.EnumApproveFieldUpdateOperationsInput | $Enums.Approve
+  licenseNo?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isLicenseValid?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  country?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.StringFieldUpdateOperationsInput | string
+  blockedMembers?: Prisma.UserUpdateblockedMembersInput | string[]
+  privateKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  publicKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  hasUsedFreeTrial?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  resetPasswordExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  resetPasswordToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isEmailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verifyEmailToken?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  verifyEmailExpires?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -3650,6 +4019,7 @@ export type UserCountOutputType = {
   sentNotifications: number
   payments: number
   readReceipts: number
+  mentionedIn: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -3662,6 +4032,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   sentNotifications?: boolean | UserCountOutputTypeCountSentNotificationsArgs
   payments?: boolean | UserCountOutputTypeCountPaymentsArgs
   readReceipts?: boolean | UserCountOutputTypeCountReadReceiptsArgs
+  mentionedIn?: boolean | UserCountOutputTypeCountMentionedInArgs
 }
 
 /**
@@ -3737,6 +4108,13 @@ export type UserCountOutputTypeCountReadReceiptsArgs<ExtArgs extends runtime.Typ
   where?: Prisma.ReadReceiptWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountMentionedInArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ChatMessageWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -3780,6 +4158,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   readReceipts?: boolean | Prisma.User$readReceiptsArgs<ExtArgs>
   subscription?: boolean | Prisma.User$subscriptionArgs<ExtArgs>
   superAdmin?: boolean | Prisma.User$superAdminArgs<ExtArgs>
+  mentionedIn?: boolean | Prisma.User$mentionedInArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -3891,6 +4270,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   readReceipts?: boolean | Prisma.User$readReceiptsArgs<ExtArgs>
   subscription?: boolean | Prisma.User$subscriptionArgs<ExtArgs>
   superAdmin?: boolean | Prisma.User$superAdminArgs<ExtArgs>
+  mentionedIn?: boolean | Prisma.User$mentionedInArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -3912,6 +4292,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     readReceipts: Prisma.$ReadReceiptPayload<ExtArgs>[]
     subscription: Prisma.$SubscriptionPayload<ExtArgs> | null
     superAdmin: Prisma.$SuperAdminPayload<ExtArgs> | null
+    mentionedIn: Prisma.$ChatMessagePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -4349,6 +4730,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readReceipts<T extends Prisma.User$readReceiptsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$readReceiptsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReadReceiptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   subscription<T extends Prisma.User$subscriptionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$subscriptionArgs<ExtArgs>>): Prisma.Prisma__SubscriptionClient<runtime.Types.Result.GetResult<Prisma.$SubscriptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   superAdmin<T extends Prisma.User$superAdminArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$superAdminArgs<ExtArgs>>): Prisma.Prisma__SuperAdminClient<runtime.Types.Result.GetResult<Prisma.$SuperAdminPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  mentionedIn<T extends Prisma.User$mentionedInArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$mentionedInArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ChatMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5083,6 +5465,30 @@ export type User$superAdminArgs<ExtArgs extends runtime.Types.Extensions.Interna
    */
   include?: Prisma.SuperAdminInclude<ExtArgs> | null
   where?: Prisma.SuperAdminWhereInput
+}
+
+/**
+ * User.mentionedIn
+ */
+export type User$mentionedInArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ChatMessage
+   */
+  select?: Prisma.ChatMessageSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ChatMessage
+   */
+  omit?: Prisma.ChatMessageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ChatMessageInclude<ExtArgs> | null
+  where?: Prisma.ChatMessageWhereInput
+  orderBy?: Prisma.ChatMessageOrderByWithRelationInput | Prisma.ChatMessageOrderByWithRelationInput[]
+  cursor?: Prisma.ChatMessageWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ChatMessageScalarFieldEnum | Prisma.ChatMessageScalarFieldEnum[]
 }
 
 /**

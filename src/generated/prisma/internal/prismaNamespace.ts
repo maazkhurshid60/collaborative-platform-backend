@@ -1845,7 +1845,8 @@ export const GroupChatScalarFieldEnum = {
   name: 'name',
   providerId: 'providerId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  membersCanInvite: 'membersCanInvite'
 } as const
 
 export type GroupChatScalarFieldEnum = (typeof GroupChatScalarFieldEnum)[keyof typeof GroupChatScalarFieldEnum]

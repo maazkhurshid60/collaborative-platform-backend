@@ -30,6 +30,7 @@ export type GroupChatMinAggregateOutputType = {
   providerId: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  membersCanInvite: boolean | null
 }
 
 export type GroupChatMaxAggregateOutputType = {
@@ -38,6 +39,7 @@ export type GroupChatMaxAggregateOutputType = {
   providerId: string | null
   createdAt: Date | null
   updatedAt: Date | null
+  membersCanInvite: boolean | null
 }
 
 export type GroupChatCountAggregateOutputType = {
@@ -46,6 +48,7 @@ export type GroupChatCountAggregateOutputType = {
   providerId: number
   createdAt: number
   updatedAt: number
+  membersCanInvite: number
   _all: number
 }
 
@@ -56,6 +59,7 @@ export type GroupChatMinAggregateInputType = {
   providerId?: true
   createdAt?: true
   updatedAt?: true
+  membersCanInvite?: true
 }
 
 export type GroupChatMaxAggregateInputType = {
@@ -64,6 +68,7 @@ export type GroupChatMaxAggregateInputType = {
   providerId?: true
   createdAt?: true
   updatedAt?: true
+  membersCanInvite?: true
 }
 
 export type GroupChatCountAggregateInputType = {
@@ -72,6 +77,7 @@ export type GroupChatCountAggregateInputType = {
   providerId?: true
   createdAt?: true
   updatedAt?: true
+  membersCanInvite?: true
   _all?: true
 }
 
@@ -153,6 +159,7 @@ export type GroupChatGroupByOutputType = {
   providerId: string
   createdAt: Date
   updatedAt: Date
+  membersCanInvite: boolean
   _count: GroupChatCountAggregateOutputType | null
   _min: GroupChatMinAggregateOutputType | null
   _max: GroupChatMaxAggregateOutputType | null
@@ -182,6 +189,7 @@ export type GroupChatWhereInput = {
   providerId?: Prisma.StringFilter<"GroupChat"> | string
   createdAt?: Prisma.DateTimeFilter<"GroupChat"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GroupChat"> | Date | string
+  membersCanInvite?: Prisma.BoolFilter<"GroupChat"> | boolean
   messages?: Prisma.ChatMessageListRelationFilter
   provider?: Prisma.XOR<Prisma.ProviderScalarRelationFilter, Prisma.ProviderWhereInput>
   members?: Prisma.GroupMembersListRelationFilter
@@ -194,6 +202,7 @@ export type GroupChatOrderByWithRelationInput = {
   providerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  membersCanInvite?: Prisma.SortOrder
   messages?: Prisma.ChatMessageOrderByRelationAggregateInput
   provider?: Prisma.ProviderOrderByWithRelationInput
   members?: Prisma.GroupMembersOrderByRelationAggregateInput
@@ -209,6 +218,7 @@ export type GroupChatWhereUniqueInput = Prisma.AtLeast<{
   providerId?: Prisma.StringFilter<"GroupChat"> | string
   createdAt?: Prisma.DateTimeFilter<"GroupChat"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GroupChat"> | Date | string
+  membersCanInvite?: Prisma.BoolFilter<"GroupChat"> | boolean
   messages?: Prisma.ChatMessageListRelationFilter
   provider?: Prisma.XOR<Prisma.ProviderScalarRelationFilter, Prisma.ProviderWhereInput>
   members?: Prisma.GroupMembersListRelationFilter
@@ -221,6 +231,7 @@ export type GroupChatOrderByWithAggregationInput = {
   providerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  membersCanInvite?: Prisma.SortOrder
   _count?: Prisma.GroupChatCountOrderByAggregateInput
   _max?: Prisma.GroupChatMaxOrderByAggregateInput
   _min?: Prisma.GroupChatMinOrderByAggregateInput
@@ -235,6 +246,7 @@ export type GroupChatScalarWhereWithAggregatesInput = {
   providerId?: Prisma.StringWithAggregatesFilter<"GroupChat"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"GroupChat"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"GroupChat"> | Date | string
+  membersCanInvite?: Prisma.BoolWithAggregatesFilter<"GroupChat"> | boolean
 }
 
 export type GroupChatCreateInput = {
@@ -242,6 +254,7 @@ export type GroupChatCreateInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  membersCanInvite?: boolean
   messages?: Prisma.ChatMessageCreateNestedManyWithoutGroupInput
   provider: Prisma.ProviderCreateNestedOneWithoutGroupChatsInput
   members?: Prisma.GroupMembersCreateNestedManyWithoutGroupChatInput
@@ -254,6 +267,7 @@ export type GroupChatUncheckedCreateInput = {
   providerId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  membersCanInvite?: boolean
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutGroupInput
   members?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutGroupChatInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutGroupInput
@@ -264,6 +278,7 @@ export type GroupChatUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.ChatMessageUpdateManyWithoutGroupNestedInput
   provider?: Prisma.ProviderUpdateOneRequiredWithoutGroupChatsNestedInput
   members?: Prisma.GroupMembersUpdateManyWithoutGroupChatNestedInput
@@ -276,6 +291,7 @@ export type GroupChatUncheckedUpdateInput = {
   providerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutGroupNestedInput
   members?: Prisma.GroupMembersUncheckedUpdateManyWithoutGroupChatNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutGroupNestedInput
@@ -287,6 +303,7 @@ export type GroupChatCreateManyInput = {
   providerId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  membersCanInvite?: boolean
 }
 
 export type GroupChatUpdateManyMutationInput = {
@@ -294,6 +311,7 @@ export type GroupChatUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type GroupChatUncheckedUpdateManyInput = {
@@ -302,6 +320,7 @@ export type GroupChatUncheckedUpdateManyInput = {
   providerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 export type GroupChatListRelationFilter = {
@@ -325,6 +344,7 @@ export type GroupChatCountOrderByAggregateInput = {
   providerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  membersCanInvite?: Prisma.SortOrder
 }
 
 export type GroupChatMaxOrderByAggregateInput = {
@@ -333,6 +353,7 @@ export type GroupChatMaxOrderByAggregateInput = {
   providerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  membersCanInvite?: Prisma.SortOrder
 }
 
 export type GroupChatMinOrderByAggregateInput = {
@@ -341,6 +362,7 @@ export type GroupChatMinOrderByAggregateInput = {
   providerId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+  membersCanInvite?: Prisma.SortOrder
 }
 
 export type GroupChatScalarRelationFilter = {
@@ -441,6 +463,7 @@ export type GroupChatCreateWithoutProviderInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  membersCanInvite?: boolean
   messages?: Prisma.ChatMessageCreateNestedManyWithoutGroupInput
   members?: Prisma.GroupMembersCreateNestedManyWithoutGroupChatInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutGroupInput
@@ -451,6 +474,7 @@ export type GroupChatUncheckedCreateWithoutProviderInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  membersCanInvite?: boolean
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutGroupInput
   members?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutGroupChatInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutGroupInput
@@ -491,6 +515,7 @@ export type GroupChatScalarWhereInput = {
   providerId?: Prisma.StringFilter<"GroupChat"> | string
   createdAt?: Prisma.DateTimeFilter<"GroupChat"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"GroupChat"> | Date | string
+  membersCanInvite?: Prisma.BoolFilter<"GroupChat"> | boolean
 }
 
 export type GroupChatCreateWithoutMessagesInput = {
@@ -498,6 +523,7 @@ export type GroupChatCreateWithoutMessagesInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  membersCanInvite?: boolean
   provider: Prisma.ProviderCreateNestedOneWithoutGroupChatsInput
   members?: Prisma.GroupMembersCreateNestedManyWithoutGroupChatInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutGroupInput
@@ -509,6 +535,7 @@ export type GroupChatUncheckedCreateWithoutMessagesInput = {
   providerId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  membersCanInvite?: boolean
   members?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutGroupChatInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutGroupInput
 }
@@ -534,6 +561,7 @@ export type GroupChatUpdateWithoutMessagesInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
   provider?: Prisma.ProviderUpdateOneRequiredWithoutGroupChatsNestedInput
   members?: Prisma.GroupMembersUpdateManyWithoutGroupChatNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutGroupNestedInput
@@ -545,6 +573,7 @@ export type GroupChatUncheckedUpdateWithoutMessagesInput = {
   providerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
   members?: Prisma.GroupMembersUncheckedUpdateManyWithoutGroupChatNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutGroupNestedInput
 }
@@ -554,6 +583,7 @@ export type GroupChatCreateWithoutMembersInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  membersCanInvite?: boolean
   messages?: Prisma.ChatMessageCreateNestedManyWithoutGroupInput
   provider: Prisma.ProviderCreateNestedOneWithoutGroupChatsInput
   invitations?: Prisma.InvitationCreateNestedManyWithoutGroupInput
@@ -565,6 +595,7 @@ export type GroupChatUncheckedCreateWithoutMembersInput = {
   providerId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  membersCanInvite?: boolean
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutGroupInput
   invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutGroupInput
 }
@@ -590,6 +621,7 @@ export type GroupChatUpdateWithoutMembersInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.ChatMessageUpdateManyWithoutGroupNestedInput
   provider?: Prisma.ProviderUpdateOneRequiredWithoutGroupChatsNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutGroupNestedInput
@@ -601,6 +633,7 @@ export type GroupChatUncheckedUpdateWithoutMembersInput = {
   providerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutGroupNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutGroupNestedInput
 }
@@ -610,6 +643,7 @@ export type GroupChatCreateWithoutInvitationsInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  membersCanInvite?: boolean
   messages?: Prisma.ChatMessageCreateNestedManyWithoutGroupInput
   provider: Prisma.ProviderCreateNestedOneWithoutGroupChatsInput
   members?: Prisma.GroupMembersCreateNestedManyWithoutGroupChatInput
@@ -621,6 +655,7 @@ export type GroupChatUncheckedCreateWithoutInvitationsInput = {
   providerId: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  membersCanInvite?: boolean
   messages?: Prisma.ChatMessageUncheckedCreateNestedManyWithoutGroupInput
   members?: Prisma.GroupMembersUncheckedCreateNestedManyWithoutGroupChatInput
 }
@@ -646,6 +681,7 @@ export type GroupChatUpdateWithoutInvitationsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.ChatMessageUpdateManyWithoutGroupNestedInput
   provider?: Prisma.ProviderUpdateOneRequiredWithoutGroupChatsNestedInput
   members?: Prisma.GroupMembersUpdateManyWithoutGroupChatNestedInput
@@ -657,6 +693,7 @@ export type GroupChatUncheckedUpdateWithoutInvitationsInput = {
   providerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutGroupNestedInput
   members?: Prisma.GroupMembersUncheckedUpdateManyWithoutGroupChatNestedInput
 }
@@ -666,6 +703,7 @@ export type GroupChatCreateManyProviderInput = {
   name: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  membersCanInvite?: boolean
 }
 
 export type GroupChatUpdateWithoutProviderInput = {
@@ -673,6 +711,7 @@ export type GroupChatUpdateWithoutProviderInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.ChatMessageUpdateManyWithoutGroupNestedInput
   members?: Prisma.GroupMembersUpdateManyWithoutGroupChatNestedInput
   invitations?: Prisma.InvitationUpdateManyWithoutGroupNestedInput
@@ -683,6 +722,7 @@ export type GroupChatUncheckedUpdateWithoutProviderInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
   messages?: Prisma.ChatMessageUncheckedUpdateManyWithoutGroupNestedInput
   members?: Prisma.GroupMembersUncheckedUpdateManyWithoutGroupChatNestedInput
   invitations?: Prisma.InvitationUncheckedUpdateManyWithoutGroupNestedInput
@@ -693,6 +733,7 @@ export type GroupChatUncheckedUpdateManyWithoutProviderInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  membersCanInvite?: Prisma.BoolFieldUpdateOperationsInput | boolean
 }
 
 
@@ -750,6 +791,7 @@ export type GroupChatSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   providerId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  membersCanInvite?: boolean
   messages?: boolean | Prisma.GroupChat$messagesArgs<ExtArgs>
   provider?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
   members?: boolean | Prisma.GroupChat$membersArgs<ExtArgs>
@@ -763,6 +805,7 @@ export type GroupChatSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   providerId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  membersCanInvite?: boolean
   provider?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["groupChat"]>
 
@@ -772,6 +815,7 @@ export type GroupChatSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   providerId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  membersCanInvite?: boolean
   provider?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["groupChat"]>
 
@@ -781,9 +825,10 @@ export type GroupChatSelectScalar = {
   providerId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
+  membersCanInvite?: boolean
 }
 
-export type GroupChatOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "providerId" | "createdAt" | "updatedAt", ExtArgs["result"]["groupChat"]>
+export type GroupChatOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "providerId" | "createdAt" | "updatedAt" | "membersCanInvite", ExtArgs["result"]["groupChat"]>
 export type GroupChatInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   messages?: boolean | Prisma.GroupChat$messagesArgs<ExtArgs>
   provider?: boolean | Prisma.ProviderDefaultArgs<ExtArgs>
@@ -812,6 +857,7 @@ export type $GroupChatPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     providerId: string
     createdAt: Date
     updatedAt: Date
+    membersCanInvite: boolean
   }, ExtArgs["result"]["groupChat"]>
   composites: {}
 }
@@ -1244,6 +1290,7 @@ export interface GroupChatFieldRefs {
   readonly providerId: Prisma.FieldRef<"GroupChat", 'String'>
   readonly createdAt: Prisma.FieldRef<"GroupChat", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"GroupChat", 'DateTime'>
+  readonly membersCanInvite: Prisma.FieldRef<"GroupChat", 'Boolean'>
 }
     
 

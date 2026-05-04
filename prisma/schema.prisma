@@ -49,6 +49,7 @@ model User {
   readReceipts          ReadReceipt[]
   subscription          Subscription?
   superAdmin            SuperAdmin?
+  mentionedIn           ChatMessage[]      @relation("MessageMentions")
 }
 
 model Client {
@@ -118,6 +119,7 @@ model ChatMessage {
   sender            User               @relation(fields: [senderId], references: [id], onDelete: Cascade)
   groupReadReceipts GroupReadReceipt[]
   readReceipts      ReadReceipt[]
+  mentions          User[]             @relation("MessageMentions")
 }
 
 model Document {
@@ -152,6 +154,10 @@ model GroupChat {
   providerId  String
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  // When false, only the group creator (providerId) can add members or send
+  // email invites. When true (default), any member of the group can.
+  // Defaults to true so existing groups keep their current behaviour.
+  membersCanInvite Boolean   @default(true)
   messages    ChatMessage[]
   provider    Provider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
   members     GroupMembers[]
@@ -304,6 +310,7 @@ enum NotificationType {
   PASSWORD_UPDATE
   DOCUMENT_SHARED
   DOCUMENT_SIGNED
+  MENTIONED_IN_CHAT
 }
 
 enum PlanType {
