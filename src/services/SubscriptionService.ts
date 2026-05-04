@@ -313,9 +313,20 @@ export class SubscriptionService {
             limit: 50 // Check more to clean up old mess if it exists
         });
 
-        // Try to find a reusable subscription (incomplete or trialing for the same plan)
+        // Try to find a reusable subscription. Only `incomplete` is reusable —
+        // an `incomplete` sub means a previous signup attempt created it but
+        // the user never finished paying, so we want to attach to it again.
+        //
+        // We deliberately do NOT reuse `trialing` subs here. A trialing
+        // subscription's `latest_invoice` is the trial-start invoice ($0),
+        // and reusing it makes the upgrade payment appear to succeed without
+        // ever charging the customer's card — invoice in our DB would record
+        // amount_paid: 0. By dropping `trialing` from this filter, the trial
+        // sub falls through to `othersToCancel` below and the user gets a
+        // brand-new `default_incomplete` paying subscription with a real
+        // invoice — same path the yearly upgrade already takes.
         let subscription = existingStripeSubs.data.find((s: any) =>
-            (s.status === 'incomplete' || s.status === 'trialing') &&
+            s.status === 'incomplete' &&
             s.items.data[0].price.id === priceId
         );
 
