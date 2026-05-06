@@ -130,22 +130,38 @@ model Document {
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
   sharedWith DocumentShareWith[]
+  fields     DocumentField[]
 }
 
 model DocumentShareWith {
-  id         String    @id @default(uuid())
-  documentId String
-  clientId   String?
-  providerId String?
-  eSignature String?
-  isAgree    Boolean   @default(false)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  client     Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  document   Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  provider   Provider? @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  id            String    @id @default(uuid())
+  documentId    String
+  clientId      String?
+  providerId    String?
+  eSignature    String?
+  isAgree       Boolean   @default(false)
+  signedFileKey String?   // S3 key of the signed PDF (set after embedding)
+  signedAt      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  client        Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  document      Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  provider      Provider? @relation(fields: [providerId], references: [id], onDelete: Cascade)
 
   @@unique([documentId, clientId, providerId])
+}
+
+model DocumentField {
+  id         String   @id @default(uuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  fieldType  String   // "signature" | "date" | "text" | "initial"
+  page       Int
+  position   Json     // { x, y, width, height } as 0–1 fractions of page dimensions
+  assignedTo String   @default("client")
+  label      String?
+  required   Boolean  @default(true)
+  createdAt  DateTime @default(now())
 }
 
 model GroupChat {

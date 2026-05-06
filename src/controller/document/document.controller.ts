@@ -6,6 +6,7 @@ import { ApiResponse } from "../../utils/apiResponse";
 import { io } from "../../socket/socket";
 import { sendDocumentEmail } from "../../utils/nodeMailer/SendDocumentEmail";
 import logger from "../../utils/logger";
+import { Approve } from "../../generated/prisma/enums";
 
 const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
     const file = req.file as Express.Multer.File & { location: string };;
@@ -114,6 +115,19 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Response) => {
     const { providerId, clientId, documentId, senderId, clientEmail } = req.body;
     logger.debug(`Document share request: providerId=${providerId}, clientId=${clientId}, senderId=${senderId}, documents=${documentId}`);
+
+    const clientRecord = await prisma.client.findUnique({
+        where: { id: clientId },
+        include: { user: { select: { isApprove: true, fullName: true } } }
+    });
+
+    if (!clientRecord || clientRecord.user.isApprove !== Approve.APPROVED) {
+        const clientName = clientRecord?.user?.fullName ?? "This client";
+        const status = clientRecord?.user?.isApprove ?? "PENDING";
+        return res.status(403).json({
+            error: `${clientName}'s account has not been approved yet (status: ${status}). Admin approval is required before documents can be shared.`
+        });
+    }
 
     const alreadySharedDocs = await prisma.documentShareWith.findMany({
         where: {
