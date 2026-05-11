@@ -16,6 +16,8 @@ import { sendVerifyEmailLink } from "../../utils/nodeMailer/VerifyEmailLink";
 import { AuthService } from "../../services/AuthService";
 import { UserService } from "../../services/UserService";
 import { SubscriptionService } from "../../services/SubscriptionService";
+import { AuditLogService } from "../../services/AuditLogService";
+
 
 const authService = new AuthService();
 const userService = new UserService();
@@ -391,6 +393,20 @@ const unblockUserApi = asyncHandler(async (req: Request, res: Response) => {
 })
 
 const logoutApi = asyncHandler(async (req: Request, res: Response) => {
+    const userId = (req as any).user?.id;
+
+    if (userId) {
+        await AuditLogService.createLog({
+            userId,
+            action: "LOGOUT",
+            resource: "AUTH",
+            details: {
+                timestamp: new Date().toISOString(),
+
+            }
+        });
+    }
+
     // Clearing all possible token variants
     return res
         .clearCookie("accessToken", cookiesOptions)

@@ -58,6 +58,11 @@ export type Document = Prisma.DocumentModel
  */
 export type DocumentShareWith = Prisma.DocumentShareWithModel
 /**
+ * Model DocumentField
+ * 
+ */
+export type DocumentField = Prisma.DocumentFieldModel
+/**
  * Model GroupChat
  * 
  */
@@ -102,3 +107,8 @@ export type Subscription = Prisma.SubscriptionModel
  * 
  */
 export type Payment = Prisma.PaymentModel
+/**
+ * Model AuditLog
+ * 
+ */
+export type AuditLog = Prisma.AuditLogModel

@@ -392,6 +392,7 @@ export const ModelName = {
   ChatMessage: 'ChatMessage',
   Document: 'Document',
   DocumentShareWith: 'DocumentShareWith',
+  DocumentField: 'DocumentField',
   GroupChat: 'GroupChat',
   GroupMembers: 'GroupMembers',
   GroupReadReceipt: 'GroupReadReceipt',
@@ -400,7 +401,8 @@ export const ModelName = {
   ProviderOnClient: 'ProviderOnClient',
   ReadReceipt: 'ReadReceipt',
   Subscription: 'Subscription',
-  Payment: 'Payment'
+  Payment: 'Payment',
+  AuditLog: 'AuditLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -416,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "client" | "provider" | "superAdmin" | "chatChannel" | "chatMessage" | "document" | "documentShareWith" | "groupChat" | "groupMembers" | "groupReadReceipt" | "invitation" | "notification" | "providerOnClient" | "readReceipt" | "subscription" | "payment"
+    modelProps: "user" | "client" | "provider" | "superAdmin" | "chatChannel" | "chatMessage" | "document" | "documentShareWith" | "documentField" | "groupChat" | "groupMembers" | "groupReadReceipt" | "invitation" | "notification" | "providerOnClient" | "readReceipt" | "subscription" | "payment" | "auditLog"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1009,6 +1011,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.DocumentShareWithCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.DocumentShareWithCountAggregateOutputType> | number
+        }
+      }
+    }
+    DocumentField: {
+      payload: Prisma.$DocumentFieldPayload<ExtArgs>
+      fields: Prisma.DocumentFieldFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.DocumentFieldFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentFieldPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.DocumentFieldFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentFieldPayload>
+        }
+        findFirst: {
+          args: Prisma.DocumentFieldFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentFieldPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.DocumentFieldFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentFieldPayload>
+        }
+        findMany: {
+          args: Prisma.DocumentFieldFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentFieldPayload>[]
+        }
+        create: {
+          args: Prisma.DocumentFieldCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentFieldPayload>
+        }
+        createMany: {
+          args: Prisma.DocumentFieldCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.DocumentFieldCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentFieldPayload>[]
+        }
+        delete: {
+          args: Prisma.DocumentFieldDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentFieldPayload>
+        }
+        update: {
+          args: Prisma.DocumentFieldUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentFieldPayload>
+        }
+        deleteMany: {
+          args: Prisma.DocumentFieldDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.DocumentFieldUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.DocumentFieldUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentFieldPayload>[]
+        }
+        upsert: {
+          args: Prisma.DocumentFieldUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$DocumentFieldPayload>
+        }
+        aggregate: {
+          args: Prisma.DocumentFieldAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateDocumentField>
+        }
+        groupBy: {
+          args: Prisma.DocumentFieldGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DocumentFieldGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.DocumentFieldCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.DocumentFieldCountAggregateOutputType> | number
         }
       }
     }
@@ -1678,6 +1754,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AuditLog: {
+      payload: Prisma.$AuditLogPayload<ExtArgs>
+      fields: Prisma.AuditLogFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AuditLogFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AuditLogFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>
+        }
+        findFirst: {
+          args: Prisma.AuditLogFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AuditLogFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>
+        }
+        findMany: {
+          args: Prisma.AuditLogFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>[]
+        }
+        create: {
+          args: Prisma.AuditLogCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>
+        }
+        createMany: {
+          args: Prisma.AuditLogCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AuditLogCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>[]
+        }
+        delete: {
+          args: Prisma.AuditLogDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>
+        }
+        update: {
+          args: Prisma.AuditLogUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>
+        }
+        deleteMany: {
+          args: Prisma.AuditLogDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AuditLogUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AuditLogUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>[]
+        }
+        upsert: {
+          args: Prisma.AuditLogUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>
+        }
+        aggregate: {
+          args: Prisma.AuditLogAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAuditLog>
+        }
+        groupBy: {
+          args: Prisma.AuditLogGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AuditLogGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AuditLogCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AuditLogCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1833,11 +1983,28 @@ export const DocumentShareWithScalarFieldEnum = {
   providerId: 'providerId',
   eSignature: 'eSignature',
   isAgree: 'isAgree',
+  signedFileKey: 'signedFileKey',
+  signedAt: 'signedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type DocumentShareWithScalarFieldEnum = (typeof DocumentShareWithScalarFieldEnum)[keyof typeof DocumentShareWithScalarFieldEnum]
+
+
+export const DocumentFieldScalarFieldEnum = {
+  id: 'id',
+  documentId: 'documentId',
+  fieldType: 'fieldType',
+  page: 'page',
+  position: 'position',
+  assignedTo: 'assignedTo',
+  label: 'label',
+  required: 'required',
+  createdAt: 'createdAt'
+} as const
+
+export type DocumentFieldScalarFieldEnum = (typeof DocumentFieldScalarFieldEnum)[keyof typeof DocumentFieldScalarFieldEnum]
 
 
 export const GroupChatScalarFieldEnum = {
@@ -1965,12 +2132,40 @@ export const PaymentScalarFieldEnum = {
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
 
 
+export const AuditLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  action: 'action',
+  resource: 'resource',
+  resourceId: 'resourceId',
+  details: 'details',
+  timestamp: 'timestamp'
+} as const
+
+export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -1987,6 +2182,15 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 
 
 
@@ -2083,6 +2287,20 @@ export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel
  * Reference to a field of type 'DateTime[]'
  */
 export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -2272,6 +2490,7 @@ export type GlobalOmitConfig = {
   chatMessage?: Prisma.ChatMessageOmit
   document?: Prisma.DocumentOmit
   documentShareWith?: Prisma.DocumentShareWithOmit
+  documentField?: Prisma.DocumentFieldOmit
   groupChat?: Prisma.GroupChatOmit
   groupMembers?: Prisma.GroupMembersOmit
   groupReadReceipt?: Prisma.GroupReadReceiptOmit
@@ -2281,6 +2500,7 @@ export type GlobalOmitConfig = {
   readReceipt?: Prisma.ReadReceiptOmit
   subscription?: Prisma.SubscriptionOmit
   payment?: Prisma.PaymentOmit
+  auditLog?: Prisma.AuditLogOmit
 }
 
 /* Types for Logging */

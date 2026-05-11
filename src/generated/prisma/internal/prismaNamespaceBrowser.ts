@@ -59,6 +59,7 @@ export const ModelName = {
   ChatMessage: 'ChatMessage',
   Document: 'Document',
   DocumentShareWith: 'DocumentShareWith',
+  DocumentField: 'DocumentField',
   GroupChat: 'GroupChat',
   GroupMembers: 'GroupMembers',
   GroupReadReceipt: 'GroupReadReceipt',
@@ -67,7 +68,8 @@ export const ModelName = {
   ProviderOnClient: 'ProviderOnClient',
   ReadReceipt: 'ReadReceipt',
   Subscription: 'Subscription',
-  Payment: 'Payment'
+  Payment: 'Payment',
+  AuditLog: 'AuditLog'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -202,11 +204,28 @@ export const DocumentShareWithScalarFieldEnum = {
   providerId: 'providerId',
   eSignature: 'eSignature',
   isAgree: 'isAgree',
+  signedFileKey: 'signedFileKey',
+  signedAt: 'signedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type DocumentShareWithScalarFieldEnum = (typeof DocumentShareWithScalarFieldEnum)[keyof typeof DocumentShareWithScalarFieldEnum]
+
+
+export const DocumentFieldScalarFieldEnum = {
+  id: 'id',
+  documentId: 'documentId',
+  fieldType: 'fieldType',
+  page: 'page',
+  position: 'position',
+  assignedTo: 'assignedTo',
+  label: 'label',
+  required: 'required',
+  createdAt: 'createdAt'
+} as const
+
+export type DocumentFieldScalarFieldEnum = (typeof DocumentFieldScalarFieldEnum)[keyof typeof DocumentFieldScalarFieldEnum]
 
 
 export const GroupChatScalarFieldEnum = {
@@ -334,12 +353,40 @@ export const PaymentScalarFieldEnum = {
 export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
 
 
+export const AuditLogScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  action: 'action',
+  resource: 'resource',
+  resourceId: 'resourceId',
+  details: 'details',
+  timestamp: 'timestamp'
+} as const
+
+export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
 } as const
 
 export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
 export const QueryMode = {
@@ -356,4 +403,13 @@ export const NullsOrder = {
 } as const
 
 export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+export const JsonNullValueFilter = {
+  DbNull: DbNull,
+  JsonNull: JsonNull,
+  AnyNull: AnyNull
+} as const
+
+export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
 

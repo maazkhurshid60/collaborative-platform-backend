@@ -31,6 +31,8 @@ export type DocumentShareWithMinAggregateOutputType = {
   providerId: string | null
   eSignature: string | null
   isAgree: boolean | null
+  signedFileKey: string | null
+  signedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -42,6 +44,8 @@ export type DocumentShareWithMaxAggregateOutputType = {
   providerId: string | null
   eSignature: string | null
   isAgree: boolean | null
+  signedFileKey: string | null
+  signedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -53,6 +57,8 @@ export type DocumentShareWithCountAggregateOutputType = {
   providerId: number
   eSignature: number
   isAgree: number
+  signedFileKey: number
+  signedAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -66,6 +72,8 @@ export type DocumentShareWithMinAggregateInputType = {
   providerId?: true
   eSignature?: true
   isAgree?: true
+  signedFileKey?: true
+  signedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -77,6 +85,8 @@ export type DocumentShareWithMaxAggregateInputType = {
   providerId?: true
   eSignature?: true
   isAgree?: true
+  signedFileKey?: true
+  signedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -88,6 +98,8 @@ export type DocumentShareWithCountAggregateInputType = {
   providerId?: true
   eSignature?: true
   isAgree?: true
+  signedFileKey?: true
+  signedAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -172,6 +184,8 @@ export type DocumentShareWithGroupByOutputType = {
   providerId: string | null
   eSignature: string | null
   isAgree: boolean
+  signedFileKey: string | null
+  signedAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: DocumentShareWithCountAggregateOutputType | null
@@ -204,6 +218,8 @@ export type DocumentShareWithWhereInput = {
   providerId?: Prisma.StringNullableFilter<"DocumentShareWith"> | string | null
   eSignature?: Prisma.StringNullableFilter<"DocumentShareWith"> | string | null
   isAgree?: Prisma.BoolFilter<"DocumentShareWith"> | boolean
+  signedFileKey?: Prisma.StringNullableFilter<"DocumentShareWith"> | string | null
+  signedAt?: Prisma.DateTimeNullableFilter<"DocumentShareWith"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"DocumentShareWith"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"DocumentShareWith"> | Date | string
   client?: Prisma.XOR<Prisma.ClientNullableScalarRelationFilter, Prisma.ClientWhereInput> | null
@@ -218,6 +234,8 @@ export type DocumentShareWithOrderByWithRelationInput = {
   providerId?: Prisma.SortOrderInput | Prisma.SortOrder
   eSignature?: Prisma.SortOrderInput | Prisma.SortOrder
   isAgree?: Prisma.SortOrder
+  signedFileKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  signedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   client?: Prisma.ClientOrderByWithRelationInput
@@ -236,6 +254,8 @@ export type DocumentShareWithWhereUniqueInput = Prisma.AtLeast<{
   providerId?: Prisma.StringNullableFilter<"DocumentShareWith"> | string | null
   eSignature?: Prisma.StringNullableFilter<"DocumentShareWith"> | string | null
   isAgree?: Prisma.BoolFilter<"DocumentShareWith"> | boolean
+  signedFileKey?: Prisma.StringNullableFilter<"DocumentShareWith"> | string | null
+  signedAt?: Prisma.DateTimeNullableFilter<"DocumentShareWith"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"DocumentShareWith"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"DocumentShareWith"> | Date | string
   client?: Prisma.XOR<Prisma.ClientNullableScalarRelationFilter, Prisma.ClientWhereInput> | null
@@ -250,6 +270,8 @@ export type DocumentShareWithOrderByWithAggregationInput = {
   providerId?: Prisma.SortOrderInput | Prisma.SortOrder
   eSignature?: Prisma.SortOrderInput | Prisma.SortOrder
   isAgree?: Prisma.SortOrder
+  signedFileKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  signedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.DocumentShareWithCountOrderByAggregateInput
@@ -267,6 +289,8 @@ export type DocumentShareWithScalarWhereWithAggregatesInput = {
   providerId?: Prisma.StringNullableWithAggregatesFilter<"DocumentShareWith"> | string | null
   eSignature?: Prisma.StringNullableWithAggregatesFilter<"DocumentShareWith"> | string | null
   isAgree?: Prisma.BoolWithAggregatesFilter<"DocumentShareWith"> | boolean
+  signedFileKey?: Prisma.StringNullableWithAggregatesFilter<"DocumentShareWith"> | string | null
+  signedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"DocumentShareWith"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"DocumentShareWith"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"DocumentShareWith"> | Date | string
 }
@@ -275,6 +299,8 @@ export type DocumentShareWithCreateInput = {
   id?: string
   eSignature?: string | null
   isAgree?: boolean
+  signedFileKey?: string | null
+  signedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutReceivedDocumentInput
@@ -289,6 +315,8 @@ export type DocumentShareWithUncheckedCreateInput = {
   providerId?: string | null
   eSignature?: string | null
   isAgree?: boolean
+  signedFileKey?: string | null
+  signedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -297,6 +325,8 @@ export type DocumentShareWithUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutReceivedDocumentNestedInput
@@ -311,6 +341,8 @@ export type DocumentShareWithUncheckedUpdateInput = {
   providerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -322,6 +354,8 @@ export type DocumentShareWithCreateManyInput = {
   providerId?: string | null
   eSignature?: string | null
   isAgree?: boolean
+  signedFileKey?: string | null
+  signedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -330,6 +364,8 @@ export type DocumentShareWithUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -341,6 +377,8 @@ export type DocumentShareWithUncheckedUpdateManyInput = {
   providerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -368,6 +406,8 @@ export type DocumentShareWithCountOrderByAggregateInput = {
   providerId?: Prisma.SortOrder
   eSignature?: Prisma.SortOrder
   isAgree?: Prisma.SortOrder
+  signedFileKey?: Prisma.SortOrder
+  signedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -379,6 +419,8 @@ export type DocumentShareWithMaxOrderByAggregateInput = {
   providerId?: Prisma.SortOrder
   eSignature?: Prisma.SortOrder
   isAgree?: Prisma.SortOrder
+  signedFileKey?: Prisma.SortOrder
+  signedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -390,6 +432,8 @@ export type DocumentShareWithMinOrderByAggregateInput = {
   providerId?: Prisma.SortOrder
   eSignature?: Prisma.SortOrder
   isAgree?: Prisma.SortOrder
+  signedFileKey?: Prisma.SortOrder
+  signedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -524,6 +568,8 @@ export type DocumentShareWithCreateWithoutClientInput = {
   id?: string
   eSignature?: string | null
   isAgree?: boolean
+  signedFileKey?: string | null
+  signedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   document: Prisma.DocumentCreateNestedOneWithoutSharedWithInput
@@ -536,6 +582,8 @@ export type DocumentShareWithUncheckedCreateWithoutClientInput = {
   providerId?: string | null
   eSignature?: string | null
   isAgree?: boolean
+  signedFileKey?: string | null
+  signedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -576,6 +624,8 @@ export type DocumentShareWithScalarWhereInput = {
   providerId?: Prisma.StringNullableFilter<"DocumentShareWith"> | string | null
   eSignature?: Prisma.StringNullableFilter<"DocumentShareWith"> | string | null
   isAgree?: Prisma.BoolFilter<"DocumentShareWith"> | boolean
+  signedFileKey?: Prisma.StringNullableFilter<"DocumentShareWith"> | string | null
+  signedAt?: Prisma.DateTimeNullableFilter<"DocumentShareWith"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"DocumentShareWith"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"DocumentShareWith"> | Date | string
 }
@@ -584,6 +634,8 @@ export type DocumentShareWithCreateWithoutProviderInput = {
   id?: string
   eSignature?: string | null
   isAgree?: boolean
+  signedFileKey?: string | null
+  signedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutReceivedDocumentInput
@@ -596,6 +648,8 @@ export type DocumentShareWithUncheckedCreateWithoutProviderInput = {
   clientId?: string | null
   eSignature?: string | null
   isAgree?: boolean
+  signedFileKey?: string | null
+  signedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -630,6 +684,8 @@ export type DocumentShareWithCreateWithoutDocumentInput = {
   id?: string
   eSignature?: string | null
   isAgree?: boolean
+  signedFileKey?: string | null
+  signedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   client?: Prisma.ClientCreateNestedOneWithoutReceivedDocumentInput
@@ -642,6 +698,8 @@ export type DocumentShareWithUncheckedCreateWithoutDocumentInput = {
   providerId?: string | null
   eSignature?: string | null
   isAgree?: boolean
+  signedFileKey?: string | null
+  signedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -678,6 +736,8 @@ export type DocumentShareWithCreateManyClientInput = {
   providerId?: string | null
   eSignature?: string | null
   isAgree?: boolean
+  signedFileKey?: string | null
+  signedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -686,6 +746,8 @@ export type DocumentShareWithUpdateWithoutClientInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   document?: Prisma.DocumentUpdateOneRequiredWithoutSharedWithNestedInput
@@ -698,6 +760,8 @@ export type DocumentShareWithUncheckedUpdateWithoutClientInput = {
   providerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -708,6 +772,8 @@ export type DocumentShareWithUncheckedUpdateManyWithoutClientInput = {
   providerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -718,6 +784,8 @@ export type DocumentShareWithCreateManyProviderInput = {
   clientId?: string | null
   eSignature?: string | null
   isAgree?: boolean
+  signedFileKey?: string | null
+  signedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -726,6 +794,8 @@ export type DocumentShareWithUpdateWithoutProviderInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutReceivedDocumentNestedInput
@@ -738,6 +808,8 @@ export type DocumentShareWithUncheckedUpdateWithoutProviderInput = {
   clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -748,6 +820,8 @@ export type DocumentShareWithUncheckedUpdateManyWithoutProviderInput = {
   clientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -758,6 +832,8 @@ export type DocumentShareWithCreateManyDocumentInput = {
   providerId?: string | null
   eSignature?: string | null
   isAgree?: boolean
+  signedFileKey?: string | null
+  signedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -766,6 +842,8 @@ export type DocumentShareWithUpdateWithoutDocumentInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   client?: Prisma.ClientUpdateOneWithoutReceivedDocumentNestedInput
@@ -778,6 +856,8 @@ export type DocumentShareWithUncheckedUpdateWithoutDocumentInput = {
   providerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -788,6 +868,8 @@ export type DocumentShareWithUncheckedUpdateManyWithoutDocumentInput = {
   providerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   eSignature?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isAgree?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  signedFileKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  signedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -801,6 +883,8 @@ export type DocumentShareWithSelect<ExtArgs extends runtime.Types.Extensions.Int
   providerId?: boolean
   eSignature?: boolean
   isAgree?: boolean
+  signedFileKey?: boolean
+  signedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   client?: boolean | Prisma.DocumentShareWith$clientArgs<ExtArgs>
@@ -815,6 +899,8 @@ export type DocumentShareWithSelectCreateManyAndReturn<ExtArgs extends runtime.T
   providerId?: boolean
   eSignature?: boolean
   isAgree?: boolean
+  signedFileKey?: boolean
+  signedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   client?: boolean | Prisma.DocumentShareWith$clientArgs<ExtArgs>
@@ -829,6 +915,8 @@ export type DocumentShareWithSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   providerId?: boolean
   eSignature?: boolean
   isAgree?: boolean
+  signedFileKey?: boolean
+  signedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   client?: boolean | Prisma.DocumentShareWith$clientArgs<ExtArgs>
@@ -843,11 +931,13 @@ export type DocumentShareWithSelectScalar = {
   providerId?: boolean
   eSignature?: boolean
   isAgree?: boolean
+  signedFileKey?: boolean
+  signedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type DocumentShareWithOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "documentId" | "clientId" | "providerId" | "eSignature" | "isAgree" | "createdAt" | "updatedAt", ExtArgs["result"]["documentShareWith"]>
+export type DocumentShareWithOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "documentId" | "clientId" | "providerId" | "eSignature" | "isAgree" | "signedFileKey" | "signedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["documentShareWith"]>
 export type DocumentShareWithInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   client?: boolean | Prisma.DocumentShareWith$clientArgs<ExtArgs>
   document?: boolean | Prisma.DocumentDefaultArgs<ExtArgs>
@@ -878,6 +968,8 @@ export type $DocumentShareWithPayload<ExtArgs extends runtime.Types.Extensions.I
     providerId: string | null
     eSignature: string | null
     isAgree: boolean
+    signedFileKey: string | null
+    signedAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["documentShareWith"]>
@@ -1312,6 +1404,8 @@ export interface DocumentShareWithFieldRefs {
   readonly providerId: Prisma.FieldRef<"DocumentShareWith", 'String'>
   readonly eSignature: Prisma.FieldRef<"DocumentShareWith", 'String'>
   readonly isAgree: Prisma.FieldRef<"DocumentShareWith", 'Boolean'>
+  readonly signedFileKey: Prisma.FieldRef<"DocumentShareWith", 'String'>
+  readonly signedAt: Prisma.FieldRef<"DocumentShareWith", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"DocumentShareWith", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"DocumentShareWith", 'DateTime'>
 }

@@ -10,6 +10,8 @@ import {
 } from "../../utils/encryptedMessage/EncryptedMessage";
 import { sendShareChatEmail } from "../../utils/nodeMailer/ShareChatEmail";
 import { getFrontendUrl } from "../../utils/nodeMailer/getFrontendUrl";
+import { AuditLogService } from "../../services/AuditLogService";
+
 
 const getAllSingleConservationMessage = asyncHandler(
   async (req: Request, res: Response) => {
@@ -196,6 +198,20 @@ const sendMessageToSingleConservation = asyncHandler(
         ...chatMessage,
         message: chatMessage.message ? decryptText(chatMessage.message) : "",
       };
+
+      // Audit Log for Chat Message
+      await AuditLogService.createLog({
+        userId: userIdToUse,
+        action: "SEND_MESSAGE",
+        resource: "CHAT",
+        resourceId: chatMessage.id,
+        details: {
+          chatChannelId,
+          type: type || "text",
+          messageTimestamp: chatMessage.createdAt.toISOString(), // HIPAA requirement: timestamp of individual chat
+          hasMedia: files && files.length > 0
+        }
+      });
 
       return res
         .status(StatusCodes.OK)

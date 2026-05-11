@@ -4,6 +4,8 @@ import { Role, Gender, Approve } from "../generated/prisma/enums";
 import { stripe, STRIPE_PRICES } from "../utils/stripe/stripe";
 import { ApiError } from "../utils/apiError";
 import { StatusCodes } from "http-status-codes";
+import { AuditLogService } from "./AuditLogService";
+
 
 export class AuthService {
     async signup(userData: any) {
@@ -66,7 +68,7 @@ export class AuthService {
                     ...(isValidDate(periodEnd) && { currentPeriodEnd: periodEnd })
                 } as any;
             } catch (err: any) {
-                console.error("❌ Failed to retrieve existing Stripe subscription during signup:", err);
+                console.error("Failed to retrieve existing Stripe subscription during signup:", err);
             }
         } else if (planType === 'FREE') {
             mappedPlanType = 'STANDARD';
@@ -95,7 +97,7 @@ export class AuthService {
                     ...(isValidDate(periodEnd) && { currentPeriodEnd: periodEnd })
                 } as any;
             } catch (error: any) {
-                console.error("❌ Stripe trial creation failed:", error);
+                console.error("Stripe trial creation failed:", error);
                 throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Failed to create trial subscription");
             }
         }
@@ -217,7 +219,7 @@ export class AuthService {
                 }
             }
         } catch (error) {
-            console.error("❌ Error during invitation processing:", error);
+            console.error("Error during invitation processing:", error);
         }
     }
 
@@ -346,6 +348,20 @@ export class AuthService {
             throw new ApiError(StatusCodes.NOT_FOUND, `Account for ${email} is incomplete or invalid.`);
         }
 
-        return await this.getCompleteUserData(user.id, user.role);
+        const completeUserData = await this.getCompleteUserData(user.id, user.role);
+
+        // Audit Log for Login
+        await AuditLogService.createLog({
+            userId: user.id,
+            action: "LOGIN",
+            resource: "AUTH",
+            details: {
+                email: user.email,
+                role: user.role,
+                timestamp: new Date().toISOString()
+            }
+        });
+
+        return completeUserData;
     }
 }

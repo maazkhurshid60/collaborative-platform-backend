@@ -8,6 +8,8 @@ import { decryptText, encryptText } from "../../utils/encryptedMessage/Encrypted
 import { sendShareChatEmail } from "../../utils/nodeMailer/ShareChatEmail";
 import { sendProviderSignupInviteEmail } from "../../utils/nodeMailer/InviteProviderSignupEmail";
 import crypto from "crypto";
+import { AuditLogService } from "../../services/AuditLogService";
+
 
 const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
     const { groupName, membersId, createdBy } = req.body
@@ -403,6 +405,20 @@ const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) =
             ...chatMessage,
             message: chatMessage.message ? decryptText(chatMessage.message) : ''
         };
+
+        // Audit Log for Group Chat Message
+        await AuditLogService.createLog({
+            userId: senderId,
+            action: "SEND_GROUP_MESSAGE",
+            resource: "CHAT_GROUP",
+            resourceId: chatMessage.id,
+            details: {
+                groupId,
+                type: type || 'text',
+                messageTimestamp: chatMessage.createdAt.toISOString(),
+                hasMedia: files && files.length > 0
+            }
+        });
 
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, { chatMessage: plainMessage }, 'Message sent to the group.')

@@ -50,6 +50,7 @@ model User {
   subscription          Subscription?
   superAdmin            SuperAdmin?
   mentionedIn           ChatMessage[]      @relation("MessageMentions")
+  auditLogs             AuditLog[]
 }
 
 model Client {
@@ -343,4 +344,15 @@ enum SubscriptionStatus {
   INCOMPLETE
   INCOMPLETE_EXPIRED
   PAUSED
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String   // LOGIN, LOGOUT, SEND_MESSAGE, etc.
+  resource   String   // AUTH, CHAT, etc.
+  resourceId String?  // e.g., messageId
+  details    Json?    // metadata: IP, user agent, or message content metadata
+  timestamp  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 }

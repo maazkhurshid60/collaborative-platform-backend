@@ -269,3 +269,63 @@ export const getProviderPaymentHistory = asyncHandler(async (req: Request, res: 
     .status(StatusCodes.OK)
     .json(new ApiResponse(StatusCodes.OK, payments, "Payment history fetched successfully"));
 });
+
+export const getAllAuditLogs = asyncHandler(async (req: Request, res: Response) => {
+  const { page = 1, limit = 50, action, resource, userId, search } = req.query;
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const where: any = {
+    user: {
+      role: {
+        not: "superAdmin"
+      }
+    }
+  };
+
+  if (action) where.action = action as string;
+  if (resource) where.resource = resource as string;
+  if (userId) where.userId = userId as string;
+
+  if (search) {
+    const searchString = search as string;
+    where.OR = [
+      { action: { contains: searchString, mode: 'insensitive' } },
+      { resource: { contains: searchString, mode: 'insensitive' } },
+      { user: { fullName: { contains: searchString, mode: 'insensitive' } } },
+      { user: { email: { contains: searchString, mode: 'insensitive' } } },
+    ];
+  }
+
+  const logs = await prisma.auditLog.findMany({
+    where,
+    include: {
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          role: true
+        }
+      }
+    },
+    orderBy: {
+      timestamp: "desc"
+    },
+    skip,
+    take: Number(limit)
+  });
+
+  const total = await prisma.auditLog.count({ where });
+
+  return res.status(StatusCodes.OK).json(
+    new ApiResponse(StatusCodes.OK, {
+      logs,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    }, "Audit logs fetched successfully")
+  );
+});

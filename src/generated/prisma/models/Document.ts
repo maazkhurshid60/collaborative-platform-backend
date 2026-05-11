@@ -191,6 +191,7 @@ export type DocumentWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   sharedWith?: Prisma.DocumentShareWithListRelationFilter
+  fields?: Prisma.DocumentFieldListRelationFilter
 }
 
 export type DocumentOrderByWithRelationInput = {
@@ -201,6 +202,7 @@ export type DocumentOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   sharedWith?: Prisma.DocumentShareWithOrderByRelationAggregateInput
+  fields?: Prisma.DocumentFieldOrderByRelationAggregateInput
 }
 
 export type DocumentWhereUniqueInput = Prisma.AtLeast<{
@@ -214,6 +216,7 @@ export type DocumentWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Document"> | Date | string
   sharedWith?: Prisma.DocumentShareWithListRelationFilter
+  fields?: Prisma.DocumentFieldListRelationFilter
 }, "id">
 
 export type DocumentOrderByWithAggregationInput = {
@@ -248,6 +251,7 @@ export type DocumentCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.DocumentShareWithCreateNestedManyWithoutDocumentInput
+  fields?: Prisma.DocumentFieldCreateNestedManyWithoutDocumentInput
 }
 
 export type DocumentUncheckedCreateInput = {
@@ -258,6 +262,7 @@ export type DocumentUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   sharedWith?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutDocumentInput
+  fields?: Prisma.DocumentFieldUncheckedCreateNestedManyWithoutDocumentInput
 }
 
 export type DocumentUpdateInput = {
@@ -268,6 +273,7 @@ export type DocumentUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.DocumentShareWithUpdateManyWithoutDocumentNestedInput
+  fields?: Prisma.DocumentFieldUpdateManyWithoutDocumentNestedInput
 }
 
 export type DocumentUncheckedUpdateInput = {
@@ -278,6 +284,7 @@ export type DocumentUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sharedWith?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutDocumentNestedInput
+  fields?: Prisma.DocumentFieldUncheckedUpdateManyWithoutDocumentNestedInput
 }
 
 export type DocumentCreateManyInput = {
@@ -353,6 +360,20 @@ export type DocumentUpdateOneRequiredWithoutSharedWithNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.DocumentUpdateToOneWithWhereWithoutSharedWithInput, Prisma.DocumentUpdateWithoutSharedWithInput>, Prisma.DocumentUncheckedUpdateWithoutSharedWithInput>
 }
 
+export type DocumentCreateNestedOneWithoutFieldsInput = {
+  create?: Prisma.XOR<Prisma.DocumentCreateWithoutFieldsInput, Prisma.DocumentUncheckedCreateWithoutFieldsInput>
+  connectOrCreate?: Prisma.DocumentCreateOrConnectWithoutFieldsInput
+  connect?: Prisma.DocumentWhereUniqueInput
+}
+
+export type DocumentUpdateOneRequiredWithoutFieldsNestedInput = {
+  create?: Prisma.XOR<Prisma.DocumentCreateWithoutFieldsInput, Prisma.DocumentUncheckedCreateWithoutFieldsInput>
+  connectOrCreate?: Prisma.DocumentCreateOrConnectWithoutFieldsInput
+  upsert?: Prisma.DocumentUpsertWithoutFieldsInput
+  connect?: Prisma.DocumentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DocumentUpdateToOneWithWhereWithoutFieldsInput, Prisma.DocumentUpdateWithoutFieldsInput>, Prisma.DocumentUncheckedUpdateWithoutFieldsInput>
+}
+
 export type DocumentCreateWithoutSharedWithInput = {
   id?: string
   url: string
@@ -360,6 +381,7 @@ export type DocumentCreateWithoutSharedWithInput = {
   type?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  fields?: Prisma.DocumentFieldCreateNestedManyWithoutDocumentInput
 }
 
 export type DocumentUncheckedCreateWithoutSharedWithInput = {
@@ -369,6 +391,7 @@ export type DocumentUncheckedCreateWithoutSharedWithInput = {
   type?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  fields?: Prisma.DocumentFieldUncheckedCreateNestedManyWithoutDocumentInput
 }
 
 export type DocumentCreateOrConnectWithoutSharedWithInput = {
@@ -394,6 +417,7 @@ export type DocumentUpdateWithoutSharedWithInput = {
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  fields?: Prisma.DocumentFieldUpdateManyWithoutDocumentNestedInput
 }
 
 export type DocumentUncheckedUpdateWithoutSharedWithInput = {
@@ -403,6 +427,63 @@ export type DocumentUncheckedUpdateWithoutSharedWithInput = {
   type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  fields?: Prisma.DocumentFieldUncheckedUpdateManyWithoutDocumentNestedInput
+}
+
+export type DocumentCreateWithoutFieldsInput = {
+  id?: string
+  url: string
+  name: string
+  type?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sharedWith?: Prisma.DocumentShareWithCreateNestedManyWithoutDocumentInput
+}
+
+export type DocumentUncheckedCreateWithoutFieldsInput = {
+  id?: string
+  url: string
+  name: string
+  type?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sharedWith?: Prisma.DocumentShareWithUncheckedCreateNestedManyWithoutDocumentInput
+}
+
+export type DocumentCreateOrConnectWithoutFieldsInput = {
+  where: Prisma.DocumentWhereUniqueInput
+  create: Prisma.XOR<Prisma.DocumentCreateWithoutFieldsInput, Prisma.DocumentUncheckedCreateWithoutFieldsInput>
+}
+
+export type DocumentUpsertWithoutFieldsInput = {
+  update: Prisma.XOR<Prisma.DocumentUpdateWithoutFieldsInput, Prisma.DocumentUncheckedUpdateWithoutFieldsInput>
+  create: Prisma.XOR<Prisma.DocumentCreateWithoutFieldsInput, Prisma.DocumentUncheckedCreateWithoutFieldsInput>
+  where?: Prisma.DocumentWhereInput
+}
+
+export type DocumentUpdateToOneWithWhereWithoutFieldsInput = {
+  where?: Prisma.DocumentWhereInput
+  data: Prisma.XOR<Prisma.DocumentUpdateWithoutFieldsInput, Prisma.DocumentUncheckedUpdateWithoutFieldsInput>
+}
+
+export type DocumentUpdateWithoutFieldsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sharedWith?: Prisma.DocumentShareWithUpdateManyWithoutDocumentNestedInput
+}
+
+export type DocumentUncheckedUpdateWithoutFieldsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  url?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sharedWith?: Prisma.DocumentShareWithUncheckedUpdateManyWithoutDocumentNestedInput
 }
 
 
@@ -412,10 +493,12 @@ export type DocumentUncheckedUpdateWithoutSharedWithInput = {
 
 export type DocumentCountOutputType = {
   sharedWith: number
+  fields: number
 }
 
 export type DocumentCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sharedWith?: boolean | DocumentCountOutputTypeCountSharedWithArgs
+  fields?: boolean | DocumentCountOutputTypeCountFieldsArgs
 }
 
 /**
@@ -435,6 +518,13 @@ export type DocumentCountOutputTypeCountSharedWithArgs<ExtArgs extends runtime.T
   where?: Prisma.DocumentShareWithWhereInput
 }
 
+/**
+ * DocumentCountOutputType without action
+ */
+export type DocumentCountOutputTypeCountFieldsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.DocumentFieldWhereInput
+}
+
 
 export type DocumentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -444,6 +534,7 @@ export type DocumentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   createdAt?: boolean
   updatedAt?: boolean
   sharedWith?: boolean | Prisma.Document$sharedWithArgs<ExtArgs>
+  fields?: boolean | Prisma.Document$fieldsArgs<ExtArgs>
   _count?: boolean | Prisma.DocumentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["document"]>
 
@@ -477,6 +568,7 @@ export type DocumentSelectScalar = {
 export type DocumentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "url" | "name" | "type" | "createdAt" | "updatedAt", ExtArgs["result"]["document"]>
 export type DocumentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sharedWith?: boolean | Prisma.Document$sharedWithArgs<ExtArgs>
+  fields?: boolean | Prisma.Document$fieldsArgs<ExtArgs>
   _count?: boolean | Prisma.DocumentCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type DocumentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -486,6 +578,7 @@ export type $DocumentPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   name: "Document"
   objects: {
     sharedWith: Prisma.$DocumentShareWithPayload<ExtArgs>[]
+    fields: Prisma.$DocumentFieldPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -889,6 +982,7 @@ readonly fields: DocumentFieldRefs;
 export interface Prisma__DocumentClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   sharedWith<T extends Prisma.Document$sharedWithArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Document$sharedWithArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DocumentShareWithPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  fields<T extends Prisma.Document$fieldsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Document$fieldsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DocumentFieldPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1333,6 +1427,30 @@ export type Document$sharedWithArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.DocumentShareWithScalarFieldEnum | Prisma.DocumentShareWithScalarFieldEnum[]
+}
+
+/**
+ * Document.fields
+ */
+export type Document$fieldsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DocumentField
+   */
+  select?: Prisma.DocumentFieldSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DocumentField
+   */
+  omit?: Prisma.DocumentFieldOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DocumentFieldInclude<ExtArgs> | null
+  where?: Prisma.DocumentFieldWhereInput
+  orderBy?: Prisma.DocumentFieldOrderByWithRelationInput | Prisma.DocumentFieldOrderByWithRelationInput[]
+  cursor?: Prisma.DocumentFieldWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.DocumentFieldScalarFieldEnum | Prisma.DocumentFieldScalarFieldEnum[]
 }
 
 /**

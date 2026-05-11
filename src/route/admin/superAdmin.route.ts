@@ -10,11 +10,16 @@ import {
   getProviderContactInfo,
   getProviderSubscriptionInfo,
   getProviderPaymentHistory,
+  getAllAuditLogs,
 } from "../../controller/admin/superAdmin.controller";
 
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
+import { authorizeRoles } from "../../middlewares/roleCheck.middleware";
 
 const router = Router();
+
+// Apply role check to all routes in this router
+router.use(authorizeRoles("superAdmin"));
 
 
 router.get("/first", getSuperAdminFirst);
@@ -33,5 +38,7 @@ router.delete("/subscriptions/:id", deleteSubscription);
 router.get("/provider/:userId/contact-info", getProviderContactInfo);
 router.get("/provider/:userId/subscription-info", getProviderSubscriptionInfo);
 router.get("/provider/:userId/payment-history", getProviderPaymentHistory);
+
+router.get("/audit-logs/all", getAllAuditLogs);
 
 export default router;
