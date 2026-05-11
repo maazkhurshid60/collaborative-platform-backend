@@ -7,6 +7,7 @@ import { clientSchema } from "../../schema/client/client.schema";
 import { Role, Gender, Approve } from "../../generated/prisma/client";
 import { userSchema } from "../../schema/auth/auth.schema";
 import bcrypt from "bcrypt";
+import { sendWelcomeClientEmail } from "../../utils/nodeMailer/WelcomeClientEmail";
 
 // ─── Client ID Generator ───────────────────────────────────────────────────────
 // Generates a unique client ID in the format: CLT-YYYYMMDD-XXXXXX
@@ -728,6 +729,18 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
     // Generate a unique clientId before the transaction
     const newClientId = await generateClientId();
 
+    // Look up the provider's name so we can personalise the welcome email
+    let providerName: string | undefined;
+    if (providerId) {
+        try {
+            const providerRecord = await prisma.provider.findUnique({
+                where: { id: providerId },
+                include: { user: { select: { fullName: true } } }
+            });
+            providerName = providerRecord?.user?.fullName ?? undefined;
+        } catch (_) { /* non-fatal */ }
+    }
+
     try {
         const result = await prisma.$transaction(async (tx) => {
             const userCreated = await tx.user.create({
@@ -741,7 +754,9 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
                     //          country,
                     state,
                     role: Role.client,
-                    isApprove: isApprove ? isApprove.toUpperCase() as Approve : Approve.PENDING,
+                    // Clients created by a provider/admin are approved immediately —
+                    // no admin approval step is needed.
+                    isApprove: Approve.APPROVED,
                     profileImage: profileImageUrl,
                     email: normalizedEmail,
                     password: hashedPassword,
@@ -771,11 +786,23 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
             return clientCreated;
         });
 
+        // Send welcome email to the new client with their Client ID
+        try {
+            await sendWelcomeClientEmail(
+                normalizedEmail,
+                fullName,
+                newClientId,
+                providerName
+            );
+        } catch (emailErr) {
+            console.error("[addClient] Welcome email failed (non-fatal):", emailErr);
+        }
+
         return res.status(StatusCodes.CREATED).json(
             new ApiResponse(
                 StatusCodes.CREATED,
                 result,
-                "Client Data has been sent to the super admin for verification. Client will receive a verification email once approved."
+                "Client created successfully. A welcome email with their Client ID has been sent."
             )
         );
     } catch (err: any) {
@@ -900,6 +927,18 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
     // New client — generate a unique Client ID
     const newClientIdForExisting = await generateClientId();
 
+    // Look up provider name for welcome email personalisation
+    let providerNameForExisting: string | undefined;
+    if (providerId) {
+        try {
+            const providerRecord = await prisma.provider.findUnique({
+                where: { id: providerId },
+                include: { user: { select: { fullName: true } } }
+            });
+            providerNameForExisting = providerRecord?.user?.fullName ?? undefined;
+        } catch (_) { /* non-fatal */ }
+    }
+
     const userCreated = await prisma.user.create({
         data: {
             fullName,
@@ -909,7 +948,8 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
             address,
             status,
             role,
-            isApprove: isApprove ? isApprove.toUpperCase() as Approve : Approve.PENDING,
+            // Clients are approved immediately — no admin approval step needed.
+            isApprove: Approve.APPROVED,
             // country,
             state,
             profileImage: profileImageUrl,
@@ -927,25 +967,7 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
             );
         }
 
-        const existingUserEmail = await prisma.user.findFirst({ where: { email: normalizedEmail } });
-        if (existingUserEmail) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: "Email already exists." }, "Email already exists.")
-            );
-        }
-
         const clientShowToOthersBool = clientShowToOthers === "true";
-
-        // We need to update user with email/password now because it was optional in schema but required for client login
-        // if (userCreated) {
-        //     await prisma.user.update({
-        //         where: { id: userCreated.id },
-        //         data: {
-        //             email: normalizedEmail,
-        //             password: hashedPassword
-        //         }
-        //     })
-        // }
 
         const clientCreated = await prisma.client.create({
             data: {
@@ -969,8 +991,20 @@ const addExistingClientToProvider = asyncHandler(async (req: Request, res: Respo
             });
         }
 
+        // Send welcome email to the new client
+        try {
+            await sendWelcomeClientEmail(
+                normalizedEmail,
+                fullName,
+                newClientIdForExisting,
+                providerNameForExisting
+            );
+        } catch (emailErr) {
+            console.error("[addExistingClientToProvider] Welcome email failed (non-fatal):", emailErr);
+        }
+
         return res.status(StatusCodes.CREATED).json(
-            new ApiResponse(StatusCodes.CREATED, clientCreated, "Client created and linked to provider successfully")
+            new ApiResponse(StatusCodes.CREATED, clientCreated, "Client created and linked to provider successfully. A welcome email with their Client ID has been sent.")
         );
     }
 

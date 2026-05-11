@@ -6,7 +6,6 @@ import { ApiResponse } from "../../utils/apiResponse";
 import { io } from "../../socket/socket";
 import { sendDocumentEmail } from "../../utils/nodeMailer/SendDocumentEmail";
 import logger from "../../utils/logger";
-import { Approve } from "../../generated/prisma/enums";
 
 const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
     const file = req.file as Express.Multer.File & { location: string };;
@@ -46,7 +45,8 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
     if (!clientId) {
         return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Client ID is required" }, "Bad Request")
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Client ID is required" },
+                "Bad Request")
         );
     }
 
@@ -118,15 +118,13 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
 
     const clientRecord = await prisma.client.findUnique({
         where: { id: clientId },
-        include: { user: { select: { isApprove: true, fullName: true } } }
+        include: { user: { select: { fullName: true } } }
     });
 
-    if (!clientRecord || clientRecord.user.isApprove !== Approve.APPROVED) {
-        const clientName = clientRecord?.user?.fullName ?? "This client";
-        const status = clientRecord?.user?.isApprove ?? "PENDING";
-        return res.status(403).json({
-            error: `${clientName}'s account has not been approved yet (status: ${status}). Admin approval is required before documents can be shared.`
-        });
+    if (!clientRecord) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, { error: "Client not found." }, "Not Found")
+        );
     }
 
     const alreadySharedDocs = await prisma.documentShareWith.findMany({
