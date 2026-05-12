@@ -6,6 +6,7 @@ import { ApiResponse } from "../../utils/apiResponse";
 import { io } from "../../socket/socket";
 import { sendDocumentEmail } from "../../utils/nodeMailer/SendDocumentEmail";
 import logger from "../../utils/logger";
+import { AuditLogService } from "../../services/AuditLogService";
 
 const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
     const file = req.file as Express.Multer.File & { location: string };;
@@ -16,7 +17,6 @@ const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Check if document already exists by name or S3 URL
     const existing = await prisma.document.findFirst({
         where: {
             OR: [{ name }, { url: file.location }],
@@ -27,13 +27,20 @@ const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
         return res.status(409).json({ error: 'Document already exists' });
     }
 
-    // ✅ Save document info with S3 URL
     const document = await prisma.document.create({
         data: {
             name,
-            url: file.location, // ✅ S3 URL here
+            url: file.location,
             type,
         },
+    });
+
+    await AuditLogService.createLog({
+        userId: (req as any).user?.id,
+        action: "UPLOAD_DOCUMENT",
+        resource: "DOCUMENT",
+        resourceId: document.id,
+        details: { name: document.name, type: document.type }
     });
 
     res.status(201).json({ message: 'Uploaded successfully', document });
@@ -90,6 +97,15 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
     const sharedDocuments = allDocuments.filter(doc => onlySharedDocs.includes(doc.id));
 
     const totalDocuments = await prisma.document.count();
+
+    // Audit Log for Listing Documents
+    await AuditLogService.createLog({
+        userId: (req as any).user?.id,
+        action: "LIST DOCUMENTS",
+        resource: "DOCUMENT",
+        resourceId: clientId,
+        details: { providerId }
+    });
 
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, {
@@ -216,6 +232,19 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
         });
 
         io.to(`notification_room_${providerUser.id}`).emit('new_notification', providerNotification);
+
+        // Audit Log for Document Sharing
+        await AuditLogService.createLog({
+            userId: senderId,
+            action: "SHARE_DOCUMENT",
+            resource: "DOCUMENT",
+            resourceId: doc.documentId,
+            details: {
+                sharedWithClientId: clientId,
+                sharedWithClientName: clientUser.fullName,
+                documentName: doc.document.name
+            }
+        });
     }
 
     return res.status(StatusCodes.OK).json(
@@ -307,6 +336,19 @@ const documentSignByClientApi = asyncHandler(async (req: Request, res: Response)
 
     io.to(`notification_room_${clientUserId}`).emit('new_notification', clientNotification);
 
+    // Audit Log for Document Signing
+    await AuditLogService.createLog({
+        userId: clientUserId,
+        action: "SIGN_DOCUMENT",
+        resource: "DOCUMENT",
+        resourceId: documentUpdated.documentId,
+        details: {
+            sharedDocumentId: sharedDocumentId,
+            documentName: documentUpdated.document.name,
+            providerId: documentUpdated.providerId
+        }
+    });
+
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, {
             message: "Your response has been recorded successfully.",
@@ -352,6 +394,14 @@ const deleteDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
     const isDocumentDelete = await prisma.document.delete({ where: { id } })
     if (isDocumentDelete) {
+        // Audit Log for Document Deletion
+        await AuditLogService.createLog({
+            userId: (req as any).user?.id,
+            action: "DELETE_DOCUMENT",
+            resource: "DOCUMENT",
+            resourceId: id,
+            details: { name: isDocumentExist.name }
+        });
 
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, { message: "Document has deleted successfully" }, "Success")

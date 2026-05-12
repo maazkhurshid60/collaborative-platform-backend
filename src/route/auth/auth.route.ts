@@ -7,7 +7,7 @@ authRouter.post("/signup", signupApi)
 authRouter.post("/check-email", checkEmailExistsApi)
 authRouter.post("/license-found", findByLicenseNo)
 authRouter.post("/login", logInApi)
-authRouter.post("/block-user", blockUserApi)
+authRouter.post("/block-user", authJWT, blockUserApi)
 authRouter.post("/unblock-user", authJWT, unblockUserApi)
 authRouter.post("/logout", authJWT, logoutApi)
 authRouter.patch(

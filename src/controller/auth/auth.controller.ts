@@ -66,6 +66,15 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
         user: { ...completeUserData.user, isEmailVerified: false }
     };
 
+    // Audit Log for User Signup
+    await AuditLogService.createLog({
+        userId: completeUserData.user.id,
+        action: "USER SIGNUP",
+        resource: "USER",
+        resourceId: completeUserData.user.id,
+        details: { email: completeUserData.user.email, role: completeUserData.user.role }
+    });
+
     return res.status(StatusCodes.CREATED).json(
         new ApiResponse(StatusCodes.CREATED, { token, user: finalUserData }, "User signed up successfully")
     );
@@ -97,6 +106,15 @@ const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
         eSignatureUpdate
     });
 
+    // Audit Log for Profile Update
+    await AuditLogService.createLog({
+        userId: loginUserId,
+        action: "UPDATE PROFILE",
+        resource: "USER",
+        resourceId: loginUserId,
+        details: { message: "User updated their profile/settings" }
+    });
+
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, updatedUser, "User updated successfully")
     );
@@ -126,7 +144,8 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const blockUserApi = asyncHandler(async (req: Request, res: Response) => {
-    const { blockUserid, loginUserId } = req.body;
+    const { blockUserid } = req.body;
+    const loginUserIdFromToken = (req as any).user.id;
 
     // 1. Check if block user exists
     const isBlockUserExist = await prisma.user.findUnique({ where: { id: blockUserid } });
@@ -137,7 +156,7 @@ const blockUserApi = asyncHandler(async (req: Request, res: Response) => {
     }
 
     // 2. Get login user (who wants to block someone)
-    const loginUser = await prisma.user.findUnique({ where: { id: loginUserId } });
+    const loginUser = await prisma.user.findUnique({ where: { id: loginUserIdFromToken } });
     if (!loginUser) {
         return res.status(StatusCodes.BAD_REQUEST).json(
             new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Blocking user not found" }, "Validation failed")
@@ -145,21 +164,31 @@ const blockUserApi = asyncHandler(async (req: Request, res: Response) => {
     }
 
     // 3. If already blocked, return early
-    if (loginUser.blockedMembers.includes(blockUserid)) {
+    const currentBlocked = loginUser.blockedMembers || [];
+    if (currentBlocked.includes(blockUserid)) {
         return res.status(StatusCodes.CONFLICT).json(
             new ApiResponse(StatusCodes.CONFLICT, { error: "User is already blocked" }, "Already blocked")
         );
     }
 
     // 4. Add blockUserid to blockedMembers list
-    const updatedBlockedMembers = [...loginUser.blockedMembers, blockUserid];
+    const updatedBlockedMembers = [...currentBlocked, blockUserid];
 
     // 5. Update user
     const updatedUser = await prisma.user.update({
-        where: { id: loginUserId },
+        where: { id: loginUserIdFromToken },
         data: {
             blockedMembers: updatedBlockedMembers,
         },
+    });
+
+    // Audit Log for Blocking User
+    await AuditLogService.createLog({
+        userId: loginUserIdFromToken,
+        action: "BLOCK_USER",
+        resource: "USER",
+        resourceId: blockUserid,
+        details: { blockedUserId: blockUserid }
     });
 
     return res.status(StatusCodes.OK).json(
@@ -267,6 +296,15 @@ const approveValidUser = asyncHandler(async (req: Request, res: Response) => {
         }
     }
 
+    // Audit Log for User Approval
+    await AuditLogService.createLog({
+        userId: (req as any).user?.id,
+        action: "APPROVE_USER",
+        resource: "USER",
+        resourceId: id,
+        details: { approvedUserEmail: user.email, role: user.role }
+    });
+
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, { message: "User approved successfully." }, "Approve")
     );
@@ -285,6 +323,15 @@ const rejectUser = asyncHandler(async (req: Request, res: Response) => {
             isApprove: Approve.REJECTED
         }
     })
+
+    // Audit Log for User Rejection
+    await AuditLogService.createLog({
+        userId: (req as any).user?.id,
+        action: "REJECT_USER",
+        resource: "USER",
+        resourceId: id,
+        details: { rejectedUserEmail: user.email, role: user.role }
+    });
 
     // If we need to send email, use user.email
     // await sendVerificationEmail(user.email, name);
@@ -307,6 +354,15 @@ const restoreUser = asyncHandler(async (req: Request, res: Response) => {
             isApprove: Approve.PENDING
         }
     })
+
+    // Audit Log for User Restoration
+    await AuditLogService.createLog({
+        userId: (req as any).user?.id,
+        action: "RESTORE_USER",
+        resource: "USER",
+        resourceId: id,
+        details: { restoredUserEmail: user.email, role: user.role }
+    });
 
     // if email needed, use user.email
     // await sendVerificationEmail(user.email, name);
@@ -361,7 +417,7 @@ const getAllValidUsersApi = asyncHandler(async (req: Request, res: Response) => 
 })
 
 const unblockUserApi = asyncHandler(async (req: Request, res: Response) => {
-    const { blockUserid, loginUserId } = req.body;
+    const { blockUserid } = req.body;
 
     // 1. Check if block user exists
     const isBlockUserExist = await prisma.user.findUnique({ where: { id: blockUserid } });
@@ -371,20 +427,31 @@ const unblockUserApi = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    // 2. Get login user (who wants to block someone)
-    const loginUser = await prisma.user.findUnique({ where: { id: loginUserId } });
+    // 2. Get login user (who wants to unblock someone)
+    const loginUserIdFromToken = (req as any).user.id;
+    const loginUser = await prisma.user.findUnique({ where: { id: loginUserIdFromToken } });
     if (!loginUser) {
         return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Blocking user not found" }, "Validation failed")
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Unblocking user not found" }, "Validation failed")
         );
     }
 
-    const updatedBlockedMembersList = loginUser.blockedMembers?.filter(data => data !== blockUserid)
+    const currentBlocked = loginUser.blockedMembers || [];
+    const updatedBlockedMembersList = currentBlocked.filter(data => data !== blockUserid);
     const updatedUser = await prisma.user.update({
-        where: { id: loginUserId },
+        where: { id: loginUserIdFromToken },
         data: {
             blockedMembers: updatedBlockedMembersList,
         },
+    });
+
+    // Audit Log for Unblocking User
+    await AuditLogService.createLog({
+        userId: loginUserIdFromToken,
+        action: "UNBLOCK_USER",
+        resource: "USER",
+        resourceId: blockUserid,
+        details: { unblockedUserId: blockUserid }
     });
 
     return res.status(StatusCodes.OK).json(
@@ -419,6 +486,16 @@ const logoutApi = asyncHandler(async (req: Request, res: Response) => {
 const deleteMeAccountApi = asyncHandler(async (req: Request, res: Response) => {
     const loginUserId = (req as any).user.id;
     await userService.deleteMe(loginUserId);
+
+    // Audit Log for Account Deletion (Self)
+    await AuditLogService.createLog({
+        userId: loginUserId,
+        action: "DELETE_ME",
+        resource: "USER",
+        resourceId: loginUserId,
+        details: { message: "User deleted their own account" }
+    });
+
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, {}, "User deleted successfully")
     );
@@ -441,6 +518,15 @@ const deleteUserByAdminApi = asyncHandler(async (req: Request, res: Response) =>
     }
 
     await userService.deleteUser(targetUserId);
+
+    // Audit Log for Account Deletion (Admin)
+    await AuditLogService.createLog({
+        userId: (req as any).user?.id,
+        action: "DELETE_USER",
+        resource: "USER",
+        resourceId: targetUserId,
+        details: { message: "Admin deleted a user" }
+    });
 
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, {}, "User deleted successfully")
@@ -553,6 +639,15 @@ const changePasswordApi = asyncHandler(async (req: Request, res: Response) => {
             data: { password: hashedPassword }
         });
 
+        // Audit Log for Password Change
+        await AuditLogService.createLog({
+            userId: loginUserId,
+            action: "CHANGE_PASSWORD",
+            resource: "USER",
+            resourceId: loginUserId,
+            details: { message: "User changed their password" }
+        });
+
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, { message: "Password has updated successfully" }, "Password has updated successfully")
         );
@@ -590,6 +685,15 @@ const forgotPasswordApi = asyncHandler(async (req: Request, res: Response) => {
         console.error("Failed to send reset email");
     }
 
+    // Audit Log for Password Reset Request
+    await AuditLogService.createLog({
+        userId: user.id,
+        action: "REQUEST PASSWORD RESET",
+        resource: "USER",
+        resourceId: user.id,
+        details: { email }
+    });
+
     return res.status(200).json(
         new ApiResponse(200, { success: true }, "Reset link sent successfully")
     );
@@ -624,6 +728,15 @@ const resetPasswordApi = asyncHandler(async (req: Request, res: Response) => {
             resetPasswordToken: null,
             resetPasswordExpires: null,
         },
+    });
+
+    // Audit Log for Password Reset
+    await AuditLogService.createLog({
+        userId: user.id,
+        action: "RESET PASSWORD",
+        resource: "USER",
+        resourceId: user.id,
+        details: { message: "User reset their password" }
     });
 
     return res.status(StatusCodes.OK).json(
@@ -766,8 +879,17 @@ const verifyEmailApi = asyncHandler(async (req: Request, res: Response) => {
         }
     });
 
+    // Audit Log for Email Verification
+    await AuditLogService.createLog({
+        userId: user.id,
+        action: "VERIFY EMAIL",
+        resource: "USER",
+        resourceId: user.id,
+        details: { message: "User verified their email address" }
+    });
+
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { success: true }, "Email verified successfully")
+        new ApiResponse(StatusCodes.OK, { success: true }, "Email verified successfully.")
     );
 });
 

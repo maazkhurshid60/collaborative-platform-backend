@@ -114,6 +114,8 @@ model ChatMessage {
   message           String
   mediaUrl          String?
   type              String
+  isPhi             Boolean            @default(false)
+  phiClientId       String?            // Associated client if message contains PHI
   createdAt         DateTime           @default(now())
   chatChannel       ChatChannel?       @relation(fields: [chatChannelId], references: [id])
   group             GroupChat?         @relation(fields: [groupId], references: [id])

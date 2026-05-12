@@ -32,6 +32,8 @@ export type ChatMessageMinAggregateOutputType = {
   message: string | null
   mediaUrl: string | null
   type: string | null
+  isPhi: boolean | null
+  phiClientId: string | null
   createdAt: Date | null
 }
 
@@ -43,6 +45,8 @@ export type ChatMessageMaxAggregateOutputType = {
   message: string | null
   mediaUrl: string | null
   type: string | null
+  isPhi: boolean | null
+  phiClientId: string | null
   createdAt: Date | null
 }
 
@@ -54,6 +58,8 @@ export type ChatMessageCountAggregateOutputType = {
   message: number
   mediaUrl: number
   type: number
+  isPhi: number
+  phiClientId: number
   createdAt: number
   _all: number
 }
@@ -67,6 +73,8 @@ export type ChatMessageMinAggregateInputType = {
   message?: true
   mediaUrl?: true
   type?: true
+  isPhi?: true
+  phiClientId?: true
   createdAt?: true
 }
 
@@ -78,6 +86,8 @@ export type ChatMessageMaxAggregateInputType = {
   message?: true
   mediaUrl?: true
   type?: true
+  isPhi?: true
+  phiClientId?: true
   createdAt?: true
 }
 
@@ -89,6 +99,8 @@ export type ChatMessageCountAggregateInputType = {
   message?: true
   mediaUrl?: true
   type?: true
+  isPhi?: true
+  phiClientId?: true
   createdAt?: true
   _all?: true
 }
@@ -173,6 +185,8 @@ export type ChatMessageGroupByOutputType = {
   message: string
   mediaUrl: string | null
   type: string
+  isPhi: boolean
+  phiClientId: string | null
   createdAt: Date
   _count: ChatMessageCountAggregateOutputType | null
   _min: ChatMessageMinAggregateOutputType | null
@@ -205,6 +219,8 @@ export type ChatMessageWhereInput = {
   message?: Prisma.StringFilter<"ChatMessage"> | string
   mediaUrl?: Prisma.StringNullableFilter<"ChatMessage"> | string | null
   type?: Prisma.StringFilter<"ChatMessage"> | string
+  isPhi?: Prisma.BoolFilter<"ChatMessage"> | boolean
+  phiClientId?: Prisma.StringNullableFilter<"ChatMessage"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ChatMessage"> | Date | string
   chatChannel?: Prisma.XOR<Prisma.ChatChannelNullableScalarRelationFilter, Prisma.ChatChannelWhereInput> | null
   group?: Prisma.XOR<Prisma.GroupChatNullableScalarRelationFilter, Prisma.GroupChatWhereInput> | null
@@ -222,6 +238,8 @@ export type ChatMessageOrderByWithRelationInput = {
   message?: Prisma.SortOrder
   mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
+  isPhi?: Prisma.SortOrder
+  phiClientId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   chatChannel?: Prisma.ChatChannelOrderByWithRelationInput
   group?: Prisma.GroupChatOrderByWithRelationInput
@@ -242,6 +260,8 @@ export type ChatMessageWhereUniqueInput = Prisma.AtLeast<{
   message?: Prisma.StringFilter<"ChatMessage"> | string
   mediaUrl?: Prisma.StringNullableFilter<"ChatMessage"> | string | null
   type?: Prisma.StringFilter<"ChatMessage"> | string
+  isPhi?: Prisma.BoolFilter<"ChatMessage"> | boolean
+  phiClientId?: Prisma.StringNullableFilter<"ChatMessage"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ChatMessage"> | Date | string
   chatChannel?: Prisma.XOR<Prisma.ChatChannelNullableScalarRelationFilter, Prisma.ChatChannelWhereInput> | null
   group?: Prisma.XOR<Prisma.GroupChatNullableScalarRelationFilter, Prisma.GroupChatWhereInput> | null
@@ -259,6 +279,8 @@ export type ChatMessageOrderByWithAggregationInput = {
   message?: Prisma.SortOrder
   mediaUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   type?: Prisma.SortOrder
+  isPhi?: Prisma.SortOrder
+  phiClientId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.ChatMessageCountOrderByAggregateInput
   _max?: Prisma.ChatMessageMaxOrderByAggregateInput
@@ -276,6 +298,8 @@ export type ChatMessageScalarWhereWithAggregatesInput = {
   message?: Prisma.StringWithAggregatesFilter<"ChatMessage"> | string
   mediaUrl?: Prisma.StringNullableWithAggregatesFilter<"ChatMessage"> | string | null
   type?: Prisma.StringWithAggregatesFilter<"ChatMessage"> | string
+  isPhi?: Prisma.BoolWithAggregatesFilter<"ChatMessage"> | boolean
+  phiClientId?: Prisma.StringNullableWithAggregatesFilter<"ChatMessage"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ChatMessage"> | Date | string
 }
 
@@ -284,6 +308,8 @@ export type ChatMessageCreateInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   chatChannel?: Prisma.ChatChannelCreateNestedOneWithoutMessagesInput
   group?: Prisma.GroupChatCreateNestedOneWithoutMessagesInput
@@ -301,6 +327,8 @@ export type ChatMessageUncheckedCreateInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutMessageInput
@@ -312,6 +340,8 @@ export type ChatMessageUpdateInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chatChannel?: Prisma.ChatChannelUpdateOneWithoutMessagesNestedInput
   group?: Prisma.GroupChatUpdateOneWithoutMessagesNestedInput
@@ -329,6 +359,8 @@ export type ChatMessageUncheckedUpdateInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
@@ -343,6 +375,8 @@ export type ChatMessageCreateManyInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
 }
 
@@ -351,6 +385,8 @@ export type ChatMessageUpdateManyMutationInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -362,6 +398,8 @@ export type ChatMessageUncheckedUpdateManyInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -383,6 +421,8 @@ export type ChatMessageCountOrderByAggregateInput = {
   message?: Prisma.SortOrder
   mediaUrl?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  isPhi?: Prisma.SortOrder
+  phiClientId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -394,6 +434,8 @@ export type ChatMessageMaxOrderByAggregateInput = {
   message?: Prisma.SortOrder
   mediaUrl?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  isPhi?: Prisma.SortOrder
+  phiClientId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -405,6 +447,8 @@ export type ChatMessageMinOrderByAggregateInput = {
   message?: Prisma.SortOrder
   mediaUrl?: Prisma.SortOrder
   type?: Prisma.SortOrder
+  isPhi?: Prisma.SortOrder
+  phiClientId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -610,6 +654,8 @@ export type ChatMessageCreateWithoutSenderInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   chatChannel?: Prisma.ChatChannelCreateNestedOneWithoutMessagesInput
   group?: Prisma.GroupChatCreateNestedOneWithoutMessagesInput
@@ -625,6 +671,8 @@ export type ChatMessageUncheckedCreateWithoutSenderInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutMessageInput
@@ -646,6 +694,8 @@ export type ChatMessageCreateWithoutMentionsInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   chatChannel?: Prisma.ChatChannelCreateNestedOneWithoutMessagesInput
   group?: Prisma.GroupChatCreateNestedOneWithoutMessagesInput
@@ -662,6 +712,8 @@ export type ChatMessageUncheckedCreateWithoutMentionsInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutMessageInput
@@ -699,6 +751,8 @@ export type ChatMessageScalarWhereInput = {
   message?: Prisma.StringFilter<"ChatMessage"> | string
   mediaUrl?: Prisma.StringNullableFilter<"ChatMessage"> | string | null
   type?: Prisma.StringFilter<"ChatMessage"> | string
+  isPhi?: Prisma.BoolFilter<"ChatMessage"> | boolean
+  phiClientId?: Prisma.StringNullableFilter<"ChatMessage"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ChatMessage"> | Date | string
 }
 
@@ -723,6 +777,8 @@ export type ChatMessageCreateWithoutChatChannelInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   group?: Prisma.GroupChatCreateNestedOneWithoutMessagesInput
   sender: Prisma.UserCreateNestedOneWithoutMessagesInput
@@ -738,6 +794,8 @@ export type ChatMessageUncheckedCreateWithoutChatChannelInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutMessageInput
@@ -775,6 +833,8 @@ export type ChatMessageCreateWithoutGroupInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   chatChannel?: Prisma.ChatChannelCreateNestedOneWithoutMessagesInput
   sender: Prisma.UserCreateNestedOneWithoutMessagesInput
@@ -790,6 +850,8 @@ export type ChatMessageUncheckedCreateWithoutGroupInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutMessageInput
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutMessageInput
@@ -827,6 +889,8 @@ export type ChatMessageCreateWithoutGroupReadReceiptsInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   chatChannel?: Prisma.ChatChannelCreateNestedOneWithoutMessagesInput
   group?: Prisma.GroupChatCreateNestedOneWithoutMessagesInput
@@ -843,6 +907,8 @@ export type ChatMessageUncheckedCreateWithoutGroupReadReceiptsInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   readReceipts?: Prisma.ReadReceiptUncheckedCreateNestedManyWithoutMessageInput
   mentions?: Prisma.UserUncheckedCreateNestedManyWithoutMentionedInInput
@@ -869,6 +935,8 @@ export type ChatMessageUpdateWithoutGroupReadReceiptsInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chatChannel?: Prisma.ChatChannelUpdateOneWithoutMessagesNestedInput
   group?: Prisma.GroupChatUpdateOneWithoutMessagesNestedInput
@@ -885,6 +953,8 @@ export type ChatMessageUncheckedUpdateWithoutGroupReadReceiptsInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
   mentions?: Prisma.UserUncheckedUpdateManyWithoutMentionedInNestedInput
@@ -895,6 +965,8 @@ export type ChatMessageCreateWithoutReadReceiptsInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   chatChannel?: Prisma.ChatChannelCreateNestedOneWithoutMessagesInput
   group?: Prisma.GroupChatCreateNestedOneWithoutMessagesInput
@@ -911,6 +983,8 @@ export type ChatMessageUncheckedCreateWithoutReadReceiptsInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedCreateNestedManyWithoutMessageInput
   mentions?: Prisma.UserUncheckedCreateNestedManyWithoutMentionedInInput
@@ -937,6 +1011,8 @@ export type ChatMessageUpdateWithoutReadReceiptsInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chatChannel?: Prisma.ChatChannelUpdateOneWithoutMessagesNestedInput
   group?: Prisma.GroupChatUpdateOneWithoutMessagesNestedInput
@@ -953,6 +1029,8 @@ export type ChatMessageUncheckedUpdateWithoutReadReceiptsInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
   mentions?: Prisma.UserUncheckedUpdateManyWithoutMentionedInNestedInput
@@ -965,6 +1043,8 @@ export type ChatMessageCreateManySenderInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
 }
 
@@ -973,6 +1053,8 @@ export type ChatMessageUpdateWithoutSenderInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chatChannel?: Prisma.ChatChannelUpdateOneWithoutMessagesNestedInput
   group?: Prisma.GroupChatUpdateOneWithoutMessagesNestedInput
@@ -988,6 +1070,8 @@ export type ChatMessageUncheckedUpdateWithoutSenderInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
@@ -1001,6 +1085,8 @@ export type ChatMessageUncheckedUpdateManyWithoutSenderInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1009,6 +1095,8 @@ export type ChatMessageUpdateWithoutMentionsInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chatChannel?: Prisma.ChatChannelUpdateOneWithoutMessagesNestedInput
   group?: Prisma.GroupChatUpdateOneWithoutMessagesNestedInput
@@ -1025,6 +1113,8 @@ export type ChatMessageUncheckedUpdateWithoutMentionsInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
@@ -1038,6 +1128,8 @@ export type ChatMessageUncheckedUpdateManyWithoutMentionsInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1048,6 +1140,8 @@ export type ChatMessageCreateManyChatChannelInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
 }
 
@@ -1056,6 +1150,8 @@ export type ChatMessageUpdateWithoutChatChannelInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   group?: Prisma.GroupChatUpdateOneWithoutMessagesNestedInput
   sender?: Prisma.UserUpdateOneRequiredWithoutMessagesNestedInput
@@ -1071,6 +1167,8 @@ export type ChatMessageUncheckedUpdateWithoutChatChannelInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
@@ -1084,6 +1182,8 @@ export type ChatMessageUncheckedUpdateManyWithoutChatChannelInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1094,6 +1194,8 @@ export type ChatMessageCreateManyGroupInput = {
   message: string
   mediaUrl?: string | null
   type: string
+  isPhi?: boolean
+  phiClientId?: string | null
   createdAt?: Date | string
 }
 
@@ -1102,6 +1204,8 @@ export type ChatMessageUpdateWithoutGroupInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   chatChannel?: Prisma.ChatChannelUpdateOneWithoutMessagesNestedInput
   sender?: Prisma.UserUpdateOneRequiredWithoutMessagesNestedInput
@@ -1117,6 +1221,8 @@ export type ChatMessageUncheckedUpdateWithoutGroupInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   groupReadReceipts?: Prisma.GroupReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
   readReceipts?: Prisma.ReadReceiptUncheckedUpdateManyWithoutMessageNestedInput
@@ -1130,6 +1236,8 @@ export type ChatMessageUncheckedUpdateManyWithoutGroupInput = {
   message?: Prisma.StringFieldUpdateOperationsInput | string
   mediaUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   type?: Prisma.StringFieldUpdateOperationsInput | string
+  isPhi?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  phiClientId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -1190,6 +1298,8 @@ export type ChatMessageSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   message?: boolean
   mediaUrl?: boolean
   type?: boolean
+  isPhi?: boolean
+  phiClientId?: boolean
   createdAt?: boolean
   chatChannel?: boolean | Prisma.ChatMessage$chatChannelArgs<ExtArgs>
   group?: boolean | Prisma.ChatMessage$groupArgs<ExtArgs>
@@ -1208,6 +1318,8 @@ export type ChatMessageSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   message?: boolean
   mediaUrl?: boolean
   type?: boolean
+  isPhi?: boolean
+  phiClientId?: boolean
   createdAt?: boolean
   chatChannel?: boolean | Prisma.ChatMessage$chatChannelArgs<ExtArgs>
   group?: boolean | Prisma.ChatMessage$groupArgs<ExtArgs>
@@ -1222,6 +1334,8 @@ export type ChatMessageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   message?: boolean
   mediaUrl?: boolean
   type?: boolean
+  isPhi?: boolean
+  phiClientId?: boolean
   createdAt?: boolean
   chatChannel?: boolean | Prisma.ChatMessage$chatChannelArgs<ExtArgs>
   group?: boolean | Prisma.ChatMessage$groupArgs<ExtArgs>
@@ -1236,10 +1350,12 @@ export type ChatMessageSelectScalar = {
   message?: boolean
   mediaUrl?: boolean
   type?: boolean
+  isPhi?: boolean
+  phiClientId?: boolean
   createdAt?: boolean
 }
 
-export type ChatMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "chatChannelId" | "groupId" | "senderId" | "message" | "mediaUrl" | "type" | "createdAt", ExtArgs["result"]["chatMessage"]>
+export type ChatMessageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "chatChannelId" | "groupId" | "senderId" | "message" | "mediaUrl" | "type" | "isPhi" | "phiClientId" | "createdAt", ExtArgs["result"]["chatMessage"]>
 export type ChatMessageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   chatChannel?: boolean | Prisma.ChatMessage$chatChannelArgs<ExtArgs>
   group?: boolean | Prisma.ChatMessage$groupArgs<ExtArgs>
@@ -1278,6 +1394,8 @@ export type $ChatMessagePayload<ExtArgs extends runtime.Types.Extensions.Interna
     message: string
     mediaUrl: string | null
     type: string
+    isPhi: boolean
+    phiClientId: string | null
     createdAt: Date
   }, ExtArgs["result"]["chatMessage"]>
   composites: {}
@@ -1715,6 +1833,8 @@ export interface ChatMessageFieldRefs {
   readonly message: Prisma.FieldRef<"ChatMessage", 'String'>
   readonly mediaUrl: Prisma.FieldRef<"ChatMessage", 'String'>
   readonly type: Prisma.FieldRef<"ChatMessage", 'String'>
+  readonly isPhi: Prisma.FieldRef<"ChatMessage", 'Boolean'>
+  readonly phiClientId: Prisma.FieldRef<"ChatMessage", 'String'>
   readonly createdAt: Prisma.FieldRef<"ChatMessage", 'DateTime'>
 }
     

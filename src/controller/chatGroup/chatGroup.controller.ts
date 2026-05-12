@@ -48,6 +48,15 @@ const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
         }
     });
 
+    // Audit Log for Group Creation
+    await AuditLogService.createLog({
+        userId: createdBy,
+        action: "CREATE_GROUP",
+        resource: "CHAT_GROUP",
+        resourceId: group.id,
+        details: { groupName: group.name, initialMemberCount: membersId.length }
+    });
+
     return res.status(StatusCodes.CREATED).json(
         new ApiResponse(StatusCodes.CREATED, { group }, 'New group has been created.')
     );
@@ -283,6 +292,15 @@ const addExistingProvidersToGroupApi = asyncHandler(async (req: Request, res: Re
         )
     );
 
+    // Audit Log for Adding Members to Group
+    await AuditLogService.createLog({
+        userId: callerUserId!,
+        action: "ADD_GROUP_MEMBERS",
+        resource: "CHAT_GROUP",
+        resourceId: groupId,
+        details: { addedMemberCount: toAdd.length, addedMemberNames: toAdd.map(p => p.user?.fullName) }
+    });
+
     const addedNames = toAdd.map(p => p.user?.fullName).filter(Boolean);
     const skippedCount = providerIds.length - toAdd.length;
 
@@ -344,10 +362,29 @@ const updateGroupPermissionsApi = asyncHandler(async (req: Request, res: Respons
 });
 
 const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) => {
-    const { groupId, senderId, message, type } = req.body;
+    const { groupId, senderId, message, type, isPhi, phiClientId } = req.body;
     const files = req.files as Express.Multer.File[];
 
     try {
+        // Get the user ID from the provider ID (handling case where provider ID might be passed instead of user ID)
+        const provider = await prisma.provider.findFirst({
+            where: {
+                OR: [
+                    { id: senderId },
+                    { userId: senderId }
+                ]
+            },
+            select: { userId: true }
+        });
+
+        if (!provider) {
+            return res.status(StatusCodes.NOT_FOUND).json({
+                message: "Sender provider not found"
+            });
+        }
+
+        const userIdToUse = provider.userId;
+
         // Upload media files to S3
         let uploadedMediaUrls: string[] = [];
         if (files && files.length > 0) {
@@ -359,16 +396,18 @@ const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) =
         // Create the group chat message
         const chatMessage = await prisma.chatMessage.create({
             data: {
-                sender: { connect: { id: senderId } },
-                // message: message || '',
+                senderId: userIdToUse,
                 message: encryptedMessage,
                 mediaUrl: uploadedMediaUrls.join(','),
                 type: type || 'text',
-                group: { connect: { id: groupId } },
+                isPhi: isPhi === 'true' || isPhi === true,
+                phiClientId: phiClientId || null,
+                groupId: groupId,
             },
             include: {
                 sender: {
                     select: {
+                        id: true,
                         fullName: true,
                         profileImage: true,
                     },
@@ -390,7 +429,7 @@ const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) =
         }
 
         const readReceipts = groupMembers.members
-            .filter(member => member.userId !== senderId)
+            .filter(member => member.userId !== userIdToUse)
             .map(member => ({
                 messageId: chatMessage.id,
                 userId: member.userId,
@@ -398,9 +437,6 @@ const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) =
 
         await prisma.groupReadReceipt.createMany({ data: readReceipts });
 
-        // return res.status(StatusCodes.OK).json(
-        //     new ApiResponse(StatusCodes.OK, { chatMessage }, 'Message sent to the group.')
-        // );
         const plainMessage = {
             ...chatMessage,
             message: chatMessage.message ? decryptText(chatMessage.message) : ''
@@ -408,7 +444,7 @@ const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) =
 
         // Audit Log for Group Chat Message
         await AuditLogService.createLog({
-            userId: senderId,
+            userId: userIdToUse,
             action: "SEND_GROUP_MESSAGE",
             resource: "CHAT_GROUP",
             resourceId: chatMessage.id,
@@ -416,7 +452,9 @@ const sendMessageToGroupApi = asyncHandler(async (req: Request, res: Response) =
                 groupId,
                 type: type || 'text',
                 messageTimestamp: chatMessage.createdAt.toISOString(),
-                hasMedia: files && files.length > 0
+                hasMedia: files && files.length > 0,
+                isPhi: chatMessage.isPhi,
+                phiClientId: chatMessage.phiClientId
             }
         });
 

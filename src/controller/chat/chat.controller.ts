@@ -120,7 +120,7 @@ const getAllSingleConservationMessage = asyncHandler(
 
 const sendMessageToSingleConservation = asyncHandler(
   async (req: Request, res: Response) => {
-    const { chatChannelId, message, type, senderId } = req.body;
+    const { chatChannelId, message, type, senderId, isPhi, phiClientId } = req.body;
     const files = req.files as Express.Multer.File[]; // files from multer
 
     try {
@@ -168,6 +168,8 @@ const sendMessageToSingleConservation = asyncHandler(
           chatChannelId,
           mediaUrl: uploadedMediaUrls.join(","),
           type: type || "text",
+          isPhi: isPhi === 'true' || isPhi === true,
+          phiClientId: phiClientId || null,
           readReceipts: {
             create: {
               userId: userIdToUse,
@@ -209,7 +211,9 @@ const sendMessageToSingleConservation = asyncHandler(
           chatChannelId,
           type: type || "text",
           messageTimestamp: chatMessage.createdAt.toISOString(), // HIPAA requirement: timestamp of individual chat
-          hasMedia: files && files.length > 0
+          hasMedia: files && files.length > 0,
+          isPhi: chatMessage.isPhi,
+          phiClientId: chatMessage.phiClientId
         }
       });
 

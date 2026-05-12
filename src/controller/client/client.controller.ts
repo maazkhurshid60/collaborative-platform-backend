@@ -8,6 +8,7 @@ import { Role, Gender, Approve } from "../../generated/prisma/client";
 import { userSchema } from "../../schema/auth/auth.schema";
 import bcrypt from "bcrypt";
 import { sendWelcomeClientEmail } from "../../utils/nodeMailer/WelcomeClientEmail";
+import { AuditLogService } from "../../services/AuditLogService";
 
 // ─── Client ID Generator ───────────────────────────────────────────────────────
 // Generates a unique client ID in the format: CLT-YYYYMMDD-XXXXXX
@@ -324,6 +325,15 @@ const deletClient = asyncHandler(async (req: Request, res: Response) => {
         }
     });
 
+    // Audit Log for Removing Client from List
+    await AuditLogService.createLog({
+        userId: user.id,
+        action: "REMOVE CLIENT LINK",
+        resource: "CLIENT",
+        resourceId: clientId,
+        details: { message: "Provider removed client from their active list", providerId: provider.id }
+    });
+
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, null, "Client removed from your list successfully")
     );
@@ -569,6 +579,15 @@ const updateClient = asyncHandler(async (req: Request, res: Response) => {
 
         const updatedData = { ...updatedUser, ...updatedClient };
 
+        // Audit Log for Client Profile Update
+        await AuditLogService.createLog({
+            userId: loginUserId,
+            action: "UPDATE CLIENT",
+            resource: "CLIENT",
+            resourceId: clientId,
+            details: { updatedByRole: loginUserRole }
+        });
+
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, { updatedData }, "Client updated successfully")
         );
@@ -784,6 +803,16 @@ const addClient = asyncHandler(async (req: Request, res: Response) => {
             }
 
             return clientCreated;
+        });
+
+        // Audit Log for Client Creation
+        const creatorId = (req as any).user?.id || result.userId;
+        await AuditLogService.createLog({
+            userId: creatorId,
+            action: "CREATE CLIENT",
+            resource: "CLIENT",
+            resourceId: result.id,
+            details: { clientId: newClientId, createdByProvider: providerId }
         });
 
         // Send welcome email to the new client with their Client ID

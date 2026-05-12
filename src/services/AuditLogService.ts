@@ -9,7 +9,6 @@ export class AuditLogService {
         details?: any;
     }) {
         try {
-            // Filter out logs for admin users (superAdmin)
             if (data.userId) {
                 const user = await prisma.user.findUnique({
                     where: { id: data.userId },
@@ -17,7 +16,7 @@ export class AuditLogService {
                 });
 
                 if (user?.role === "superAdmin") {
-                    return null; // Don't log for superAdmin
+                    return null;
                 }
             }
 
@@ -31,8 +30,7 @@ export class AuditLogService {
                 }
             });
         } catch (error) {
-            console.error("❌ Failed to create audit log:", error);
-            // We don't throw here to avoid breaking the main flow if logging fails
+            console.error("Failed to create audit log:", error);
             return null;
         }
     }

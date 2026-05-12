@@ -179,6 +179,8 @@ export const ChatMessageScalarFieldEnum = {
   message: 'message',
   mediaUrl: 'mediaUrl',
   type: 'type',
+  isPhi: 'isPhi',
+  phiClientId: 'phiClientId',
   createdAt: 'createdAt'
 } as const
 

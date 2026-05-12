@@ -22,6 +22,10 @@ if (shouldUseCluster && cluster.isPrimary) {
         cluster.fork();
     }
 
+    // Initialize cron jobs in the primary process
+    const { setupCronJobs } = require("./utils/cron");
+    setupCronJobs();
+
     cluster.on('exit', (worker, code, signal) => {
         logger.warn(`Worker process ${worker.process.pid} died with code ${code} and signal ${signal}. Restarting...`);
         cluster.fork();
@@ -40,6 +44,10 @@ if (shouldUseCluster && cluster.isPrimary) {
 
     // Initialize Socket.IO with the created server
     setupSocket(server);
+
+    // Initialize cron jobs in single process mode
+    const { setupCronJobs } = require("./utils/cron");
+    setupCronJobs();
 
     const PORT = process.env.PORT || 3000;
 
