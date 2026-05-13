@@ -204,7 +204,7 @@ const sendMessageToSingleConservation = asyncHandler(
       // Audit Log for Chat Message
       await AuditLogService.createLog({
         userId: userIdToUse,
-        action: "SEND_MESSAGE",
+        action: "SEND MESSAGE",
         resource: "CHAT",
         resourceId: chatMessage.id,
         details: {

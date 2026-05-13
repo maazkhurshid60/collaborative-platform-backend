@@ -329,3 +329,36 @@ export const getAllAuditLogs = asyncHandler(async (req: Request, res: Response) 
     }, "Audit logs fetched successfully")
   );
 });
+
+export const deleteAuditLog = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  await prisma.auditLog.delete({
+    where: { id: id as string },
+  });
+
+  return res
+    .status(StatusCodes.OK)
+    .json(new ApiResponse(StatusCodes.OK, null, "Audit log deleted successfully"));
+});
+
+export const bulkDeleteAuditLogs = asyncHandler(async (req: Request, res: Response) => {
+  const { ids } = req.body;
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      success: false,
+      message: "Please provide an array of log IDs to delete",
+    });
+  }
+
+  await prisma.auditLog.deleteMany({
+    where: {
+      id: { in: ids },
+    },
+  });
+
+  return res
+    .status(StatusCodes.OK)
+    .json(new ApiResponse(StatusCodes.OK, null, "Selected audit logs deleted successfully"));
+});

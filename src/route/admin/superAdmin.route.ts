@@ -11,6 +11,8 @@ import {
   getProviderSubscriptionInfo,
   getProviderPaymentHistory,
   getAllAuditLogs,
+  deleteAuditLog,
+  bulkDeleteAuditLogs,
 } from "../../controller/admin/superAdmin.controller";
 
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
@@ -40,5 +42,7 @@ router.get("/provider/:userId/subscription-info", getProviderSubscriptionInfo);
 router.get("/provider/:userId/payment-history", getProviderPaymentHistory);
 
 router.get("/audit-logs/all", getAllAuditLogs);
+router.delete("/audit-logs/:id", deleteAuditLog);
+router.post("/audit-logs/bulk-delete", bulkDeleteAuditLogs);
 
 export default router;

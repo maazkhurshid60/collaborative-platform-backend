@@ -185,7 +185,7 @@ const blockUserApi = asyncHandler(async (req: Request, res: Response) => {
     // Audit Log for Blocking User
     await AuditLogService.createLog({
         userId: loginUserIdFromToken,
-        action: "BLOCK_USER",
+        action: "BLOCK USER",
         resource: "USER",
         resourceId: blockUserid,
         details: { blockedUserId: blockUserid }
@@ -448,7 +448,7 @@ const unblockUserApi = asyncHandler(async (req: Request, res: Response) => {
     // Audit Log for Unblocking User
     await AuditLogService.createLog({
         userId: loginUserIdFromToken,
-        action: "UNBLOCK_USER",
+        action: "UNBLOCK USER",
         resource: "USER",
         resourceId: blockUserid,
         details: { unblockedUserId: blockUserid }
@@ -642,7 +642,7 @@ const changePasswordApi = asyncHandler(async (req: Request, res: Response) => {
         // Audit Log for Password Change
         await AuditLogService.createLog({
             userId: loginUserId,
-            action: "CHANGE_PASSWORD",
+            action: "CHANGE PASSWORD",
             resource: "USER",
             resourceId: loginUserId,
             details: { message: "User changed their password" }
