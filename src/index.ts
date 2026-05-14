@@ -54,7 +54,7 @@ if (shouldUseCluster && cluster.isPrimary) {
     // Start the server
     server.listen(PORT, () => {
         const processInfo = shouldUseCluster ? `Worker ${process.pid}` : `Single process ${process.pid}`;
-        logger.info(`🚀 ${processInfo} - Server running on port ${PORT}`);
+        logger.info(` ${processInfo} - Server running on port ${PORT}`);
     });
 
     // Graceful shutdown for worker process

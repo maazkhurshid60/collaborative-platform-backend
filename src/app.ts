@@ -25,7 +25,7 @@ import notificationRouter from "./route/notification/notification.route";
 import invitationEmailRouter from "./route/invitationEmail/invitationEmail.route";
 import publicChatRouter from "./route/chat/public.chat.route";
 import superAdminRouter from "./route/admin/superAdmin.route";
-import providerInviteRouter from "./route/invitationEmail/providerInvite.routes"
+import providerInviteRouter from "./route/invitationEmail/providerInvite.routes";
 
 const app = express();
 app.set("trust proxy", 1);
