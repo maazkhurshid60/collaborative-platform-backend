@@ -26,6 +26,10 @@ if (shouldUseCluster && cluster.isPrimary) {
     const { setupCronJobs } = require("./utils/cron");
     setupCronJobs();
 
+    // Start audit log queue worker in the primary process
+    const { initAuditLogWorker } = require("./services/AuditLogWorker");
+    initAuditLogWorker();
+
     cluster.on('exit', (worker, code, signal) => {
         logger.warn(`Worker process ${worker.process.pid} died with code ${code} and signal ${signal}. Restarting...`);
         cluster.fork();
@@ -48,6 +52,10 @@ if (shouldUseCluster && cluster.isPrimary) {
     // Initialize cron jobs in single process mode
     const { setupCronJobs } = require("./utils/cron");
     setupCronJobs();
+
+    // Start audit log queue worker
+    const { initAuditLogWorker } = require("./services/AuditLogWorker");
+    initAuditLogWorker();
 
     const PORT = process.env.PORT || 3000;
 

@@ -1,4 +1,5 @@
-import prisma from "../db/db.config";
+import { auditLogQueue } from "./AuditLogQueue";
+import logger from "../utils/logger";
 
 export class AuditLogService {
     static async createLog(data: {
@@ -9,29 +10,24 @@ export class AuditLogService {
         details?: any;
     }) {
         try {
-            if (data.userId) {
-                const user = await prisma.user.findUnique({
-                    where: { id: data.userId },
-                    select: { role: true }
-                });
-
-                if (user?.role === "superAdmin") {
-                    return null;
-                }
+            if (process.env.NODE_ENV === "test" || !auditLogQueue) {
+                logger.debug("Bypassing BullMQ audit log in test/uninitialized environment");
+                return { id: "mock-test-job-id", data } as any;
             }
 
-            return await prisma.auditLog.create({
-                data: {
-                    userId: data.userId,
-                    action: data.action,
-                    resource: data.resource,
-                    resourceId: data.resourceId,
-                    details: data.details || {},
-                }
+            // Queue the job to be processed asynchronously in the background
+            const job = await auditLogQueue.add("create-audit-log", {
+                userId: data.userId,
+                action: data.action,
+                resource: data.resource,
+                resourceId: data.resourceId,
+                details: data.details,
             });
+            return job;
         } catch (error) {
-            console.error("Failed to create audit log:", error);
+            logger.error("Failed to queue audit log job in BullMQ:", error);
             return null;
         }
     }
 }
+

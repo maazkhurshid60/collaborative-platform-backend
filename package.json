@@ -21,12 +21,13 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.823.0",
     "@prisma/adapter-pg": "^7.3.0",
-    "@prisma/client": "^7.3.0",
+    "@prisma/client": "^7.8.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "@types/jest": "^30.0.0",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.13.6",
     "bcrypt": "^6.0.0",
+    "bullmq": "^5.76.10",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "express": "^4.21.2",
@@ -71,7 +72,7 @@
     "cross-env": "^10.1.0",
     "dotenv": "^16.6.1",
     "ioredis-mock": "^8.13.1",
-    "prisma": "^7.3.0",
+    "prisma": "^7.8.0",
     "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
