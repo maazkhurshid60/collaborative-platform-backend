@@ -26,6 +26,8 @@ import invitationEmailRouter from "./route/invitationEmail/invitationEmail.route
 import publicChatRouter from "./route/chat/public.chat.route";
 import superAdminRouter from "./route/admin/superAdmin.route";
 import providerInviteRouter from "./route/invitationEmail/providerInvite.routes";
+import { formRouter } from "./route/form/form.route";
+
 
 const app = express();
 app.set("trust proxy", 1);
@@ -126,6 +128,7 @@ app.use("/api/v1/notification", authJWT, notificationRouter);
 app.use("/api/v1/invite", authJWT, invitationEmailRouter);
 app.use("/api/v1/individual-invites", authJWT, providerInviteRouter);
 app.use("/api/v1/subscription", subscriptionRouter); // Added Subscription Router
+app.use("/api/v1/form", authJWT, formRouter);
 
 app.use("/api/v1/super-admin", authJWT, superAdminRouter);
 
