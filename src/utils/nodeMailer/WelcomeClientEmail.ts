@@ -1,15 +1,11 @@
 import { transporter } from "./NodeMailer";
 import { getFrontendUrl } from "./getFrontendUrl";
 
-/**
- * Sends a welcome email to a newly created client.
- * Includes their Client ID and instructions to complete account setup.
- */
 export const sendWelcomeClientEmail = async (
   toEmail: string,
   clientName: string,
   clientId: string,
-  providerName?: string
+  providerName?: string,
 ) => {
   const signupUrl = `${getFrontendUrl()}/signup-with-client-id`;
 
@@ -257,26 +253,12 @@ export const sendWelcomeClientEmail = async (
 
           <!-- Header -->
           <div class="header">
-            <div class="header-inner">
-              <!-- Confetti dots -->
-              <div class="dot" style="top:14px;left:18px;width:10px;height:10px;background:#fbbf24;"></div>
-              <div class="dot" style="top:28px;left:56px;width:7px;height:7px;background:#f472b6;border-radius:2px;transform:rotate(30deg);"></div>
-              <div class="dot" style="top:10px;left:110px;width:8px;height:8px;background:#60a5fa;"></div>
-              <div class="dot" style="top:38px;left:160px;width:6px;height:6px;background:#a78bfa;border-radius:2px;"></div>
-              <div class="dot" style="top:12px;right:100px;width:9px;height:9px;background:#fb923c;"></div>
-              <div class="dot" style="top:30px;right:50px;width:7px;height:7px;background:#34d399;border-radius:2px;transform:rotate(45deg);"></div>
-              <div class="dot" style="top:10px;right:20px;width:8px;height:8px;background:#fbbf24;"></div>
-              <div class="dot" style="bottom:14px;left:40px;width:7px;height:7px;background:#60a5fa;"></div>
-              <div class="dot" style="bottom:20px;left:130px;width:6px;height:6px;background:#f472b6;border-radius:2px;"></div>
-              <div class="dot" style="bottom:10px;right:80px;width:8px;height:8px;background:#a78bfa;"></div>
-              <div class="dot" style="bottom:22px;right:30px;width:7px;height:7px;background:#fb923c;border-radius:2px;transform:rotate(20deg);"></div>
-
+            <div class="header-inner">           
               <div class="logo">Kolabme</div>
               <span class="emoji-wave">👋</span>
               <h1 class="header-title">Welcome to Kolabme!</h1>
-              <p class="header-sub">Your account has been created${providerName ? ` by ${providerName}` : ''}</p>
+              <p class="header-sub">Your account has been created${providerName ? ` by ${providerName}` : ""}</p>
             </div>
-            <div class="strip">🎉 &nbsp; 🎊 &nbsp; ✨ &nbsp; 🎉 &nbsp; 🎊 &nbsp; ✨ &nbsp; 🎉 &nbsp; 🎊 &nbsp; ✨</div>
           </div>
 
           <!-- Body -->
