@@ -7,10 +7,16 @@ const pool = new pg.Pool({
     ssl: process.env.NODE_ENV === 'staging' || process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('rds.amazonaws.com')
         ? { rejectUnauthorized: false }
         : false,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    max: 40, // Increased to allow more concurrent database connections
+    idleTimeoutMillis: 15000, 
+    connectionTimeoutMillis: 30000, // Increased to 30 seconds to handle DB wake-ups and high load
 })
+
+// Catch errors on idle clients so they don't crash the application
+pool.on('error', (err) => {
+    console.error('Unexpected error on idle client', err)
+})
+
 const adapter = new PrismaPg(pool)
 
 const prisma = new PrismaClient({
