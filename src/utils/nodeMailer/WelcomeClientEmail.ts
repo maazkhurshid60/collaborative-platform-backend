@@ -67,7 +67,6 @@ export const sendWelcomeClientEmail = async (
           letter-spacing: -0.025em;
           margin-bottom: 20px;
         }
-
         .emoji-wave {
           font-size: 64px;
           line-height: 1;

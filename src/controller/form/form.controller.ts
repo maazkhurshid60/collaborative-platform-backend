@@ -1,7 +1,6 @@
 import crypto from "crypto";
 import { Request, Response } from "express";
 
-
 import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
@@ -67,7 +66,6 @@ const shareFormApi = async (req: Request, res: Response) => {
       );
   }
 
-
   if (clientId) {
     const existingShare = await prisma.formShare.findFirst({
       where: {
@@ -82,8 +80,7 @@ const shareFormApi = async (req: Request, res: Response) => {
         new ApiResponse(
           StatusCodes.CONFLICT,
           {
-            message:
-              "Conflict",
+            message: "Conflict",
           },
           "This form template has already been shared with this client.",
         ),
@@ -418,7 +415,6 @@ const submitFormApi = async (req: Request, res: Response) => {
       );
     }
 
-    // Log the main event via global AuditLog
     await AuditLogService.createLog({
       userId: clientUserId || null,
       action: "SUBMIT_AND_LOCK_FORM",
