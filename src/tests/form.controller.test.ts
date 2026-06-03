@@ -79,7 +79,7 @@ describe("Form Controller Test Suite", () => {
       const req = makeReq({ body: { title: "" } });
       const res = makeRes();
 
-      await addFormTemplateApi(req, res);
+      await addFormTemplateApi(req, res, jest.fn());
 
       expect(res.status).toHaveBeenCalledWith(400);
     });
@@ -94,7 +94,7 @@ describe("Form Controller Test Suite", () => {
       const req = makeReq({ body: { title: "Intake Form", schema: { fields: [] } } });
       const res = makeRes();
 
-      await addFormTemplateApi(req, res);
+      await addFormTemplateApi(req, res, jest.fn());
 
       expect(res.status).toHaveBeenCalledWith(201);
       expect(mockPrismaFormTemplate.create).toHaveBeenCalled();
@@ -106,7 +106,7 @@ describe("Form Controller Test Suite", () => {
       const req = makeReq({ body: { providerId: "provider-1" } });
       const res = makeRes();
 
-      await shareFormApi(req, res);
+      await shareFormApi(req, res, jest.fn());
 
       expect(res.status).toHaveBeenCalledWith(400);
     });
@@ -133,7 +133,7 @@ describe("Form Controller Test Suite", () => {
       });
       const res = makeRes();
 
-      await shareFormApi(req, res);
+      await shareFormApi(req, res, jest.fn());
 
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(
@@ -153,7 +153,7 @@ describe("Form Controller Test Suite", () => {
       const req = makeReq({ params: { token: "bad-token" } });
       const res = makeRes();
 
-      await getFormTemplateByTokenApi(req, res);
+      await getFormTemplateByTokenApi(req, res, jest.fn());
 
       expect(res.status).toHaveBeenCalledWith(404);
     });
@@ -168,7 +168,7 @@ describe("Form Controller Test Suite", () => {
       const req = makeReq({ params: { token: "expired-token" } });
       const res = makeRes();
 
-      await getFormTemplateByTokenApi(req, res);
+      await getFormTemplateByTokenApi(req, res, jest.fn());
 
       expect(res.status).toHaveBeenCalledWith(410);
     });
@@ -183,7 +183,7 @@ describe("Form Controller Test Suite", () => {
       const req = makeReq({ params: { token: "submitted-token" } });
       const res = makeRes();
 
-      await getFormTemplateByTokenApi(req, res);
+      await getFormTemplateByTokenApi(req, res, jest.fn());
 
       expect(res.status).toHaveBeenCalledWith(423);
     });
@@ -226,7 +226,7 @@ describe("Form Controller Test Suite", () => {
       });
       const res = makeRes();
 
-      await submitFormApi(req, res);
+      await submitFormApi(req, res, jest.fn());
 
       expect(res.status).toHaveBeenCalledWith(403);
     });
@@ -267,7 +267,7 @@ describe("Form Controller Test Suite", () => {
       });
       const res = makeRes();
 
-      await submitFormApi(req, res);
+      await submitFormApi(req, res, jest.fn());
 
       expect(res.status).toHaveBeenCalledWith(423);
     });
@@ -318,7 +318,7 @@ describe("Form Controller Test Suite", () => {
       });
       const res = makeRes();
 
-      await submitFormApi(req, res);
+      await submitFormApi(req, res, jest.fn());
 
       expect(mockTx.formSubmission.create).toHaveBeenCalledWith(
         expect.objectContaining({

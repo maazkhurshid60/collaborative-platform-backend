@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { asyncHandler } from "../../utils/asyncHandler";
 import {
   addFormTemplateApi,
   shareFormApi,
@@ -10,28 +9,32 @@ import {
   listSharedFormsForClientApi,
   getFormTemplateRecipientsApi,
   uploadFormPdfApi,
+  getFormTemplateApi,
+  updateFormTemplateApi,
 } from "../../controller/form/form.controller";
 import uploadDoc from "../../utils/multer/s3DocUploader";
 
 const formRouter = Router();
 
-formRouter.post("/create-template", asyncHandler(addFormTemplateApi));
-formRouter.get("/templates", asyncHandler(listFormTemplatesApi));
-formRouter.delete("/templates/:id", asyncHandler(deleteFormTemplateApi));
-formRouter.post("/share", asyncHandler(shareFormApi));
-formRouter.get("/client/:clientId", asyncHandler(listSharedFormsForClientApi));
+formRouter.post("/create-template", addFormTemplateApi);
+formRouter.get("/templates", listFormTemplatesApi);
+formRouter.get("/templates/:id", getFormTemplateApi);
+formRouter.put("/templates/:id", updateFormTemplateApi);
+formRouter.delete("/templates/:id", deleteFormTemplateApi);
+formRouter.post("/share", shareFormApi);
+formRouter.get("/client/:clientId", listSharedFormsForClientApi);
 formRouter.get(
   "/templates/:id/recipients",
-  asyncHandler(getFormTemplateRecipientsApi),
+  getFormTemplateRecipientsApi,
 );
 
 // Protected ==> Authenticated Form Submission Routes (Only accessible by logged-in clients)
-formRouter.get("/token/:token", asyncHandler(getFormTemplateByTokenApi));
-formRouter.post("/submit/:token", asyncHandler(submitFormApi));
+formRouter.get("/token/:token", getFormTemplateByTokenApi);
+formRouter.post("/submit/:token", submitFormApi);
 formRouter.post(
   "/upload-pdf",
   uploadDoc.single("file"),
-  asyncHandler(uploadFormPdfApi),
+  uploadFormPdfApi,
 );
 
 export { formRouter };

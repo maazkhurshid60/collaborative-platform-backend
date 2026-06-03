@@ -1,15 +1,15 @@
 import crypto from "crypto";
 import { Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
 
 import prisma from "../../db/db.config";
-import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { io } from "../../socket/socket";
 import { asyncHandler } from "../../utils/asyncHandler";
 import logger from "../../utils/logger";
 import { AuditLogService } from "../../services/AuditLogService";
 
-const addFormTemplateApi = async (req: Request, res: Response) => {
+const addFormTemplateApi = asyncHandler(async (req: Request, res: Response) => {
   const { title, description, schema } = req.body;
 
   if (!title || !schema) {
@@ -49,9 +49,101 @@ const addFormTemplateApi = async (req: Request, res: Response) => {
         "Form template created successfully.",
       ),
     );
-};
+});
 
-const shareFormApi = async (req: Request, res: Response) => {
+const getFormTemplateApi = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const template = await prisma.formTemplate.findUnique({
+    where: { id: String(id) },
+  });
+
+  if (!template) {
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .json(
+        new ApiResponse(
+          StatusCodes.NOT_FOUND,
+          { error: "Form template not found." },
+          "Not Found",
+        ),
+      );
+  }
+
+  return res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        { template },
+        "Form template fetched successfully.",
+      ),
+    );
+});
+
+const updateFormTemplateApi = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { title, description, schema } = req.body;
+
+    if (!title || !schema) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(
+          new ApiResponse(
+            StatusCodes.BAD_REQUEST,
+            { error: "Title and Form Schema are required." },
+            "Bad Request",
+          ),
+        );
+    }
+
+    const existingTemplate = await prisma.formTemplate.findUnique({
+      where: { id: String(id) },
+    });
+
+    if (!existingTemplate) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json(
+          new ApiResponse(
+            StatusCodes.NOT_FOUND,
+            { error: "Form template not found." },
+            "Not Found",
+          ),
+        );
+    }
+
+    const updatedTemplate = await prisma.formTemplate.update({
+      where: { id: String(id) },
+      data: {
+        title,
+        description,
+        schema,
+      },
+    });
+
+    await AuditLogService.createLog({
+      userId: (req as any).user?.id,
+      action: "UPDATE_FORM_TEMPLATE",
+      resource: "FORM_TEMPLATE",
+      resourceId: updatedTemplate.id,
+      details: { title: updatedTemplate.title },
+    });
+
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          { template: updatedTemplate },
+          "Form template updated successfully.",
+        ),
+      );
+  },
+);
+
+const shareFormApi = asyncHandler(async (req: Request, res: Response) => {
   const { templateId, clientId, providerId, expirationDays } = req.body;
 
   if (!templateId || !providerId) {
@@ -157,9 +249,9 @@ const shareFormApi = async (req: Request, res: Response) => {
         "Secure share link generated successfully.",
       ),
     );
-};
+});
 
-const getFormTemplateByTokenApi = async (req: Request, res: Response) => {
+const getFormTemplateByTokenApi = asyncHandler(async (req: Request, res: Response) => {
   const { token } = req.params as { token: string };
 
   if (!token) {
@@ -242,9 +334,9 @@ const getFormTemplateByTokenApi = async (req: Request, res: Response) => {
       "Template loaded successfully.",
     ),
   );
-};
+});
 
-const submitFormApi = async (req: Request, res: Response) => {
+const submitFormApi = asyncHandler(async (req: Request, res: Response) => {
   const { token } = req.params as { token: string };
   const { submittedBy, data, signature, pdfUrl } = req.body;
   const ipAddress = req.ip || req.socket?.remoteAddress || "unknown";
@@ -495,9 +587,9 @@ const submitFormApi = async (req: Request, res: Response) => {
         ),
       );
   }
-};
+});
 
-const listFormTemplatesApi = async (req: Request, res: Response) => {
+const listFormTemplatesApi = asyncHandler(async (req: Request, res: Response) => {
   try {
     const templates = await prisma.formTemplate.findMany({
       orderBy: { createdAt: "desc" },
@@ -527,7 +619,7 @@ const listFormTemplatesApi = async (req: Request, res: Response) => {
         ),
       );
   }
-};
+});
 
 const deleteFormTemplateApi = asyncHandler(
   async (req: Request, res: Response) => {
@@ -685,7 +777,7 @@ const getFormTemplateRecipientsApi = asyncHandler(
   },
 );
 
-const uploadFormPdfApi = async (req: Request, res: Response) => {
+const uploadFormPdfApi = asyncHandler(async (req: Request, res: Response) => {
   const file = req.file as Express.Multer.File & { location: string };
   if (!file) {
     return res
@@ -696,7 +788,7 @@ const uploadFormPdfApi = async (req: Request, res: Response) => {
     message: "PDF uploaded successfully",
     url: file.location,
   });
-};
+});
 
 export {
   addFormTemplateApi,
@@ -707,5 +799,7 @@ export {
   deleteFormTemplateApi,
   listSharedFormsForClientApi,
   getFormTemplateRecipientsApi,
+  getFormTemplateApi,
+  updateFormTemplateApi,
   uploadFormPdfApi,
 };

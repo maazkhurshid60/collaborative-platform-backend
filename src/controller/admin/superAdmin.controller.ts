@@ -362,3 +362,43 @@ export const bulkDeleteAuditLogs = asyncHandler(async (req: Request, res: Respon
     .status(StatusCodes.OK)
     .json(new ApiResponse(StatusCodes.OK, null, "Selected audit logs deleted successfully"));
 });
+
+export const getAllSubmittedDocuments = asyncHandler(async (req: Request, res: Response) => {
+  const { page = 1, limit = 50 } = req.query;
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const documents = await prisma.formSubmission.findMany({
+    include: {
+      share: {
+        include: {
+          template: true,
+          client: {
+            include: { user: true }
+          },
+          provider: {
+            include: { user: true }
+          }
+        }
+      }
+    },
+    orderBy: {
+      submittedAt: "desc"
+    },
+    skip,
+    take: Number(limit)
+  });
+
+  const total = await prisma.formSubmission.count();
+
+  return res.status(StatusCodes.OK).json(
+    new ApiResponse(StatusCodes.OK, {
+      documents,
+      pagination: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(total / Number(limit))
+      }
+    }, "Submitted documents fetched successfully")
+  );
+});
