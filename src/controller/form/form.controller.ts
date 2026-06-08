@@ -163,6 +163,7 @@ const shareFormApi = asyncHandler(async (req: Request, res: Response) => {
       where: {
         templateId,
         clientId,
+        providerId,
         status: { in: ["PENDING", "SUBMITTED"] },
       },
     });

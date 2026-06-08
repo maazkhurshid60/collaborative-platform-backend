@@ -389,7 +389,7 @@ model FormShare {
   provider      Provider          @relation(fields: [providerId], references: [id], onDelete: Cascade)
   submission    FormSubmission?
 
-  @@unique([templateId, clientId])
+  @@unique([templateId, clientId, providerId])
 }
 
 model FormSubmission {
