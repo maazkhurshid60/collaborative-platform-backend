@@ -104,24 +104,13 @@ export class SubscriptionService {
             { userId: provider.user.id }
         );
 
-        // 2. Create Stripe trial subscription
-        const stripeSubscription = await stripeService.createSubscription({
-            customer: customer.id,
-            items: [{ price: STRIPE_PRICES.STANDARD.MONTHLY! }],
-            trial_period_days: 14,
-            metadata: { userId: provider.user.id }
-        });
-
-        // 3. Create Subscription in DB
+        // 2. Create Subscription in DB (Unlimited Free Plan)
         const sub = await prisma.subscription.create({
             data: {
                 userId: provider.user.id,
                 stripeCustomerId: customer.id,
-                stripeSubscriptionId: stripeSubscription.id,
                 plan: "STANDARD",
-                status: "TRIALING",
-                trialStart: new Date(),
-                trialEnd: new Date((stripeSubscription.trial_end || (Date.now() / 1000 + 14 * 24 * 60 * 60)) * 1000)
+                status: "TRIALING"
             }
         });
 
@@ -177,7 +166,7 @@ export class SubscriptionService {
 
         if (planType === 'STANDARD' && !user.hasUsedFreeTrial) {
             sessionConfig.subscription_data = {
-                trial_period_days: 14,
+                trial_period_days: 730,
                 metadata: { planType, userId: user.id, email: user.email }
             };
         } else {
@@ -434,16 +423,13 @@ export class SubscriptionService {
         if (existingSub) throw new ApiError(StatusCodes.BAD_REQUEST, "Subscription already exists");
 
         const normalizedPlan = planType?.toUpperCase() || "STANDARD";
-        const isStandardTrial = normalizedPlan === 'STANDARD';
-        const endDate = isStandardTrial ? new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) : null;
 
         return await prisma.subscription.create({
             data: {
                 userId,
-                stripeCustomerId: isStandardTrial ? `trial_${userId}` : `free_${userId}`,
+                stripeCustomerId: `free_${userId}`,
                 plan: (normalizedPlan === "PRO" ? "PRO" : "STANDARD") as any,
-                status: "ACTIVE",
-                ...(endDate && { trialEnd: endDate })
+                status: "TRIALING"
             }
         });
     }

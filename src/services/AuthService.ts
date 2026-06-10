@@ -79,26 +79,13 @@ export class AuthService {
                     metadata: { role }
                 });
 
-                const subscription = await stripe.subscriptions.create({
-                    customer: customer.id,
-                    items: [{ price: STRIPE_PRICES.STANDARD.MONTHLY }],
-                    trial_period_days: 14,
-                    payment_behavior: 'default_incomplete',
-                    metadata: { role, email, planType: 'STANDARD', userId: 'temp' }
-                });
-
-                const periodEnd = subscription.current_period_end
-                    ? new Date(subscription.current_period_end * 1000)
-                    : undefined;
                 stripeData = {
                     stripeCustomerId: customer.id,
-                    stripeSubscriptionId: subscription.id,
-                    trialEnd: new Date(subscription.trial_end! * 1000),
-                    ...(isValidDate(periodEnd) && { currentPeriodEnd: periodEnd })
+                    stripeSubscriptionId: undefined, // No stripe subscription for unlimited free plan
                 } as any;
             } catch (error: any) {
-                console.error("Stripe trial creation failed:", error);
-                throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Failed to create trial subscription");
+                console.error("Stripe customer creation failed:", error);
+                throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Failed to create Stripe customer");
             }
         }
 
@@ -137,14 +124,10 @@ export class AuthService {
                     ...(planType && !userData.subscriptionId && {
                         subscription: {
                             create: {
-                                stripeSubscriptionId: stripeData?.stripeSubscriptionId,
+                                stripeSubscriptionId: stripeData?.stripeSubscriptionId || null,
                                 plan: mappedPlanType,
-                                status: (planType === 'FREE' && stripeData) ? 'TRIALING' : 'ACTIVE',
-                                ...(stripeData?.currentPeriodEnd && { currentPeriodEnd: stripeData.currentPeriodEnd }),
-                                ...(planType === 'FREE' && stripeData && {
-                                    trialStart: new Date(),
-                                    trialEnd: stripeData.trialEnd
-                                })
+                                status: planType === 'FREE' ? 'TRIALING' : 'ACTIVE',
+                                ...(stripeData?.currentPeriodEnd && { currentPeriodEnd: stripeData.currentPeriodEnd })
                             }
                         }
                     })
