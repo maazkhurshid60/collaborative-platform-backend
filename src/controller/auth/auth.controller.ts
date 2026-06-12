@@ -1271,7 +1271,7 @@ const resendVerificationEmailApi = asyncHandler(
         new ApiResponse(
           StatusCodes.OK,
           { success: true },
-          "Verification email sent successfully",
+          "We've sent a new verification link to your email address. It will expire in 24 hours.",
         ),
       );
   },
