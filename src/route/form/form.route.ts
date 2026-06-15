@@ -11,6 +11,7 @@ import {
   uploadFormPdfApi,
   getFormTemplateApi,
   updateFormTemplateApi,
+  deleteProviderFormSubmissionsApi,
 } from "../../controller/form/form.controller";
 import uploadDoc from "../../utils/multer/s3DocUploader";
 
@@ -21,6 +22,7 @@ formRouter.get("/templates", listFormTemplatesApi);
 formRouter.get("/templates/:id", getFormTemplateApi);
 formRouter.put("/templates/:id", updateFormTemplateApi);
 formRouter.delete("/templates/:id", deleteFormTemplateApi);
+formRouter.delete("/templates/:id/provider-submissions", deleteProviderFormSubmissionsApi);
 formRouter.post("/share", shareFormApi);
 formRouter.get("/client/:clientId", listSharedFormsForClientApi);
 formRouter.get(

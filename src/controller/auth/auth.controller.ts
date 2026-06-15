@@ -99,6 +99,7 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
+// remove to user controller.
 const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
   const loginUserId = (req as any).user.id;
 
@@ -181,6 +182,7 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
+// remove to user controller.
 const blockUserApi = asyncHandler(async (req: Request, res: Response) => {
   const { blockUserid } = req.body;
   const loginUserIdFromToken = (req as any).user.id;
@@ -262,6 +264,7 @@ const blockUserApi = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
+// remove to user controller.
 const getAllUsersApi = asyncHandler(async (req: Request, res: Response) => {
   const allUsers = await prisma.user.findMany({
     where: {
@@ -330,6 +333,7 @@ const getAllUsersApi = asyncHandler(async (req: Request, res: Response) => {
 
 // })
 
+// remove to user controller.
 const approveValidUser = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.body;
 
@@ -400,6 +404,7 @@ const approveValidUser = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
+// remove to user controller.
 const rejectUser = asyncHandler(async (req: Request, res: Response) => {
   const { id, name } = req.body; // removed email from destructuring as we get it from DB if needed, or unused.
 
@@ -447,6 +452,8 @@ const rejectUser = asyncHandler(async (req: Request, res: Response) => {
       );
   }
 });
+
+// remove to user controller.
 const restoreUser = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.body;
 
@@ -1277,6 +1284,107 @@ const resendVerificationEmailApi = asyncHandler(
   },
 );
 
+const searchUsersApi = asyncHandler(async (req: Request, res: Response) => {
+  const { q } = req.query;
+  const loginUserId = (req as any).user.id;
+  const loginUserRole = (req as any).user.role;
+
+  if (!q || typeof q !== "string") {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(
+        new ApiResponse(
+          StatusCodes.BAD_REQUEST,
+          null,
+          "Search query 'q' is required",
+        ),
+      );
+  }
+
+  const searchTerm = q.trim();
+
+  const userSearchFilter = {
+    OR: [
+      { fullName: { contains: searchTerm, mode: "insensitive" as const } },
+      { email: { contains: searchTerm, mode: "insensitive" as const } },
+      { licenseNo: { contains: searchTerm, mode: "insensitive" as const } },
+    ],
+  };
+
+  let clientWhereClause: any = {
+    user: {
+      ...userSearchFilter,
+      id: { not: loginUserId },
+    },
+  };
+
+  if (loginUserRole === Role.provider) {
+    const provider = await prisma.provider.findUnique({
+      where: { userId: loginUserId },
+    });
+    const providerId = provider?.id;
+
+    clientWhereClause.OR = [
+      { clientShowToOthers: true },
+      { createdByProviderId: providerId },
+      {
+        providerList: {
+          some: { providerId: providerId },
+        },
+      },
+    ];
+  } else if (loginUserRole === Role.client) {
+    clientWhereClause.userId = loginUserId;
+  }
+
+  const clients = await prisma.client.findMany({
+    where: clientWhereClause,
+    include: {
+      user: true,
+      providerList: {
+        include: {
+          provider: {
+            include: { user: true },
+          },
+        },
+      },
+    },
+    take: 20,
+  });
+
+  const providers = await prisma.provider.findMany({
+    where: {
+      user: {
+        ...userSearchFilter,
+        id: { not: loginUserId },
+      },
+    },
+    include: {
+      user: true,
+      clientList: {
+        include: {
+          client: {
+            include: { user: true },
+          },
+        },
+      },
+    },
+    take: 20,
+  });
+
+  const allUsers = [...clients, ...providers];
+
+  return res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        { totalDocument: allUsers.length, users: allUsers },
+        "Users searched successfully",
+      ),
+    );
+});
+
 export {
   signupApi,
   logInApi,
@@ -1301,4 +1409,5 @@ export {
   checkEmailExistsApi,
   verifyEmailApi,
   resendVerificationEmailApi,
+  searchUsersApi,
 };

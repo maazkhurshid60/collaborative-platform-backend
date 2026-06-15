@@ -123,6 +123,35 @@ const updateFormTemplateApi = asyncHandler(
       },
     });
 
+    // Notify all providers who are associated with this template
+    const associatedProviders = await prisma.formShare.findMany({
+      where: { templateId: String(id) },
+      select: { provider: { select: { userId: true } } },
+      distinct: ["providerId"],
+    });
+
+    const senderId = (req as any).user?.id || null;
+
+    if (associatedProviders.length > 0) {
+      const notificationsData = associatedProviders
+        .filter((share) => share.provider?.userId)
+        .map((share) => ({
+          recipientId: share.provider.userId,
+          senderId,
+          title: "Form Template Updated",
+          message: `The form template "${updatedTemplate.title}" has been updated. You may want to delete previous submissions and re-share the updated form with your clients.`,
+          type: "DOCUMENT_SHARED" as any,
+        }));
+
+      for (const data of notificationsData) {
+        const notification = await prisma.notification.create({ data });
+        io.to(`notification_room_${data.recipientId}`).emit(
+          "new_notification",
+          notification,
+        );
+      }
+    }
+
     await AuditLogService.createLog({
       userId: (req as any).user?.id,
       action: "UPDATE_FORM_TEMPLATE",
@@ -138,6 +167,72 @@ const updateFormTemplateApi = asyncHandler(
           StatusCodes.OK,
           { template: updatedTemplate },
           "Form template updated successfully.",
+        ),
+      );
+  },
+);
+
+const deleteProviderFormSubmissionsApi = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params; // templateId
+    const { providerId } = req.body;
+
+    if (!id || !providerId) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(
+          new ApiResponse(
+            StatusCodes.BAD_REQUEST,
+            { error: "Template ID and providerId are required." },
+            "Bad Request",
+          ),
+        );
+    }
+
+    const template = await prisma.formTemplate.findUnique({
+      where: { id: String(id) },
+    });
+
+    if (!template) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json(
+          new ApiResponse(
+            StatusCodes.NOT_FOUND,
+            { error: "Template not found." },
+            "Not Found",
+          ),
+        );
+    }
+
+    const deletedShares = await prisma.formShare.deleteMany({
+      where: {
+        templateId: String(id),
+        providerId: String(providerId),
+        updatedAt: {
+          lt: template.updatedAt,
+        },
+      },
+    });
+
+    await AuditLogService.createLog({
+      userId: (req as any).user?.id,
+      action: "DELETE_PROVIDER_FORM_SUBMISSIONS",
+      resource: "FORM_TEMPLATE",
+      resourceId: String(id),
+      details: {
+        providerId: String(providerId),
+        deletedCount: deletedShares.count,
+      },
+    });
+
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          { count: deletedShares.count },
+          "Previous form submissions for this template and provider deleted successfully.",
         ),
       );
   },
@@ -252,90 +347,94 @@ const shareFormApi = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
-const getFormTemplateByTokenApi = asyncHandler(async (req: Request, res: Response) => {
-  const { token } = req.params as { token: string };
+const getFormTemplateByTokenApi = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { token } = req.params as { token: string };
 
-  if (!token) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json(
-        new ApiResponse(
-          StatusCodes.BAD_REQUEST,
-          { error: "Token parameter is required." },
-          "Bad Request",
-        ),
-      );
-  }
+    if (!token) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(
+          new ApiResponse(
+            StatusCodes.BAD_REQUEST,
+            { error: "Token parameter is required." },
+            "Bad Request",
+          ),
+        );
+    }
 
-  const share: any = await prisma.formShare.findUnique({
-    where: { token },
-    include: { template: true, client: { include: { user: true } } },
-  });
+    const share: any = await prisma.formShare.findUnique({
+      where: { token },
+      include: { template: true, client: { include: { user: true } } },
+    });
 
-  if (!share) {
-    return res
-      .status(StatusCodes.NOT_FOUND)
-      .json(
-        new ApiResponse(
-          StatusCodes.NOT_FOUND,
-          { error: "Form link not found or invalid." },
-          "Not Found. Form link not found or invalid.",
-        ),
-      );
-  }
+    if (!share) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json(
+          new ApiResponse(
+            StatusCodes.NOT_FOUND,
+            { error: "Form link not found or invalid." },
+            "Not Found. Form link not found or invalid.",
+          ),
+        );
+    }
 
-  if (new Date() > share.expiresAt) {
-    return res
-      .status(StatusCodes.GONE)
-      .json(
-        new ApiResponse(
-          StatusCodes.GONE,
-          { error: "Link Expired. This share link has expired." },
-          "Link Expired. This share link has expired.",
-        ),
-      );
-  }
+    if (new Date() > share.expiresAt) {
+      return res
+        .status(StatusCodes.GONE)
+        .json(
+          new ApiResponse(
+            StatusCodes.GONE,
+            { error: "Link Expired. This share link has expired." },
+            "Link Expired. This share link has expired.",
+          ),
+        );
+    }
 
-  if (share.status === "SUBMITTED") {
-    return res
-      .status(StatusCodes.LOCKED)
-      .json(
-        new ApiResponse(
-          StatusCodes.LOCKED,
-          { error: "Locked. This form has already been completed and locked." },
-          "Locked. This form has already been completed and locked.",
-        ),
-      );
-  }
+    if (share.status === "SUBMITTED") {
+      return res
+        .status(StatusCodes.LOCKED)
+        .json(
+          new ApiResponse(
+            StatusCodes.LOCKED,
+            {
+              error: "Locked. This form has already been completed and locked.",
+            },
+            "Locked. This form has already been completed and locked.",
+          ),
+        );
+    }
 
-  // Log the access to FormAuditTrail
-  await prisma.formAuditTrail.create({
-    data: {
-      action: "LINK_ACCESSED",
-      ipAddress: req.ip || req.socket.remoteAddress || "unknown",
-      userAgent: req.headers["user-agent"] || "unknown",
-      details: {
-        shareId: share.id,
-        templateTitle: share.template.title,
-        clientId: share.clientId,
+    // Log the access to FormAuditTrail
+    await prisma.formAuditTrail.create({
+      data: {
+        action: "LINK_ACCESSED",
+        ipAddress: req.ip || req.socket.remoteAddress || "unknown",
+        userAgent: req.headers["user-agent"] || "unknown",
+        details: {
+          shareId: share.id,
+          templateTitle: share.template.title,
+          clientId: share.clientId,
+        },
       },
-    },
-  });
+    });
 
-  return res.status(StatusCodes.OK).json(
-    new ApiResponse(
-      StatusCodes.OK,
-      {
-        title: share.template.title,
-        description: share.template.description,
-        schema: share.template.schema,
-        clientId: share.clientId,
-        clientName: share.client?.user?.fullName || null,
-      },
-      "Template loaded successfully.",
-    ),
-  );
-});
+    return res.status(StatusCodes.OK).json(
+      new ApiResponse(
+        StatusCodes.OK,
+        {
+          title: share.template.title,
+          description: share.template.description,
+          schema: share.template.schema,
+          clientId: share.clientId,
+          clientName: share.client?.user?.fullName || null,
+        },
+        "Template loaded successfully.",
+      ),
+    );
+  },
+);
 
 const submitFormApi = asyncHandler(async (req: Request, res: Response) => {
   const { token } = req.params as { token: string };
@@ -590,37 +689,39 @@ const submitFormApi = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
-const listFormTemplatesApi = asyncHandler(async (req: Request, res: Response) => {
-  try {
-    const templates = await prisma.formTemplate.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        shares: true,
-      },
-    });
+const listFormTemplatesApi = asyncHandler(
+  async (req: Request, res: Response) => {
+    try {
+      const templates = await prisma.formTemplate.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          shares: true,
+        },
+      });
 
-    return res
-      .status(StatusCodes.OK)
-      .json(
-        new ApiResponse(
-          StatusCodes.OK,
-          { templates },
-          "Form templates retrieved successfully.",
-        ),
-      );
-  } catch (error) {
-    logger.error("Error retrieving form templates:", error);
-    return res
-      .status(StatusCodes.INTERNAL_SERVER_ERROR)
-      .json(
-        new ApiResponse(
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          { error: "Internal Server Error during retrieving templates." },
-          "Error",
-        ),
-      );
-  }
-});
+      return res
+        .status(StatusCodes.OK)
+        .json(
+          new ApiResponse(
+            StatusCodes.OK,
+            { templates },
+            "Form templates retrieved successfully.",
+          ),
+        );
+    } catch (error) {
+      logger.error("Error retrieving form templates:", error);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json(
+          new ApiResponse(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            { error: "Internal Server Error during retrieving templates." },
+            "Error",
+          ),
+        );
+    }
+  },
+);
 
 const deleteFormTemplateApi = asyncHandler(
   async (req: Request, res: Response) => {
@@ -803,4 +904,5 @@ export {
   getFormTemplateApi,
   updateFormTemplateApi,
   uploadFormPdfApi,
+  deleteProviderFormSubmissionsApi,
 };
