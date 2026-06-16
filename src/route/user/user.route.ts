@@ -10,7 +10,8 @@ import {
     approveValidUser, 
     rejectUser, 
     restoreUser, 
-    searchUsersApi 
+    searchUsersApi,
+    getUsersPaginatedApi
 } from "../../controller/user/user.controller";
 
 const userRouter = Router();
@@ -25,5 +26,6 @@ userRouter.patch("/approve-user", authJWT, approveValidUser);
 userRouter.patch("/reject-user", authJWT, rejectUser);
 userRouter.patch("/restore-user", authJWT, restoreUser);
 userRouter.get("/get-all-valid-users", authJWT, getAllValidUsersApi);
+userRouter.get("/get-users-paginated", authJWT, getUsersPaginatedApi);
 
 export default userRouter;

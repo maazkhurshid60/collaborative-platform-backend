@@ -14,6 +14,7 @@ import {
   deleteAuditLog,
   bulkDeleteAuditLogs,
   getAllSubmittedDocuments,
+  getSuperAdminDashboardStats,
 } from "../../controller/admin/superAdmin.controller";
 
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
@@ -24,8 +25,8 @@ const router = Router();
 // Apply role check to all routes in this router
 router.use(authorizeRoles("superAdmin"));
 
-
 router.get("/first", getSuperAdminFirst);
+router.get("/dashboard/stats", getSuperAdminDashboardStats);
 
 router.get("/:id", getSuperAdminById);
 

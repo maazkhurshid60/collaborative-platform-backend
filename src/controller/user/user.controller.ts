@@ -647,6 +647,66 @@ const searchUsersApi = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
+const getUsersPaginatedApi = asyncHandler(async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 7;
+  const status = req.query.status as string; // "PENDING", "APPROVED", "REJECTED", "all"
+  const role = req.query.role as string; // "provider", "client", "all"
+  const search = req.query.search as string;
+
+  const skip = (page - 1) * limit;
+
+  let whereClause: any = {
+    role: {
+      not: Role.superAdmin,
+    },
+  };
+
+  if (status && status !== "all") {
+    whereClause.isApprove = status as Approve;
+  }
+
+  if (role && role !== "all") {
+    whereClause.role = role as Role;
+  }
+
+  if (search) {
+    whereClause.OR = [
+      { fullName: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+      { licenseNo: { contains: search, mode: "insensitive" } },
+      { state: { contains: search, mode: "insensitive" } }
+    ];
+  }
+
+  const [allUsers, totalCount] = await Promise.all([
+    prisma.user.findMany({
+      where: whereClause,
+      include: {
+        client: true,
+      },
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    prisma.user.count({
+      where: whereClause,
+    }),
+  ]);
+
+  const totalPages = Math.ceil(totalCount / limit);
+
+  return res.status(StatusCodes.OK).json(
+    new ApiResponse(
+      StatusCodes.OK,
+      { users: allUsers, totalPages, totalCount, currentPage: page },
+      "Users fetched successfully"
+    )
+  );
+});
+
 export {
   blockUserApi,
   getAllUsersApi,
@@ -658,4 +718,5 @@ export {
   deleteUserByAdminApi,
   findByLicenseNo,
   searchUsersApi,
+  getUsersPaginatedApi,
 };
