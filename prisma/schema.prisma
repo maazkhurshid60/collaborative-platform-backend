@@ -94,16 +94,18 @@ model SuperAdmin {
 }
 
 model ChatChannel {
-  id          String        @id @default(uuid())
-  providerAId String
-  providerBId String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  deletedByA  Boolean       @default(false)
-  deletedByB  Boolean       @default(false)
-  providerA   User          @relation("ChatA", fields: [providerAId], references: [id], onDelete: Cascade)
-  providerB   User          @relation("ChatB", fields: [providerBId], references: [id], onDelete: Cascade)
-  messages    ChatMessage[]
+  id               String        @id @default(uuid())
+  providerAId      String
+  providerBId      String
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedByA       Boolean       @default(false)
+  deletedByB       Boolean       @default(false)
+  lastEmailSentToA DateTime?
+  lastEmailSentToB DateTime?
+  providerA        User          @relation("ChatA", fields: [providerAId], references: [id], onDelete: Cascade)
+  providerB        User          @relation("ChatB", fields: [providerBId], references: [id], onDelete: Cascade)
+  messages         ChatMessage[]
 
   @@unique([providerAId, providerBId])
 }
@@ -186,12 +188,13 @@ model GroupChat {
 }
 
 model GroupMembers {
-  id          String    @id @default(uuid())
-  groupChatId String
-  userId      String
-  createdAt   DateTime  @default(now())
-  groupChat   GroupChat @relation(fields: [groupChatId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String    @id @default(uuid())
+  groupChatId     String
+  userId          String
+  createdAt       DateTime  @default(now())
+  lastEmailSentAt DateTime?
+  groupChat       GroupChat @relation(fields: [groupChatId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model GroupReadReceipt {

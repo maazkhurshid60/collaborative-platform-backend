@@ -88,7 +88,7 @@ const createChatChannel = asyncHandler(async (req: Request, res: Response) => {
 // ✅ GET ALL CHAT CHANNELS
 // ===============================
 const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
-  const { loginUserId } = req.body;
+  const { loginUserId, search } = req.body;
 
   // Resolve user
   const user = await resolveChatUser(loginUserId);
@@ -110,9 +110,31 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
   // Fetch all channels for user that are not deleted by them
   const findAllChatChannel = await prisma.chatChannel.findMany({
     where: {
-      OR: [
-        { providerAId: userIdToSearch, deletedByA: false },
-        { providerBId: userIdToSearch, deletedByB: false },
+      AND: [
+        {
+          OR: [
+            { providerAId: userIdToSearch, deletedByA: false },
+            { providerBId: userIdToSearch, deletedByB: false },
+          ],
+        },
+        ...(search
+          ? [
+              {
+                OR: [
+                  {
+                    providerA: {
+                      fullName: { contains: search, mode: "insensitive" as any },
+                    },
+                  },
+                  {
+                    providerB: {
+                      fullName: { contains: search, mode: "insensitive" as any },
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
       ],
     },
     include: {

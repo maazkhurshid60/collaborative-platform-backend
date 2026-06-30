@@ -30,6 +30,10 @@ if (shouldUseCluster && cluster.isPrimary) {
     const { initAuditLogWorker } = require("./services/AuditLogWorker");
     initAuditLogWorker();
 
+    // Start email queue worker in the primary process
+    const { initEmailWorker } = require("./services/EmailWorker");
+    initEmailWorker();
+
     cluster.on('exit', (worker, code, signal) => {
         logger.warn(`Worker process ${worker.process.pid} died with code ${code} and signal ${signal}. Restarting...`);
         cluster.fork();
@@ -56,6 +60,10 @@ if (shouldUseCluster && cluster.isPrimary) {
     // Start audit log queue worker
     const { initAuditLogWorker } = require("./services/AuditLogWorker");
     initAuditLogWorker();
+
+    // Start email queue worker
+    const { initEmailWorker } = require("./services/EmailWorker");
+    initEmailWorker();
 
     const PORT = process.env.PORT || 3000;
 

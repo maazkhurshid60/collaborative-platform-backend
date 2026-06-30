@@ -11,6 +11,7 @@ import {
 } from "../../utils/encryptedMessage/EncryptedMessage";
 import { sendShareChatEmail } from "../../utils/nodeMailer/ShareChatEmail";
 import { getFrontendUrl } from "../../utils/nodeMailer/getFrontendUrl";
+import { emailQueue } from "../../services/EmailQueue";
 import { AuditLogService } from "../../services/AuditLogService";
 import { resolveChatUser } from "../../utils/resolveChatUser";
 
@@ -131,6 +132,10 @@ const sendMessageToSingleConservation = asyncHandler(
 
       const channel = await prisma.chatChannel.findUnique({
         where: { id: chatChannelId },
+        include: {
+          providerA: true,
+          providerB: true,
+        },
       });
 
       if (!channel) {
@@ -186,6 +191,46 @@ const sendMessageToSingleConservation = asyncHandler(
         ...chatMessage,
         message: chatMessage.message ? decryptText(chatMessage.message) : "",
       };
+
+      const COOLDOWN_MINUTES = 20;
+      const now = new Date();
+
+      const isSenderA = userIdToUse === channel.providerAId;
+      const receiver = isSenderA ? channel.providerB : channel.providerA;
+      const lastEmailSentToReceiverAt = isSenderA
+        ? channel.lastEmailSentToB
+        : channel.lastEmailSentToA;
+      const updateField = isSenderA ? "lastEmailSentToB" : "lastEmailSentToA";
+
+      let shouldNotify = false;
+      if (!lastEmailSentToReceiverAt) {
+        shouldNotify = true;
+      } else {
+        const diffMs =
+          now.getTime() - new Date(lastEmailSentToReceiverAt).getTime();
+        const diffMins = diffMs / (1000 * 60);
+        if (diffMins >= COOLDOWN_MINUTES) {
+          shouldNotify = true;
+        }
+      }
+
+      if (shouldNotify) {
+        if (emailQueue) {
+          await emailQueue.add("send-chat-notification", {
+            email: receiver.email,
+            senderName: chatMessage.sender.fullName,
+            chatLink: `${getFrontendUrl()}/chat`,
+            chatType: "individual"
+          });
+        } else {
+          console.warn("[Email Debug] emailQueue is not initialized, skipping email.");
+        }
+
+        await prisma.chatChannel.update({
+          where: { id: chatChannelId },
+          data: { [updateField]: now },
+        });
+      }
 
       // Audit Log for Chat Message
       await AuditLogService.createLog({
