@@ -143,29 +143,7 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
         );
     }
 
-    const alreadySharedDocs = await prisma.documentShareWith.findMany({
-        where: {
-            providerId,
-            clientId,
-            documentId: {
-                in: documentId
-            }
-        },
-        include: {
-            document: true
-        }
-    });
-
-    if (alreadySharedDocs.length > 0) {
-        const alreadySharedDocNames = alreadySharedDocs.map(doc => doc.document.name);
-        const docList = alreadySharedDocNames.join(', ');
-
-
-        return res.status(409).json({
-            error: `The following documents have already been shared: ${docList}`,
-            alreadyShared: alreadySharedDocNames
-        });
-    }
+    // Removed existing share check to allow sharing multiple times with the same client
     const sharedDocuments = await Promise.all(
         documentId.map((documentId: string) =>
             prisma.documentShareWith.create({

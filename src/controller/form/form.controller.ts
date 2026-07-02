@@ -239,7 +239,8 @@ const deleteProviderFormSubmissionsApi = asyncHandler(
 );
 
 const shareFormApi = asyncHandler(async (req: Request, res: Response) => {
-  const { templateId, clientId, providerId, expirationDays } = req.body;
+  const { templateId, clientId, providerId, expirationDays, providerData } =
+    req.body;
 
   if (!templateId || !providerId) {
     return res
@@ -254,26 +255,7 @@ const shareFormApi = asyncHandler(async (req: Request, res: Response) => {
   }
 
   if (clientId) {
-    const existingShare = await prisma.formShare.findFirst({
-      where: {
-        templateId,
-        clientId,
-        providerId,
-        status: { in: ["PENDING", "SUBMITTED"] },
-      },
-    });
-
-    if (existingShare) {
-      return res.status(StatusCodes.CONFLICT).json(
-        new ApiResponse(
-          StatusCodes.CONFLICT,
-          {
-            message: "Conflict",
-          },
-          "This form template has already been shared with this client.",
-        ),
-      );
-    }
+    // Removed existing share check to allow sharing multiple times with the same client
   }
 
   // High-entropy 64-character token
@@ -290,6 +272,7 @@ const shareFormApi = asyncHandler(async (req: Request, res: Response) => {
         token,
         expiresAt,
         status: "PENDING",
+        providerData: providerData || null,
       },
       include: {
         template: true,
@@ -393,17 +376,15 @@ const getFormTemplateByTokenApi = asyncHandler(
     }
 
     if (share.status === "SUBMITTED") {
-      return res
-        .status(StatusCodes.LOCKED)
-        .json(
-          new ApiResponse(
-            StatusCodes.LOCKED,
-            {
-              error: "Locked. This form has already been completed and locked.",
-            },
-            "Locked. This form has already been completed and locked.",
-          ),
-        );
+      return res.status(StatusCodes.LOCKED).json(
+        new ApiResponse(
+          StatusCodes.LOCKED,
+          {
+            error: "Locked. This form has already been completed and locked.",
+          },
+          "Locked. This form has already been completed and locked.",
+        ),
+      );
     }
 
     // Log the access to FormAuditTrail
@@ -427,6 +408,7 @@ const getFormTemplateByTokenApi = asyncHandler(
           title: share.template.title,
           description: share.template.description,
           schema: share.template.schema,
+          providerData: share.providerData,
           clientId: share.clientId,
           clientName: share.client?.user?.fullName || null,
         },
@@ -454,7 +436,6 @@ const submitFormApi = asyncHandler(async (req: Request, res: Response) => {
   }
 
   try {
-    // 1. Warm up connection pool & perform preliminary check outside transaction to prevent transaction cold-start timeouts
     const shareCheck = await prisma.formShare.findUnique({
       where: { token },
       include: { submission: true },
@@ -540,12 +521,17 @@ const submitFormApi = asyncHandler(async (req: Request, res: Response) => {
           throw new Error("FORM_ALREADY_LOCKED");
         }
 
+        // Merge Provider Data into Client Data securely
+        const finalData = share.providerData
+          ? { ...data, ...(share.providerData as Record<string, any>) }
+          : data;
+
         // Create immutable submission record
         const submission = await tx.formSubmission.create({
           data: {
             shareId: share.id,
             submittedBy,
-            data,
+            data: finalData,
             signature,
             ipAddress,
             userAgent,

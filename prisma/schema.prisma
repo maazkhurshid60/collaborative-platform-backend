@@ -154,8 +154,6 @@ model DocumentShareWith {
   client        Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   document      Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
   provider      Provider? @relation(fields: [providerId], references: [id], onDelete: Cascade)
-
-  @@unique([documentId, clientId, providerId])
 }
 
 model DocumentField {
@@ -384,6 +382,7 @@ model FormShare {
   token         String            @unique // High-entropy secure UUID or HMAC token
   status        FormShareStatus   @default(PENDING) // PENDING, SUBMITTED, EXPIRED
   expiresAt     DateTime
+  providerData  Json?             // Pre-filled data by provider before sharing
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
   
@@ -391,8 +390,6 @@ model FormShare {
   client        Client?           @relation(fields: [clientId], references: [id], onDelete: Cascade)
   provider      Provider          @relation(fields: [providerId], references: [id], onDelete: Cascade)
   submission    FormSubmission?
-
-  @@unique([templateId, clientId, providerId])
 }
 
 model FormSubmission {
