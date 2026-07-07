@@ -113,6 +113,23 @@ const logInApi = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = parsedLoginData.data;
   const loggedInUser = await authService.login(email, password);
 
+  // Check for 2FA requirement (Only for providers currently)
+  if (
+    loggedInUser.user.role === "provider" &&
+    loggedInUser.user.isTwoFactorEnabled
+  ) {
+    return res.status(StatusCodes.OK).json(
+      new ApiResponse(
+        StatusCodes.OK,
+        {
+          require2FA: true,
+          userId: loggedInUser.user.id,
+        },
+        "Two-factor authentication required",
+      ),
+    );
+  }
+
   const jwtSecret = process.env.JWT_SECRET || "default_secret";
   const token = jwt.sign(
     {
@@ -592,7 +609,6 @@ const resendVerificationEmailApi = asyncHandler(
           ),
         );
     }
-
     if (user.isEmailVerified) {
       return res
         .status(StatusCodes.BAD_REQUEST)

@@ -1,350 +1,423 @@
 import bcrypt from "bcrypt";
+import { StatusCodes } from "http-status-codes";
+
 import prisma from "../db/db.config";
 import { Role, Gender, Approve } from "../generated/prisma/enums";
-import { stripe, STRIPE_PRICES } from "../utils/stripe/stripe";
+import { stripe } from "../utils/stripe/stripe";
 import { ApiError } from "../utils/apiError";
-import { StatusCodes } from "http-status-codes";
 import { AuditLogService } from "./AuditLogService";
 
-
 export class AuthService {
-    async signup(userData: any) {
-        const {
-            fullName,
-            gender: genderInput = "male",
-            age,
-            contactNo,
-            address,
-            status = "active",
-            licenseNo,
-            role,
-            email,
-            password,
-            //         country,
-            state,
-            publicKey,
-            privateKey,
-            planType
-        } = userData;
+  async signup(userData: any) {
+    const {
+      fullName,
+      gender: genderInput = "male",
+      age,
+      contactNo,
+      address,
+      status = "active",
+      licenseNo,
+      role,
+      email,
+      password,
+      //         country,
+      state,
+      publicKey,
+      privateKey,
+      planType,
+    } = userData;
 
-        // 1. Convert gender string to Enum
-        let genderEnum: Gender = Gender.MALE;
-        if (genderInput === "female" || genderInput === "FEMALE") genderEnum = Gender.FEMALE;
-        else if (genderInput === "prefer_not_to_say" || genderInput === "PREFER_NOT_TO_SAY") genderEnum = Gender.PREFER_NOT_TO_SAY;
-        else if (genderInput === "other" || genderInput === "OTHER") genderEnum = Gender.OTHER;
+    // 1. Convert gender string to Enum
+    let genderEnum: Gender = Gender.MALE;
+    if (genderInput === "female" || genderInput === "FEMALE")
+      genderEnum = Gender.FEMALE;
+    else if (
+      genderInput === "prefer_not_to_say" ||
+      genderInput === "PREFER_NOT_TO_SAY"
+    )
+      genderEnum = Gender.PREFER_NOT_TO_SAY;
+    else if (genderInput === "other" || genderInput === "OTHER")
+      genderEnum = Gender.OTHER;
 
-        // 2. Check for duplicate email or licenseNo
-        const existingEmail = await prisma.user.findFirst({ where: { email } });
-        if (existingEmail) {
-            throw new ApiError(StatusCodes.CONFLICT, `Email ${email} is already registered.`);
-        }
+    // 2. Check for duplicate email or licenseNo
+    const existingEmail = await prisma.user.findFirst({ where: { email } });
+    if (existingEmail) {
+      throw new ApiError(
+        StatusCodes.CONFLICT,
+        `Email ${email} is already registered.`,
+      );
+    }
 
-        if (licenseNo) {
-            const existingLicense = await prisma.user.findFirst({ where: { licenseNo } });
-            if (existingLicense) {
-                throw new ApiError(StatusCodes.CONFLICT, `License Number ${licenseNo} is already registered.`);
-            }
-        }
+    if (licenseNo) {
+      const existingLicense = await prisma.user.findFirst({
+        where: { licenseNo },
+      });
+      if (existingLicense) {
+        throw new ApiError(
+          StatusCodes.CONFLICT,
+          `License Number ${licenseNo} is already registered.`,
+        );
+      }
+    }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 3. Handle Stripe trial for FREE plan or fetch existing subscription details
-        let stripeData: { stripeCustomerId: string; stripeSubscriptionId: string; trialEnd?: Date; currentPeriodEnd?: Date } | null = null;
-        let mappedPlanType = planType;
+    // 3. Handle Stripe trial for FREE plan or fetch existing subscription details
+    let stripeData: {
+      stripeCustomerId: string;
+      stripeSubscriptionId: string;
+      trialEnd?: Date;
+      currentPeriodEnd?: Date;
+    } | null = null;
+    let mappedPlanType = planType;
 
-        const isValidDate = (d: Date | undefined) => d instanceof Date && !isNaN(d.getTime());
+    const isValidDate = (d: Date | undefined) =>
+      d instanceof Date && !isNaN(d.getTime());
 
-        if (userData.subscriptionId) {
-            // User paid BEFORE signup, webhook missed them. Fetch details from Stripe so we can store next billing date.
-            try {
-                const existingStripeSub = await stripe.subscriptions.retrieve(userData.subscriptionId);
-                // current_period_end is null on INCOMPLETE subscriptions — guard against NaN dates
-                const periodEnd = existingStripeSub.current_period_end
-                    ? new Date(existingStripeSub.current_period_end * 1000)
-                    : undefined;
-                stripeData = {
-                    stripeCustomerId: existingStripeSub.customer as string,
-                    stripeSubscriptionId: existingStripeSub.id,
-                    ...(isValidDate(periodEnd) && { currentPeriodEnd: periodEnd })
-                } as any;
-            } catch (err: any) {
-                console.error("Failed to retrieve existing Stripe subscription during signup:", err);
-            }
-        } else if (planType === 'FREE') {
-            mappedPlanType = 'STANDARD';
-            try {
-                const customer = await stripe.customers.create({
-                    email: email,
-                    name: fullName,
-                    metadata: { role }
-                });
-
-                stripeData = {
-                    stripeCustomerId: customer.id,
-                    stripeSubscriptionId: undefined, // No stripe subscription for unlimited free plan
-                } as any;
-            } catch (error: any) {
-                console.error("Stripe customer creation failed:", error);
-                throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Failed to create Stripe customer");
-            }
-        }
-
-        // 4. Atomic Transaction
-        const userResult = await prisma.$transaction(async (tx) => {
-            const userCreated = await tx.user.create({
-                data: {
-                    fullName,
-                    email,
-                    password: hashedPassword,
-                    gender: genderEnum,
-                    age: age ?? null,
-                    contactNo: contactNo ?? null,
-                    address: address ?? null,
-                    status: status || "active",
-                    licenseNo: licenseNo ?? null,
-                    role,
-                    isApprove: userData.subscriptionId ? Approve.APPROVED : Approve.PENDING,
-                    //   country,
-                    state,
-                    publicKey: publicKey ?? null,
-                    privateKey: privateKey ?? null,
-                    isLicenseValid: false,
-                    stripeCustomerId: stripeData?.stripeCustomerId || userData.stripeCustomerId || userData.customerId || null,
-                    hasUsedFreeTrial: Boolean(userData.subscriptionId || (planType === 'FREE' && stripeData)),
-                    ...(userData.subscriptionId && {
-                        subscription: {
-                            create: {
-                                stripeSubscriptionId: userData.subscriptionId,
-                                plan: mappedPlanType || 'STANDARD',
-                                status: 'ACTIVE',
-                                ...(stripeData?.currentPeriodEnd && { currentPeriodEnd: stripeData.currentPeriodEnd })
-                            }
-                        }
-                    }),
-                    ...(planType && !userData.subscriptionId && {
-                        subscription: {
-                            create: {
-                                stripeSubscriptionId: stripeData?.stripeSubscriptionId || null,
-                                plan: mappedPlanType,
-                                status: planType === 'FREE' ? 'TRIALING' : 'ACTIVE',
-                                ...(stripeData?.currentPeriodEnd && { currentPeriodEnd: stripeData.currentPeriodEnd })
-                            }
-                        }
-                    })
-                }
-            });
-
-            let roleRecord;
-            if (role === Role.client) {
-                roleRecord = await tx.client.create({
-                    data: { userId: userCreated.id, isAccountCreatedByOwnClient: userData.isAccountCreatedByOwnClient },
-                    include: { user: true }
-                });
-            } else if (role === Role.provider) {
-                roleRecord = await tx.provider.create({
-                    data: { userId: userCreated.id, speciality: userData.speciality },
-                    include: { user: true }
-                });
-            } else if (role === Role.superAdmin) {
-                roleRecord = await tx.superAdmin.create({
-                    data: { userId: userCreated.id },
-                    include: { user: true }
-                });
-            }
-            return roleRecord;
+    if (userData.subscriptionId) {
+      // User paid BEFORE signup, webhook missed them. Fetch details from Stripe so we can store next billing date.
+      try {
+        const existingStripeSub = await stripe.subscriptions.retrieve(
+          userData.subscriptionId,
+        );
+        // current_period_end is null on INCOMPLETE subscriptions — guard against NaN dates
+        const periodEnd = existingStripeSub.current_period_end
+          ? new Date(existingStripeSub.current_period_end * 1000)
+          : undefined;
+        stripeData = {
+          stripeCustomerId: existingStripeSub.customer as string,
+          stripeSubscriptionId: existingStripeSub.id,
+          ...(isValidDate(periodEnd) && { currentPeriodEnd: periodEnd }),
+        } as any;
+      } catch (err: any) {
+        console.error(
+          "Failed to retrieve existing Stripe subscription during signup:",
+          err,
+        );
+      }
+    } else if (planType === "FREE") {
+      mappedPlanType = "STANDARD";
+      try {
+        const customer = await stripe.customers.create({
+          email: email,
+          name: fullName,
+          metadata: { role },
         });
 
-        // 5. Invitations
-        if (role === Role.provider && userData.inviteToken) {
-            await this.processInvitation(userData.inviteToken, userData.email, (userResult as any).userId);
-        }
-
-        return await this.getCompleteUserData((userResult as any).userId, role);
+        stripeData = {
+          stripeCustomerId: customer.id,
+          stripeSubscriptionId: undefined, // No stripe subscription for unlimited free plan
+        } as any;
+      } catch (error: any) {
+        console.error("Stripe customer creation failed:", error);
+        throw new ApiError(
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          "Failed to create Stripe customer",
+        );
+      }
     }
 
-    private async processInvitation(token: string, email: string, newProviderUserId: string) {
-        try {
-            const invitation = await prisma.invitation.findFirst({
-                where: { token, status: "PENDING" },
-                include: { invitedBy: true }
-            });
-
-            if (invitation && invitation.email.toLowerCase() === email.toLowerCase()) {
-                const inviterUserId = invitation.invitedBy.userId;
-
-                if (newProviderUserId) {
-                    if (invitation.groupId) {
-                        // User was invited to a specific group chat
-                        const createdMember = await prisma.groupMembers.create({
-                            data: {
-                                userId: newProviderUserId,
-                                groupChatId: invitation.groupId
-                            }
-                        });
-
-                        await prisma.groupChat.update({
-                            where: { id: invitation.groupId },
-                            data: {
-                                members: { connect: [{ id: createdMember.id }] }
-                            }
-                        }).catch(() => { /* Ignore connect errors if relation is complex, create is enough */ });
-                    } else if (inviterUserId && inviterUserId !== newProviderUserId) {
-                        // Standard provider invite -> 1-on-1 chat
-                        const [a, b] = [newProviderUserId, inviterUserId].sort();
-                        await prisma.chatChannel.upsert({
-                            where: { providerAId_providerBId: { providerAId: a, providerBId: b } },
-                            update: {},
-                            create: { providerAId: a, providerBId: b }
-                        });
-                    }
-
-                    await prisma.invitation.update({ where: { id: invitation.id }, data: { status: "ACCEPTED" } });
-                }
-            }
-        } catch (error) {
-            console.error("Error during invitation processing:", error);
-        }
-    }
-
-    async getCompleteUserData(userId: string, role: Role) {
-        let completeUserData: any = null;
-        const selectUser = {
-            id: true,
-            fullName: true,
-            email: true,
-            gender: true,
-            profileImage: true,
-            role: true,
-            status: true,
-            isApprove: true,
-            licenseNo: true,
-            age: true,
-            contactNo: true,
-            address: true,
-            //      country: true,
-            state: true,
-            isEmailVerified: true,
-            hasUsedFreeTrial: true,
-            blockedMembers: true,
+    // 4. Atomic Transaction
+    const userResult = await prisma.$transaction(async (tx) => {
+      const userCreated = await tx.user.create({
+        data: {
+          fullName,
+          email,
+          password: hashedPassword,
+          gender: genderEnum,
+          age: age ?? null,
+          contactNo: contactNo ?? null,
+          address: address ?? null,
+          status: status || "active",
+          licenseNo: licenseNo ?? null,
+          role,
+          isApprove: userData.subscriptionId
+            ? Approve.APPROVED
+            : Approve.PENDING,
+          //   country,
+          state,
+          publicKey: publicKey ?? null,
+          privateKey: privateKey ?? null,
+          isLicenseValid: false,
+          stripeCustomerId:
+            stripeData?.stripeCustomerId ||
+            userData.stripeCustomerId ||
+            userData.customerId ||
+            null,
+          hasUsedFreeTrial: Boolean(
+            userData.subscriptionId || (planType === "FREE" && stripeData),
+          ),
+          ...(userData.subscriptionId && {
             subscription: {
-                select: {
-                    id: true,
-                    plan: true,
-                    status: true,
-                    trialStart: true,
-                    trialEnd: true,
-                    currentPeriodEnd: true,
-                    cancelAtPeriodEnd: true,
-                    stripePriceId: true,
-                    billingCycle: true
-                }
-            }
-        };
+              create: {
+                stripeSubscriptionId: userData.subscriptionId,
+                plan: mappedPlanType || "STANDARD",
+                status: "ACTIVE",
+                ...(stripeData?.currentPeriodEnd && {
+                  currentPeriodEnd: stripeData.currentPeriodEnd,
+                }),
+              },
+            },
+          }),
+          ...(planType &&
+            !userData.subscriptionId && {
+              subscription: {
+                create: {
+                  stripeSubscriptionId:
+                    stripeData?.stripeSubscriptionId || null,
+                  plan: mappedPlanType,
+                  status: planType === "FREE" ? "TRIALING" : "ACTIVE",
+                  ...(stripeData?.currentPeriodEnd && {
+                    currentPeriodEnd: stripeData.currentPeriodEnd,
+                  }),
+                },
+              },
+            }),
+        },
+      });
 
-        const safeUserWithRole = {
-            select: {
-                id: true,
-                fullName: true,
-                email: true,
-                gender: true,
-                profileImage: true,
-                role: true,
-                status: true,
-                isApprove: true,
-                licenseNo: true,
-                age: true,
-                contactNo: true,
-                address: true,
-                //          country: true,
-                state: true,
-                isEmailVerified: true,
-                hasUsedFreeTrial: true,
-            }
-        };
+      let roleRecord;
+      if (role === Role.client) {
+        roleRecord = await tx.client.create({
+          data: {
+            userId: userCreated.id,
+            isAccountCreatedByOwnClient: userData.isAccountCreatedByOwnClient,
+          },
+          include: { user: true },
+        });
+      } else if (role === Role.provider) {
+        roleRecord = await tx.provider.create({
+          data: { userId: userCreated.id, speciality: userData.speciality },
+          include: { user: true },
+        });
+      } else if (role === Role.superAdmin) {
+        roleRecord = await tx.superAdmin.create({
+          data: { userId: userCreated.id },
+          include: { user: true },
+        });
+      }
+      return roleRecord;
+    });
 
-        if (role === Role.provider) {
-            completeUserData = await prisma.provider.findUnique({
-                where: { userId: userId },
-                include: {
-                    user: { select: selectUser },
-                    clientList: {
-                        include: {
-                            client: {
-                                include: { user: safeUserWithRole }
-                            }
-                        }
-                    }
-                }
-            });
-        } else if (role === Role.client) {
-            completeUserData = await prisma.client.findUnique({
-                where: { userId: userId },
-                include: {
-                    user: { select: selectUser },
-                    providerList: {
-                        include: {
-                            provider: {
-                                include: { user: safeUserWithRole }
-                            }
-                        }
-                    }
-                }
-            });
-        } else if (role === Role.superAdmin) {
-            completeUserData = await prisma.superAdmin.findUnique({
-                where: { userId: userId },
-                include: { user: { select: selectUser } }
-            });
-        }
-
-        if (completeUserData && completeUserData.user) {
-            delete (completeUserData.user as any).password;
-        }
-        return completeUserData;
+    // 5. Invitations
+    if (role === Role.provider && userData.inviteToken) {
+      await this.processInvitation(
+        userData.inviteToken,
+        userData.email,
+        (userResult as any).userId,
+      );
     }
 
-    async login(email: string, passwordInput: string) {
-        const user = await prisma.user.findUnique({
-            where: { email },
-            include: { client: true, provider: true, superAdmin: true }
-        });
+    return await this.getCompleteUserData((userResult as any).userId, role);
+  }
 
-        if (!user) {
-            throw new ApiError(StatusCodes.BAD_REQUEST, `Email: ${email} not found`);
+  private async processInvitation(
+    token: string,
+    email: string,
+    newProviderUserId: string,
+  ) {
+    try {
+      const invitation = await prisma.invitation.findFirst({
+        where: { token, status: "PENDING" },
+        include: { invitedBy: true },
+      });
+
+      if (
+        invitation &&
+        invitation.email.toLowerCase() === email.toLowerCase()
+      ) {
+        const inviterUserId = invitation.invitedBy.userId;
+
+        if (newProviderUserId) {
+          if (invitation.groupId) {
+            // User was invited to a specific group chat
+            const createdMember = await prisma.groupMembers.create({
+              data: {
+                userId: newProviderUserId,
+                groupChatId: invitation.groupId,
+              },
+            });
+
+            await prisma.groupChat
+              .update({
+                where: { id: invitation.groupId },
+                data: {
+                  members: { connect: [{ id: createdMember.id }] },
+                },
+              })
+              .catch(() => {
+                /* Ignore connect errors if relation is complex, create is enough */
+              });
+          } else if (inviterUserId && inviterUserId !== newProviderUserId) {
+            // Standard provider invite -> 1-on-1 chat
+            const [a, b] = [newProviderUserId, inviterUserId].sort();
+            await prisma.chatChannel.upsert({
+              where: {
+                providerAId_providerBId: { providerAId: a, providerBId: b },
+              },
+              update: {},
+              create: { providerAId: a, providerBId: b },
+            });
+          }
+
+          await prisma.invitation.update({
+            where: { id: invitation.id },
+            data: { status: "ACCEPTED" },
+          });
         }
-
-        if (!user.password) {
-            throw new ApiError(StatusCodes.BAD_REQUEST, "Password not set for this account");
-        }
-
-        const isPasswordValid = await bcrypt.compare(passwordInput, user.password);
-        if (!isPasswordValid) {
-            throw new ApiError(StatusCodes.UNAUTHORIZED, "Invaild Credentails");
-        }
-
-        let roleId;
-        if (user.role === Role.superAdmin) roleId = user.superAdmin?.id;
-        else if (user.role === Role.client) roleId = user.client?.id;
-        else if (user.role === Role.provider) roleId = user.provider?.id;
-
-        if (!roleId) {
-            throw new ApiError(StatusCodes.NOT_FOUND, `Account for ${email} is incomplete or invalid.`);
-        }
-
-        const completeUserData = await this.getCompleteUserData(user.id, user.role);
-
-        // Audit Log for Login
-        await AuditLogService.createLog({
-            userId: user.id,
-            action: "LOGIN",
-            resource: "AUTH",
-            details: {
-                email: user.email,
-                role: user.role,
-                timestamp: new Date().toISOString()
-            }
-        });
-
-        return completeUserData;
+      }
+    } catch (error) {
+      console.error("Error during invitation processing:", error);
     }
+  }
+
+  async getCompleteUserData(userId: string, role: Role) {
+    let completeUserData: any = null;
+    const selectUser = {
+      id: true,
+      fullName: true,
+      email: true,
+      gender: true,
+      profileImage: true,
+      role: true,
+      status: true,
+      isApprove: true,
+      licenseNo: true,
+      age: true,
+      contactNo: true,
+      address: true,
+      //      country: true,
+      state: true,
+      isEmailVerified: true,
+      hasUsedFreeTrial: true,
+      blockedMembers: true,
+      isTwoFactorEnabled: true,
+      subscription: {
+        select: {
+          id: true,
+          plan: true,
+          status: true,
+          trialStart: true,
+          trialEnd: true,
+          currentPeriodEnd: true,
+          cancelAtPeriodEnd: true,
+          stripePriceId: true,
+          billingCycle: true,
+        },
+      },
+    };
+
+    const safeUserWithRole = {
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        gender: true,
+        profileImage: true,
+        role: true,
+        status: true,
+        isApprove: true,
+        licenseNo: true,
+        age: true,
+        contactNo: true,
+        address: true,
+        //          country: true,
+        state: true,
+        isEmailVerified: true,
+        hasUsedFreeTrial: true,
+        isTwoFactorEnabled: true,
+      },
+    };
+
+    if (role === Role.provider) {
+      completeUserData = await prisma.provider.findUnique({
+        where: { userId: userId },
+        include: {
+          user: { select: selectUser },
+          clientList: {
+            include: {
+              client: {
+                include: { user: safeUserWithRole },
+              },
+            },
+          },
+        },
+      });
+    } else if (role === Role.client) {
+      completeUserData = await prisma.client.findUnique({
+        where: { userId: userId },
+        include: {
+          user: { select: selectUser },
+          providerList: {
+            include: {
+              provider: {
+                include: { user: safeUserWithRole },
+              },
+            },
+          },
+        },
+      });
+    } else if (role === Role.superAdmin) {
+      completeUserData = await prisma.superAdmin.findUnique({
+        where: { userId: userId },
+        include: { user: { select: selectUser } },
+      });
+    }
+
+    if (completeUserData && completeUserData.user) {
+      delete (completeUserData.user as any).password;
+    }
+    return completeUserData;
+  }
+
+  async login(email: string, passwordInput: string) {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { client: true, provider: true, superAdmin: true },
+    });
+
+    if (!user) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, `Email: ${email} not found`);
+    }
+
+    if (!user.password) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Password not set for this account",
+      );
+    }
+
+    const isPasswordValid = await bcrypt.compare(passwordInput, user.password);
+    if (!isPasswordValid) {
+      throw new ApiError(StatusCodes.UNAUTHORIZED, "Invaild Credentails");
+    }
+
+    let roleId;
+    if (user.role === Role.superAdmin) roleId = user.superAdmin?.id;
+    else if (user.role === Role.client) roleId = user.client?.id;
+    else if (user.role === Role.provider) roleId = user.provider?.id;
+
+    if (!roleId) {
+      throw new ApiError(
+        StatusCodes.NOT_FOUND,
+        `Account for ${email} is incomplete or invalid.`,
+      );
+    }
+
+    const completeUserData = await this.getCompleteUserData(user.id, user.role);
+
+    // Audit Log for Login
+    await AuditLogService.createLog({
+      userId: user.id,
+      action: "LOGIN",
+      resource: "AUTH",
+      details: {
+        email: user.email,
+        role: user.role,
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    return completeUserData;
+  }
 }

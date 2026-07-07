@@ -36,6 +36,9 @@ model User {
   isEmailVerified       Boolean            @default(false)
   verifyEmailToken      String?
   verifyEmailExpires    DateTime?
+  twoFactorSecret       String?
+  isTwoFactorEnabled    Boolean            @default(false)
+  twoFactorRecoveryCodes String[]          @default([])
   chatChannelsA         ChatChannel[]      @relation("ChatA")
   chatChannelsB         ChatChannel[]      @relation("ChatB")
   messages              ChatMessage[]
