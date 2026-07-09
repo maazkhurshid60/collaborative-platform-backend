@@ -8,6 +8,7 @@ import { io } from "../../socket/socket";
 import { asyncHandler } from "../../utils/asyncHandler";
 import logger from "../../utils/logger";
 import { AuditLogService } from "../../services/AuditLogService";
+import { sendFormTemplateEmail } from "../../utils/nodeMailer/SendFormTemplateEmail";
 
 const addFormTemplateApi = asyncHandler(async (req: Request, res: Response) => {
   const { title, description, schema } = req.body;
@@ -318,6 +319,23 @@ const shareFormApi = asyncHandler(async (req: Request, res: Response) => {
   });
 
   const secureLink = `${process.env.FRONTEND_URL || "https://app.kolabme.com"}/public/forms/${token}`;
+
+  // Send email asynchronously to the client if shared directly
+  if (share.client?.user) {
+    const clientUser = share.client.user;
+    const providerUser = share.provider?.user;
+
+    sendFormTemplateEmail(
+      clientUser.email,
+      clientUser.fullName,
+      providerUser?.fullName || "Staff",
+      share.template.title,
+      secureLink,
+      share.client.clientId || ""
+    ).catch((err) => {
+      logger.error("Error sending form template share email asynchronously:", err);
+    });
+  }
 
   return res
     .status(StatusCodes.CREATED)

@@ -6,6 +6,7 @@ import { Role, Gender, Approve } from "../generated/prisma/enums";
 import { stripe } from "../utils/stripe/stripe";
 import { ApiError } from "../utils/apiError";
 import { AuditLogService } from "./AuditLogService";
+import { kitQueue } from "./KitQueue";
 
 export class AuthService {
   async signup(userData: any) {
@@ -206,6 +207,17 @@ export class AuthService {
         userData.email,
         (userResult as any).userId,
       );
+    }
+
+    // 6. Sync user to Kit via BullMQ (both providers and clients)
+    console.log(`[Kit Sync Debug] Checking if we should sync user. Role: ${role}, email: ${email}, kitQueue exists: ${!!kitQueue}`);
+    if ((role === Role.provider || role === Role.client) && kitQueue) {
+      console.log(`[Kit Sync Debug] Enqueueing Kit sync job for ${email}...`);
+      kitQueue.add("sync-subscriber", { email, fullName }).then(job => {
+        console.log(`[Kit Sync Debug] Successfully enqueued Kit sync job ${job.id}`);
+      }).catch((err) => {
+        console.error("Failed to enqueue Kit sync job:", err);
+      });
     }
 
     return await this.getCompleteUserData((userResult as any).userId, role);

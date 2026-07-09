@@ -48,6 +48,10 @@ jest.mock("../socket/socket", () => ({
   },
 }));
 
+jest.mock("../utils/nodeMailer/SendFormTemplateEmail", () => ({
+  sendFormTemplateEmail: jest.fn().mockResolvedValue({ messageId: "mock-message-id" }),
+}));
+
 // ─── Imports ────────────────────────────────────────────────────────────────
 import { Request, Response } from "express";
 import {

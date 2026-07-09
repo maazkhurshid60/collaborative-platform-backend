@@ -34,6 +34,10 @@ if (shouldUseCluster && cluster.isPrimary) {
     const { initEmailWorker } = require("./services/EmailWorker");
     initEmailWorker();
 
+    // Start Kit queue worker in the primary process
+    const { initKitWorker } = require("./services/KitWorker");
+    initKitWorker();
+
     cluster.on('exit', (worker, code, signal) => {
         logger.warn(`Worker process ${worker.process.pid} died with code ${code} and signal ${signal}. Restarting...`);
         cluster.fork();
@@ -64,6 +68,10 @@ if (shouldUseCluster && cluster.isPrimary) {
     // Start email queue worker
     const { initEmailWorker } = require("./services/EmailWorker");
     initEmailWorker();
+
+    // Start Kit queue worker
+    const { initKitWorker } = require("./services/KitWorker");
+    initKitWorker();
 
     const PORT = process.env.PORT || 3000;
 
