@@ -12,6 +12,7 @@ import {
   getFormTemplateApi,
   updateFormTemplateApi,
   deleteProviderFormSubmissionsApi,
+  deleteExpiredFormShareApi,
 } from "../../controller/form/form.controller";
 import uploadDoc from "../../utils/multer/s3DocUploader";
 
@@ -33,6 +34,7 @@ formRouter.get(
 // Protected ==> Authenticated Form Submission Routes (Only accessible by logged-in clients)
 formRouter.get("/token/:token", getFormTemplateByTokenApi);
 formRouter.post("/submit/:token", submitFormApi);
+formRouter.delete("/share/:shareId/expired", deleteExpiredFormShareApi);
 formRouter.post(
   "/upload-pdf",
   uploadDoc.single("file"),

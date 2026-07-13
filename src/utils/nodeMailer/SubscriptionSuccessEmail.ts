@@ -7,10 +7,10 @@ export const sendSubscriptionSuccessEmail = async (
   planName: string,
   amount: string,
   billingCycle: string,
-  nextBillingDate?: string
+  nextBillingDate?: string,
 ) => {
   const frontendUrl = getFrontendUrl();
-  
+
   // Format plan display name
   const formattedPlan = `${planName.charAt(0).toUpperCase() + planName.slice(1).toLowerCase()} Plan (${billingCycle.charAt(0).toUpperCase() + billingCycle.slice(1).toLowerCase()})`;
 
@@ -156,12 +156,16 @@ export const sendSubscriptionSuccessEmail = async (
                   <td style="font-size: 14px; color: #64748b; padding-bottom: 8px;">Amount Paid</td>
                   <td style="font-size: 14px; color: #0f172a; font-weight: 600; text-align: right; padding-bottom: 8px;">${amount}</td>
                 </tr>
-                ${nextBillingDate ? `
+                ${
+                  nextBillingDate
+                    ? `
                 <tr>
                   <td style="font-size: 14px; color: #64748b;">Next Renewal</td>
                   <td style="font-size: 14px; color: #0f172a; font-weight: 600; text-align: right;">${nextBillingDate}</td>
                 </tr>
-                ` : ''}
+                `
+                    : ""
+                }
               </table>
             </div>
 
@@ -176,7 +180,7 @@ export const sendSubscriptionSuccessEmail = async (
 
             <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; margin-top: 40px;">
               <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; line-height: 1.5;">
-                &copy; ${new Date().getFullYear()} Kolabme Collaborative Platform. All rights reserved.
+                &copy; ${new Date().getFullYear()} Kolabme. All rights reserved.
               </p>
             </div>
           </div>

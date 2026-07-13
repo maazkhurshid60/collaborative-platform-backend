@@ -1,7 +1,12 @@
 import { transporter } from "./NodeMailer";
 import { getFrontendUrl } from "./getFrontendUrl";
 
-export const sendApprovalEmail = async (toEmail: string, name: string, clientId: string | null, licenseNo?: string) => {
+export const sendApprovalEmail = async (
+  toEmail: string,
+  name: string,
+  clientId: string | null,
+  licenseNo?: string,
+) => {
   const isProvider = !clientId && !!licenseNo;
   const loginUrl = `${getFrontendUrl()}/login`;
   const signupUrl = `${getFrontendUrl()}/signup-with-client-id`;
@@ -102,7 +107,7 @@ export const sendApprovalEmail = async (toEmail: string, name: string, clientId:
         </div>
 
         <div class="footer">
-          <p style="margin: 0;">&copy; ${new Date().getFullYear()} Kolabme Collaborative Platform. All rights reserved.</p>
+          <p style="margin: 0;">&copy; ${new Date().getFullYear()} Kolabme. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -161,7 +166,7 @@ export const sendApprovalEmail = async (toEmail: string, name: string, clientId:
           </div>
         </div>
         <div class="footer">
-          <p style="margin: 0;">&copy; ${new Date().getFullYear()} Kolabme Collaborative Platform. All rights reserved.</p>
+          <p style="margin: 0;">&copy; ${new Date().getFullYear()} Kolabme. All rights reserved.</p>
         </div>
       </div>
     </body>

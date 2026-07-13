@@ -331,9 +331,12 @@ const shareFormApi = asyncHandler(async (req: Request, res: Response) => {
       providerUser?.fullName || "Staff",
       share.template.title,
       secureLink,
-      share.client.clientId || ""
+      share.client.clientId || "",
     ).catch((err) => {
-      logger.error("Error sending form template share email asynchronously:", err);
+      logger.error(
+        "Error sending form template share email asynchronously:",
+        err,
+      );
     });
   }
 
@@ -695,35 +698,22 @@ const submitFormApi = asyncHandler(async (req: Request, res: Response) => {
 
 const listFormTemplatesApi = asyncHandler(
   async (req: Request, res: Response) => {
-    try {
-      const templates = await prisma.formTemplate.findMany({
-        orderBy: { createdAt: "desc" },
-        include: {
-          shares: true,
-        },
-      });
+    const templates = await prisma.formTemplate.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        shares: true,
+      },
+    });
 
-      return res
-        .status(StatusCodes.OK)
-        .json(
-          new ApiResponse(
-            StatusCodes.OK,
-            { templates },
-            "Form templates retrieved successfully.",
-          ),
-        );
-    } catch (error) {
-      logger.error("Error retrieving form templates:", error);
-      return res
-        .status(StatusCodes.INTERNAL_SERVER_ERROR)
-        .json(
-          new ApiResponse(
-            StatusCodes.INTERNAL_SERVER_ERROR,
-            { error: "Internal Server Error during retrieving templates." },
-            "Error",
-          ),
-        );
-    }
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          { templates },
+          "Form templates retrieved successfully.",
+        ),
+      );
   },
 );
 
@@ -896,6 +886,145 @@ const uploadFormPdfApi = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+const deleteExpiredFormShareApi = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { shareId } = req.params as { shareId: string };
+
+    if (!shareId) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(
+          new ApiResponse(
+            StatusCodes.BAD_REQUEST,
+            { error: "shareId is required." },
+            "Bad Request",
+          ),
+        );
+    }
+
+    const share = await prisma.formShare.findUnique({
+      where: { id: shareId },
+      include: {
+        template: true,
+        provider: {
+          select: {
+            userId: true,
+          },
+        },
+        client: {
+          include: {
+            user: {
+              select: {
+                fullName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!share) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json(
+          new ApiResponse(
+            StatusCodes.NOT_FOUND,
+            { error: "Form share not found." },
+            "Not Found",
+          ),
+        );
+    }
+
+    // Guard: must be genuinely expired
+    if (new Date() <= share.expiresAt) {
+      return res.status(StatusCodes.FORBIDDEN).json(
+        new ApiResponse(
+          StatusCodes.FORBIDDEN,
+          {
+            error: "This form link has not yet expired and cannot be deleted.",
+          },
+          "Forbidden",
+        ),
+      );
+    }
+
+    // Guard: cannot delete a completed submission
+    if (share.status === "SUBMITTED") {
+      return res
+        .status(StatusCodes.FORBIDDEN)
+        .json(
+          new ApiResponse(
+            StatusCodes.FORBIDDEN,
+            { error: "Submitted forms cannot be deleted." },
+            "Forbidden",
+          ),
+        );
+    }
+
+    const deletedAt = new Date().toISOString();
+    const clientName = share.client?.user?.fullName || "A client";
+
+    // Write to FormAuditTrail (form-scoped audit log, no submissionId needed for expired records)
+    await prisma.formAuditTrail.create({
+      data: {
+        action: "EXPIRED_SHARE_DELETED_BY_CLIENT",
+        ipAddress: req.ip || req.socket.remoteAddress || "unknown",
+        userAgent: req.headers["user-agent"] || "unknown",
+        details: {
+          shareId: share.id,
+          templateTitle: share.template?.title,
+          clientId: share.clientId,
+          expiredAt: share.expiresAt,
+          deletedAt,
+        },
+      },
+    });
+
+    await AuditLogService.createLog({
+      userId: (req as any).user?.id,
+      action: "DELETE_EXPIRED_FORM_SHARE",
+      resource: "DOCUMENT",
+      resourceId: share.id,
+      details: {
+        templateTitle: share.template?.title,
+        clientId: share.clientId,
+        expiredAt: share.expiresAt,
+        deletedAt,
+      },
+    });
+
+    // Notify the provider so this shows up in their dashboard's "Recent Activity" list
+    if (share.provider?.userId) {
+      const providerNotification = await prisma.notification.create({
+        data: {
+          recipientId: share.provider.userId,
+          senderId: (req as any).user?.id || null,
+          title: "Action Required: Expired Form Removed",
+          message: `${clientName} removed the expired form link for "${share.template.title}". If this form is still required, please re-share it with the client.`,
+          type: "DOCUMENT_SHARED",
+        },
+      });
+
+      io.to(`notification_room_${share.provider.userId}`).emit(
+        "new_notification",
+        providerNotification,
+      );
+    }
+
+    // Delete the share — FormSubmission cascades automatically via Prisma schema
+    await prisma.formShare.delete({ where: { id: shareId } });
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          { deleted: true, shareId },
+          "Expired form share deleted successfully.",
+        ),
+      );
+  },
+);
+
 export {
   addFormTemplateApi,
   shareFormApi,
@@ -909,4 +1038,5 @@ export {
   updateFormTemplateApi,
   uploadFormPdfApi,
   deleteProviderFormSubmissionsApi,
+  deleteExpiredFormShareApi,
 };

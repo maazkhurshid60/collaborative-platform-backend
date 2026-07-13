@@ -3,7 +3,7 @@ import { transporter } from "./NodeMailer";
 export const sendVerifyEmailLink = async (
   toEmail: string,
   name: string,
-  token: string
+  token: string,
 ) => {
   const isDevelopment = process.env.NODE_ENV?.toUpperCase() === "DEVELOPMENT";
   const frontendUrl = isDevelopment
@@ -157,7 +157,7 @@ export const sendVerifyEmailLink = async (
             
             <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; margin-top: 40px;">
               <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; line-height: 1.5;">
-                &copy; ${new Date().getFullYear()} Kolabme Collaborative Platform. All rights reserved.<br>
+                &copy; ${new Date().getFullYear()} Kolabme. All rights reserved.<br>
                 If you did not create this account, you can safely ignore this email.
               </p>
             </div>

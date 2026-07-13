@@ -4,10 +4,10 @@ export const sendShareChatEmail = async (
   toEmail: string,
   senderName: string,
   chatLink: string,
-  chatType: 'individual' | 'group',
-  chatName?: string
+  chatType: "individual" | "group",
+  chatName?: string,
 ) => {
-  const isGroup = chatType === 'group';
+  const isGroup = chatType === "group";
   const subject = isGroup
     ? `${senderName} shared the group chat "${chatName}" with you`
     : `${senderName} shared a chat with you`;
@@ -181,7 +181,7 @@ export const sendShareChatEmail = async (
             </p>
             
             <div class="chat-card">
-              <span class="chat-type">${isGroup ? 'Group Conversation' : 'Direct Conversation'}</span>
+              <span class="chat-type">${isGroup ? "Group Conversation" : "Direct Conversation"}</span>
               <p class="chat-name">${isGroup ? chatName : `Chat with ${senderName}`}</p>
             </div>
             
@@ -199,7 +199,7 @@ export const sendShareChatEmail = async (
 
             <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; margin-top: 24px;">
               <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; line-height: 1.5;">
-                This is an automated invitation from <strong>Kolabme Collaborative Platform</strong>. If you weren't expecting this, you can safely ignore this email.
+                This is an automated invitation from <strong>Kolabme</strong>. If you weren't expecting this, you can safely ignore this email.
               </p>
             </div>
           </div>

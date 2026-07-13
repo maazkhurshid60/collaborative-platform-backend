@@ -3,9 +3,8 @@ import { transporter } from "./NodeMailer";
 export const sendInvitationEmail = async (
   toEmail: string,
   providerName: string,
-  invitationChatLink: string
+  invitationChatLink: string,
 ) => {
-
   const userName = toEmail.split("@")[0];
 
   const htmlContent = `
@@ -162,7 +161,7 @@ export const sendInvitationEmail = async (
         
         <div class="footer">
           <p style="margin: 0;">
-            &copy; ${new Date().getFullYear()} Kolabme Collaborative Platform. All rights reserved.
+            &copy; ${new Date().getFullYear()} Kolabme. All rights reserved.
           </p>
         </div>
       </div>
@@ -177,9 +176,6 @@ export const sendInvitationEmail = async (
     html: htmlContent,
   });
 };
-
-
-
 
 // <a href="${process.env.NODE_ENV === "DEVELOPMENT" ? process.env.FRONTEND_LOCAL_URL : process.env.FRONTEND_AWS_URL}/"
 //  <p><strong>${providerName}</strong> has invited you to join our collaborative platform.</p>

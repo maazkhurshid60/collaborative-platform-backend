@@ -4,9 +4,9 @@ export const sendDocumentEmail = async (
   toEmail: string,
   clientName: string,
   providerName: string,
-  clientId: string
+  clientId: string,
 ) => {
-  const loginUrl = `${process.env.NODE_ENV === "development" ? process.env.FRONTEND_LOCAL_URL : process.env.FRONTEND_AWS_URL}/signup-with-client-id/`;
+  const loginUrl = `${process.env.NODE_ENV === "development" ? process.env.FRONTEND_LOCAL_URL : process.env.FRONTEND_AWS_URL}/documents`;
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -187,7 +187,7 @@ export const sendDocumentEmail = async (
 
             <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; margin-top: 40px;">
               <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; line-height: 1.5;">
-                &copy; ${new Date().getFullYear()} Kolabme Collaborative Platform. All rights reserved.
+                &copy; ${new Date().getFullYear()} Kolabme. All rights reserved.
               </p>
             </div>
           </div>

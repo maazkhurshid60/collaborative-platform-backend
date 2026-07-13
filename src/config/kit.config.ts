@@ -9,4 +9,8 @@ export const kitConfig = {
   
   // Base URL for the v4 API
   baseUrl: "https://api.kit.com/v4",
+
+  // Tag IDs for Free and Premium users
+  freeUserTagId: process.env.KIT_FREE_USER_TAG_ID || "",
+  premiumUserTagId: process.env.KIT_PREMIUM_USER_TAG_ID || "",
 };

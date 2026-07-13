@@ -367,7 +367,7 @@ export const sendWelcomeClientEmail = async (
         </div>
 
         <div class="footer">
-          <p style="margin:0;">&copy; ${new Date().getFullYear()} Kolabme Collaborative Platform. All rights reserved.</p>
+          <p style="margin:0;">&copy; ${new Date().getFullYear()} Kolabme. All rights reserved.</p>
         </div>
       </div>
     </body>

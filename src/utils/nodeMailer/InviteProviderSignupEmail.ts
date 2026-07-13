@@ -168,7 +168,7 @@ export const sendProviderSignupInviteEmail = async (
 
             <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; margin-top: 40px;">
               <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; line-height: 1.5;">
-                <strong>Security Note:</strong> If you weren't expecting this invitation, you can safely ignore this email. This is an automated message from <strong>Kolabme Collaborative Platform</strong>.
+                <strong>Security Note:</strong> If you weren't expecting this invitation, you can safely ignore this email. This is an automated message from <strong>Kolabme</strong>.
               </p>
             </div>
           </div>

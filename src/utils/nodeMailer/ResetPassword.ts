@@ -159,7 +159,7 @@ export const sendResetPasswordEmail = async (
 
             <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; margin-top: 40px;">
               <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; line-height: 1.5;">
-                &copy; ${new Date().getFullYear()} Kolabme Collaborative Platform. All rights reserved.
+                &copy; ${new Date().getFullYear()} Kolabme. All rights reserved.
               </p>
             </div>
           </div>

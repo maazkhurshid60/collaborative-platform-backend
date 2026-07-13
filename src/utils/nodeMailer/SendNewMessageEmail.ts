@@ -4,10 +4,10 @@ export const sendNewMessageEmail = async (
   toEmail: string,
   senderName: string,
   chatLink: string,
-  chatType: 'individual' | 'group',
-  chatName?: string
+  chatType: "individual" | "group",
+  chatName?: string,
 ) => {
-  const isGroup = chatType === 'group';
+  const isGroup = chatType === "group";
   const subject = isGroup
     ? `New messages from ${senderName} in "${chatName}"`
     : `New messages from ${senderName}`;
@@ -181,7 +181,7 @@ export const sendNewMessageEmail = async (
             </p>
             
             <div class="chat-card">
-              <span class="chat-type">${isGroup ? 'Group Conversation' : 'Direct Conversation'}</span>
+              <span class="chat-type">${isGroup ? "Group Conversation" : "Direct Conversation"}</span>
               <p class="chat-name">${isGroup ? chatName : `Chat with ${senderName}`}</p>
             </div>
             
@@ -195,7 +195,7 @@ export const sendNewMessageEmail = async (
 
             <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; margin-top: 24px;">
               <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; line-height: 1.5;">
-                This is an automated notification from <strong>Kolabme Collaborative Platform</strong>.
+                This is an automated notification from <strong>Kolabme</strong>.
               </p>
             </div>
           </div>
