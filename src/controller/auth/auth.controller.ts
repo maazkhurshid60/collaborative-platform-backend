@@ -1,866 +1,674 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "../../utils/asyncHandler";
-import { clientSchema, loginSchema, providerSchema, superAdminSchema, userSchema } from "../../schema/auth/auth.schema";
-import { ApiResponse } from "../../utils/apiResponse";
-import { StatusCodes } from "http-status-codes";
-import prisma from "../../db/db.config";
-import { Role } from "@prisma/client";
-import bcrypt from "bcrypt";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import { StatusCodes } from "http-status-codes";
+
+import { asyncHandler } from "../../utils/asyncHandler";
+import { loginSchema, userSchema } from "../../schema/auth/auth.schema";
+import { ApiResponse } from "../../utils/apiResponse";
+import prisma from "../../db/db.config";
+
 import { cookiesOptions } from "../../utils/constants";
 import { generateResetToken } from "../../utils/generateResetPasswordToken";
 import { sendResetPasswordEmail } from "../../utils/nodeMailer/ResetPassword";
-import crypto from "crypto";
-import { sendVerificationEmail } from "../../utils/nodeMailer/VerificationEmail";
+import { sendVerifyEmailLink } from "../../utils/nodeMailer/VerifyEmailLink";
+import { AuthService } from "../../services/AuthService";
+import { SubscriptionService } from "../../services/SubscriptionService";
+import { AuditLogService } from "../../services/AuditLogService";
+
+const authService = new AuthService();
+const subscriptionService = new SubscriptionService();
 
 const signupApi = asyncHandler(async (req: Request, res: Response) => {
-    // Validate User Schema
-    const userParsedData = userSchema.safeParse(req.body);
-    if (!userParsedData.success) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
-        );
-    }
-    //get data for user
-    const { fullName, gender = "male", age, contactNo, address, status = "active", licenseNo, role, isApprove, country, state, publicKey,
-        privateKey } = userParsedData.data;
+  const userParsedData = userSchema.safeParse(req.body);
+  if (!userParsedData.success) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(
+        new ApiResponse(
+          StatusCodes.BAD_REQUEST,
+          { error: userParsedData.error.errors },
+          "Validation failed",
+        ),
+      );
+  }
+  const completeUserData = await authService.signup(req.body);
 
-    // Check if User Exists
-    const existingUser = await prisma.user.findFirst({ where: { licenseNo } });
-    if (existingUser) {
+  const verifyToken = crypto.randomBytes(32).toString("hex");
+  const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-        return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `License Number ${licenseNo} is already registered.` }, "Validation failed")
-        );
-    }
-    const clientParsed = clientSchema.safeParse(req.body);
-    if (!clientParsed.success) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
-        );
-    }
-    //get client data
-    const { isAccountCreatedByOwnClient, email, password } = clientParsed.data;
-    //check duplicate client
-    const existingClient = await prisma.client.findFirst({ where: { email } });
-    if (existingClient) {
-        return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-        );
-    }
+  await prisma.user.update({
+    where: { id: completeUserData.user.id },
+    data: {
+      verifyEmailToken: verifyToken,
+      verifyEmailExpires: verifyExpires,
+    },
+  });
 
+  try {
+    await sendVerifyEmailLink(
+      completeUserData.user.email,
+      completeUserData.user.fullName,
+      verifyToken,
+    );
+  } catch (err) {
+    console.error("Failed to send verification email during signup:", err);
+  }
 
-    const userData: any = {
-        fullName, gender, age, contactNo, address, status, licenseNo, role, isApprove: "pending", country, state, publicKey, privateKey
-    };
-    if (gender !== undefined) userData.gender = gender;
-    if (age !== undefined) userData.age = age;
-    if (contactNo !== undefined) userData.contactNo = contactNo;
-    if (address !== undefined) userData.address = address;
-    if (status !== undefined) userData.status = status;
+  const jwtSecret = process.env.JWT_SECRET || "default_secret";
+  const token = jwt.sign(
+    {
+      userId: completeUserData.user.id,
+      email: completeUserData.user.email,
+      role: completeUserData.user.role,
+    },
+    jwtSecret,
+    { expiresIn: "45m" },
+  );
 
-    const userCreated = await prisma.user.create({
-        data: userData,
-    });
+  // Update the returned object so frontend knows it's unverified natively
+  const finalUserData = {
+    ...completeUserData,
+    user: { ...completeUserData.user, isEmailVerified: false },
+  };
 
-    // Handle Client Signup
-    if (role === Role.client) {
+  // Audit Log for User Signup
+  await AuditLogService.createLog({
+    userId: completeUserData.user.id,
+    action: "USER SIGNUP",
+    resource: "USER",
+    resourceId: completeUserData.user.id,
+    details: {
+      email: completeUserData.user.email,
+      role: completeUserData.user.role,
+    },
+  });
 
-
-        //hashing the client's password
-        const hashedPassword = await bcrypt.hash(password ?? "", 10);
-
-        const clientCreated = await prisma.client.create({ data: { userId: userCreated.id, isAccountCreatedByOwnClient, email, password: hashedPassword }, include: { user: true } });
-        return res.status(StatusCodes.CREATED).json(
-            new ApiResponse(StatusCodes.CREATED, clientCreated, "Your account has been sent to the super admin for verification. You will receive a verification email once approved, after which you'll be able to log in.")
-        );
-    }
-    // Handle Provider Signup
-    else if (role === Role.provider) {
-        const providerParsed = providerSchema.safeParse(req.body);
-        if (!providerParsed.success) {
-            return res.status(StatusCodes.BAD_REQUEST).json(
-                new ApiResponse(StatusCodes.BAD_REQUEST, { error: providerParsed.error.errors }, "Validation failed")
-            );
-        }
-
-        const { specialty, email, password } = providerParsed.data;
-        const existingUserByEmail = await prisma.provider.findFirst({ where: { email } });
-        if (existingUserByEmail) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email ${email} is already registered.` }, "Validation failed")
-            );
-        }
-
-        const hashedPassword = await bcrypt.hash(password ?? "", 10);
-        const existingProvider = await prisma.provider.findFirst({ where: { email } });
-        if (existingProvider) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-            );
-        }
-
-        const providerCreated = await prisma.provider.create({ data: { userId: userCreated.id, specialty, email, password: hashedPassword }, include: { user: true } });
-        return res.status(StatusCodes.CREATED).json(
-            new ApiResponse(StatusCodes.CREATED, providerCreated, "Your account has been sent to the super admin for verification. You will receive a verification email once approved, after which you'll be able to log in.")
-        );
-    }
-    // Handle Super Admin Signup
-    else if (role === Role.superadmin) {
-        const superAdminParsed = superAdminSchema.safeParse(req.body);
-        if (!superAdminParsed.success) {
-            return res.status(StatusCodes.BAD_REQUEST).json(
-                new ApiResponse(StatusCodes.BAD_REQUEST, { error: superAdminParsed.error.errors }, "Validation failed")
-            );
-        }
-
-        const { email, password } = superAdminParsed.data;
-        const existingUserByEmail = await prisma.superAdmin.findFirst({ where: { email } });
-        if (existingUserByEmail) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email ${email} is already registered.` }, "Validation failed")
-            );
-        }
-
-        const hashedPassword = await bcrypt.hash(password ?? "", 10);
-        const existingProvider = await prisma.superAdmin.findFirst({ where: { email } });
-        if (existingProvider) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-            );
-        }
-
-        const providerCreated = await prisma.superAdmin.create({ data: { userId: userCreated.id, email, password: hashedPassword }, include: { user: true } });
-        return res.status(StatusCodes.CREATED).json(
-            new ApiResponse(StatusCodes.CREATED, providerCreated, "Your account has been sent to the super admin for verification. You will receive a verification email once approved, after which you'll be able to log in.")
-        );
-    }
-
-
+  return res
+    .status(StatusCodes.CREATED)
+    .json(
+      new ApiResponse(
+        StatusCodes.CREATED,
+        { token, user: finalUserData },
+        "User signed up successfully",
+      ),
+    );
 });
-
-
-
-
-const updateMeApi = asyncHandler(async (req: Request, res: Response) => {
-    const { loginUserId } = req.body;
-    
-    if (req.body.age) {
-        req.body.age = Number(req.body.age);
-    }
-
-    if (req.body.isAccountCreatedByOwnClient) {
-        req.body.isAccountCreatedByOwnClient = req.body.isAccountCreatedByOwnClient === "true";
-    }
-
-    const files = req.files as {
-        profileImage?: Express.Multer.File[];
-        eSignature?: Express.Multer.File[];
-    };
-
-    const profileImage = files?.profileImage?.[0] as any;;
-    const eSignature = files?.eSignature?.[0] as any;
-
-
-    const existingUser = await prisma.user.findFirst({
-        where: { id: loginUserId },
-        select: { profileImage: true, role: true }
-    });
-
-
-
-    if (!existingUser) {
-        return res.status(StatusCodes.NOT_FOUND).json(
-            new ApiResponse(StatusCodes.NOT_FOUND, { error: "User does not exist." }, "Not Found Error.")
-        );
-    }
-
-    let profileImageUpdate: string = "null";
-    if (profileImage) {
-        profileImageUpdate = profileImage.location;
-    }
-
-
-    const userParsedData = userSchema.safeParse({
-        ...req.body,
-        profileImage: profileImageUpdate !== undefined ? profileImageUpdate : existingUser.profileImage
-    });
-
-    if (!userParsedData.success) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: userParsedData.error.errors }, "Validation failed")
-        );
-    }
-
-    const { fullName, gender, age, contactNo, address, status, licenseNo, role, country, state } = userParsedData.data;
-
-    const updatedUser = await prisma.user.update({
-        where: { id: loginUserId },
-        data: {
-            fullName,
-            gender,
-            age,
-            contactNo,
-            address,
-            status,
-            licenseNo,
-            role, isApprove: "approve"
-            , country, state,
-            // Only update profileImage if it was explicitly changed
-            ...(profileImageUpdate !== undefined && { profileImage: profileImageUpdate })
-        }
-    });
-
-    // Handle Client Update
-    if (role === Role.client) {
-
-        const clientParsed = clientSchema.safeParse(req.body);
-        if (!clientParsed.success) {
-            return res.status(StatusCodes.BAD_REQUEST).json(
-                new ApiResponse(StatusCodes.BAD_REQUEST, { error: clientParsed.error.errors }, "Validation failed")
-            );
-        }
-
-        const { email, password } = clientParsed.data;
-
-        const existingClient = await prisma.client.findFirst({
-            where: { email, NOT: { userId: loginUserId } }
-        });
-
-        if (existingClient) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-            );
-        }
-
-        const updateData: any = {
-            email,
-        };
-
-        const oldClient = await prisma.client.findFirst({
-            where: { userId: loginUserId },
-            select: { password: true }
-        });
-
-        if (password && password.trim() !== "") {
-            updateData.password = await bcrypt.hash(password, 10);
-        } else {
-            updateData.password = oldClient?.password;
-        }
-        // Handle eSignature updates
-        if (eSignature) {
-            updateData.eSignature = eSignature.location;
-        } else {
-            updateData.eSignature = "null";
-        }
-        const userId = String(loginUserId);
-
-        const clientUpdate = await prisma.client.update({
-            where: { userId },
-            data: updateData,
-            include: { user: true }
-        });
-
-
-        return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, clientUpdate, "User updated successfully")
-        );
-    }
-
-    // Handle Provider Update
-    else if (role === Role.provider) {
-        const providerParsed = providerSchema.safeParse(req.body);
-        if (!providerParsed.success) {
-            return res.status(StatusCodes.BAD_REQUEST).json(
-                new ApiResponse(StatusCodes.BAD_REQUEST, { error: providerParsed.error.errors }, "Validation failed")
-            );
-        }
-
-        const { email, password, specialty } = providerParsed.data;
-
-        const existingProvider = await prisma.provider.findFirst({
-            where: { email, NOT: { userId: loginUserId } }
-        });
-
-        if (existingProvider) {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is already taken.` }, "Validation failed")
-            );
-        }
-
-        const updateData: any = {
-            email,
-            specialty,
-        };
-
-        if (password && password.trim() !== "") {
-            updateData.password = await bcrypt.hash(password, 10);
-        }
-
-        const providerUpdate = await prisma.provider.update({
-            where: { userId: loginUserId },
-            data: updateData,
-            include: { user: true }
-        });
-
-        return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, providerUpdate, "User updated successfully")
-        );
-    }
-});
-
-
-
 
 const logInApi = asyncHandler(async (req: Request, res: Response) => {
-    const parsedLoginData = loginSchema.safeParse(req.body);
+  const parsedLoginData = loginSchema.safeParse(req.body);
+  if (!parsedLoginData.success) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(
+        new ApiResponse(
+          StatusCodes.BAD_REQUEST,
+          { error: parsedLoginData.error.errors },
+          "Validation failed",
+        ),
+      );
+  }
 
-    if (!parsedLoginData.success) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: parsedLoginData.error.errors }, "Validation failed")
-        );
-    }
+  const { email, password } = parsedLoginData.data;
+  const loggedInUser = await authService.login(email, password);
 
-    const { email, password } = parsedLoginData.data;
-
-    // Check in superadmin table first
-    const superAdmin = await prisma.superAdmin.findFirst({
-        where: { email },
-        include: { user: true },
-    });
-
-    if (superAdmin) {
-        const isPasswordValid = await bcrypt.compare(password, superAdmin.password);
-        if (!isPasswordValid) {
-            return res.status(StatusCodes.UNAUTHORIZED).json(
-                new ApiResponse(StatusCodes.UNAUTHORIZED, { error: "Incorrect password" }, "Authentication failed")
-            );
-        }
-
-        const jwtSecret = process.env.JWT_SECRET || "default_secret";
-        const token = jwt.sign(
-            { userId: superAdmin.user.id, email: superAdmin.email, role: "superadmin" },
-            jwtSecret,
-            { expiresIn: "45m" }
-        );
-
-        return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, { token, user: superAdmin }, "Login successful")
-        );
-    }
-
-    // Fallback: Check in provider or client
-    const user = await prisma.provider.findFirst({
-        where: { email },
-        include: {
-            user: true,
-            clientList: {
-                include: {
-                    client: {
-                        include: {
-                            user: true
-                        }
-                    }
-                }
-            }
-        }
-    }) || await prisma.client.findFirst({
-        where: { email },
-        include: {
-            user: true,
-            providerList: true
-        }
-    });
-
-    if (!user) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: `Email: ${email} not found` }, "Validation failed")
-        );
-    }
-
-    if (!user.password) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Password not set for this account" }, "Validation failed")
-        );
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-        return res.status(StatusCodes.UNAUTHORIZED).json(
-            new ApiResponse(StatusCodes.UNAUTHORIZED, { error: "Password is wrong" }, "Authentication failed")
-        );
-    }
-
-    const role = user?.user?.role;
-
-    const jwtSecret = process.env.JWT_SECRET || "default_secret";
-    const token = jwt.sign(
-        { userId: user.id, email: user.email, role },
-        jwtSecret,
-        { expiresIn: "45m" }
-    );
-
+  // Check for 2FA requirement (Only for providers currently)
+  if (
+    loggedInUser.user.role === "provider" &&
+    loggedInUser.user.isTwoFactorEnabled
+  ) {
     return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { token, user }, "Login successful")
+      new ApiResponse(
+        StatusCodes.OK,
+        {
+          require2FA: true,
+          userId: loggedInUser.user.id,
+        },
+        "Two-factor authentication required",
+      ),
+    );
+  }
+
+  const jwtSecret = process.env.JWT_SECRET || "default_secret";
+  const token = jwt.sign(
+    {
+      userId: loggedInUser.user.id,
+      email: loggedInUser.user.email,
+      role: loggedInUser.user.role,
+    },
+    jwtSecret,
+    { expiresIn: "45m" },
+  );
+
+  return res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        { token, user: loggedInUser },
+        "Login successful",
+      ),
     );
 });
-
-const blockUserApi = asyncHandler(async (req: Request, res: Response) => {
-    const { blockUserid, loginUserId } = req.body;
-
-    // 1. Check if block user exists
-    const isBlockUserExist = await prisma.user.findUnique({ where: { id: blockUserid } });
-    if (!isBlockUserExist) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "User to be blocked not found" }, "Validation failed")
-        );
-    }
-
-    // 2. Get login user (who wants to block someone)
-    const loginUser = await prisma.user.findUnique({ where: { id: loginUserId } });
-    if (!loginUser) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Blocking user not found" }, "Validation failed")
-        );
-    }
-
-    // 3. If already blocked, return early
-    if (loginUser.blockedMembers.includes(blockUserid)) {
-        return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: "User is already blocked" }, "Already blocked")
-        );
-    }
-
-    // 4. Add blockUserid to blockedMembers list
-    const updatedBlockedMembers = [...loginUser.blockedMembers, blockUserid];
-
-    // 5. Update user
-    const updatedUser = await prisma.user.update({
-        where: { id: loginUserId },
-        data: {
-            blockedMembers: updatedBlockedMembers,
-        },
-    });
-
-    return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { user: updatedUser }, "User blocked successfully")
-    );
-});
-
-const getAllUsersApi = asyncHandler(async (req: Request, res: Response) => {
-    const allUsers = await prisma.user.findMany({ include: { client: true, provider: true } })
-    return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { totalDocument: allUsers.length, user: allUsers }, "User fetched successfully")
-    );
-})
-
-const approveValidUser = asyncHandler(async (req: Request, res: Response) => {
-    const { id, name, email } = req.body
-
-    const isUserExist = await prisma.user.findFirst({ where: { id } })
-    if (!isUserExist) {
-        return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"))
-    }
-
-    const isUserApproved = await prisma.user.update({
-        where: { id }, data: {
-            isApprove: "approve"
-        }
-    })
-    // await sendVerificationEmail(email, name);
-
-
-    if (isUserApproved) {
-        return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { message: "User approved successfully." }, "Approve"))
-    }
-
-})
-const rejectUser = asyncHandler(async (req: Request, res: Response) => {
-    const { id, name, email } = req.body
-
-    const isUserExist = await prisma.user.findFirst({ where: { id } })
-    if (!isUserExist) {
-        return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"))
-    }
-
-    const isUserApproved = await prisma.user.update({
-        where: { id }, data: {
-            isApprove: "reject"
-        }
-    })
-    // await sendVerificationEmail(email, name);
-
-
-    if (isUserApproved) {
-        return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { message: "User rejected successfully." }, "reject"))
-    }
-
-})
-const restoreUser = asyncHandler(async (req: Request, res: Response) => {
-    const { id, name, email } = req.body
-
-    const isUserExist = await prisma.user.findFirst({ where: { id } })
-    if (!isUserExist) {
-        return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"))
-    }
-
-    const isUserApproved = await prisma.user.update({
-        where: { id }, data: {
-            isApprove: "pending"
-        }
-    })
-    // await sendVerificationEmail(email, name);
-
-
-    if (isUserApproved) {
-        return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { message: "User restored successfully." }, "restore"))
-    }
-
-})
-
-const getAllValidUsersApi = asyncHandler(async (req: Request, res: Response) => {
-    const allUsers = await prisma.user.findMany({ where: { isApprove: "approve" } })
-    return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { totalDocument: allUsers.length, user: allUsers }, "User fetched successfully")
-    );
-})
-
-const unblockUserApi = asyncHandler(async (req: Request, res: Response) => {
-    const { blockUserid, loginUserId } = req.body;
-
-    // 1. Check if block user exists
-    const isBlockUserExist = await prisma.user.findUnique({ where: { id: blockUserid } });
-    if (!isBlockUserExist) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "User to be blocked not found" }, "Validation failed")
-        );
-    }
-
-    // 2. Get login user (who wants to block someone)
-    const loginUser = await prisma.user.findUnique({ where: { id: loginUserId } });
-    if (!loginUser) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Blocking user not found" }, "Validation failed")
-        );
-    }
-
-    const updatedBlockedMembersList = loginUser.blockedMembers?.filter(data => data !== blockUserid)
-    const updatedUser = await prisma.user.update({
-        where: { id: loginUserId },
-        data: {
-            blockedMembers: updatedBlockedMembersList,
-        },
-    });
-
-    return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { user: updatedUser }, "User unblocked successfully")
-    );
-})
 
 const logoutApi = asyncHandler(async (req: Request, res: Response) => {
-    // Clearing the cookies by setting them to empty with an expiration time in the past
-    return res
-        .clearCookie("accessToken", cookiesOptions)
-        .clearCookie("refreshToken", cookiesOptions)
-        .status(200)
-        .json(new ApiResponse(StatusCodes.OK, {}, "Logout successful"));
+  const userId = (req as any).user?.id;
+
+  if (userId) {
+    await AuditLogService.createLog({
+      userId,
+      action: "LOGOUT",
+      resource: "AUTH",
+      details: {
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }
+
+  // Clearing all possible token variants
+  return res
+    .clearCookie("accessToken", cookiesOptions)
+    .clearCookie("token", cookiesOptions)
+    .clearCookie("refreshToken", cookiesOptions)
+    .status(200)
+    .json(new ApiResponse(StatusCodes.OK, {}, "Logout successful"));
 });
-
-
-
-const deleteMeAccountApi = asyncHandler(async (req: Request, res: Response) => {
-    const { loginUserId } = req.body
-
-    const isUserExist = await prisma.user.findFirst({ where: { id: loginUserId } })
-
-    if (!isUserExist) {
-        return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { message: "User doesnot exist." }, "Not Found Error"))
-    }
-
-
-    const isUserDeleted = await prisma.user.delete({ where: { id: loginUserId } })
-
-    return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { message: "" }, "User deleted successfully")
-    );
-
-})
-
-
-
-const getMeApi = asyncHandler(async (req: Request, res: Response) => {
-    const { loginUserId, role } = req.body
-
-    let getMeDetails
-    // Handle Client
-    if (role === Role.client) {
-        getMeDetails = await prisma.client.findFirst({ where: { id: loginUserId }, include: { user: true } })
-
-        return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, { data: getMeDetails }, "OK")
-        );
-
-
-    }
-    // Handle Provider
-    else if (role === Role.provider) {
-        getMeDetails = await prisma.provider.findFirst({
-            where: { id: loginUserId }, include: {
-                user: true,
-                clientList: {
-                    include: {
-                        client: {
-                            include: {
-                                user: true
-                            }
-                        }
-                    }
-                }
-            }
-        })
-
-        return res.status(StatusCodes.OK).json(
-            new ApiResponse(StatusCodes.OK, { data: getMeDetails }, "OK")
-        );
-    }
-});
-
-
-const findByLicenseNo = asyncHandler(async (req: Request, res: Response) => {
-    const { licenseNo } = req.body
-    if (licenseNo === "") {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { message: " licenseNo isrequired" }, "Validation failed")
-        );
-    }
-
-    const licenseNoFound = await prisma.user.findFirst({
-        where: { licenseNo }, include: { client: true }
-    })
-    return res.status(StatusCodes.OK).json(
-        new ApiResponse(StatusCodes.OK, { data: licenseNoFound }, "Record found.")
-    );
-
-
-})
-
 
 const changePasswordApi = asyncHandler(async (req: Request, res: Response) => {
-    const { oldPassword,
-        newPassword,
-        loginUserId, confirmPassword, role } = req.body
+  const { oldPassword, newPassword, loginUserId, confirmPassword, role } =
+    req.body;
 
-    if (oldPassword === "" ||
-        newPassword === "") {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { message: "All fields are isrequired" }, "Validation failed")
-        );
-    }
+  if (!oldPassword || !newPassword) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(
+        new ApiResponse(
+          StatusCodes.BAD_REQUEST,
+          { message: "All fields are required" },
+          "Validation failed",
+        ),
+      );
+  }
 
+  if (newPassword !== confirmPassword) {
+    return res
+      .status(StatusCodes.CONFLICT)
+      .json(
+        new ApiResponse(
+          StatusCodes.CONFLICT,
+          { message: "Confirm and New Password should match" },
+          "Validation failed",
+        ),
+      );
+  }
 
-    if (newPassword !== confirmPassword) {
-        return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { message: "Confirm and New Password should be matched" }, "Validation failed")
-        );
-    }
+  // Find User (source of truth for password)
+  const user = await prisma.user.findUnique({
+    where: { id: loginUserId },
+  });
 
+  if (!user) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(
+        new ApiResponse(
+          StatusCodes.BAD_REQUEST,
+          { message: "User does not exist." },
+          "Validation failed",
+        ),
+      );
+  }
 
-    if (role === Role.provider) {
-        const findUser = await prisma.provider.findFirst({ where: { id: loginUserId }, include: { user: true } })
+  const isPasswordMatch = await bcrypt.compare(oldPassword, user.password);
 
-        if (!findUser) {
+  if (isPasswordMatch) {
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: loginUserId },
+      data: { password: hashedPassword },
+    });
 
-            return res.status(StatusCodes.BAD_REQUEST).json(
-                new ApiResponse(StatusCodes.BAD_REQUEST, { message: " User does not exist." }, "Validation failed")
-            );
-        }
+    // Audit Log for Password Change
+    await AuditLogService.createLog({
+      userId: loginUserId,
+      action: "CHANGE PASSWORD",
+      resource: "USER",
+      resourceId: loginUserId,
+      details: { message: "User changed their password" },
+    });
 
-        const isPasswordMatch = await bcrypt.compare(oldPassword, findUser?.password)
-        if (isPasswordMatch) {
-            const hashedPassword = await bcrypt.hash(newPassword ?? "", 10);
-            const updatePassword = await prisma.provider.update({
-                where: { id: loginUserId }, data: {
-                    password: hashedPassword
-
-                }
-            })
-
-            if (updatePassword) {
-
-                return res.status(StatusCodes.OK).json(
-                    new ApiResponse(StatusCodes.OK, { message: "Password has updated successfully" }, "Password has updated successfully")
-                );
-            }
-            else {
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-                    new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { message: "Internal Server Error" }, "Internal Server Error")
-                );
-            }
-        }
-        else {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { message: "Password not Matched" }, "Password not Match")
-            );
-        }
-
-
-    }
-
-    if (role === Role.client) {
-        const findUser = await prisma.client.findFirst({ where: { id: loginUserId }, include: { user: true } })
-
-        if (!findUser) {
-
-            return res.status(StatusCodes.BAD_REQUEST).json(
-                new ApiResponse(StatusCodes.BAD_REQUEST, { message: " User does not exist." }, "Validation failed")
-            );
-        }
-
-        const isPasswordMatch = await bcrypt.compare(
-            oldPassword ?? "",
-            findUser?.password ?? ""
-        ); if (isPasswordMatch) {
-            const hashedPassword = await bcrypt.hash(newPassword ?? "", 10);
-            const updatePassword = await prisma.client.update({
-                where: { id: loginUserId }, data: {
-                    password: hashedPassword
-
-                }
-            })
-
-            if (updatePassword) {
-
-                return res.status(StatusCodes.OK).json(
-                    new ApiResponse(StatusCodes.OK, { message: "Password has updated successfully" }, "Password has updated successfully")
-                );
-            }
-            else {
-                return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
-                    new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { message: "Internal Server Error" }, "Internal Server Error")
-                );
-            }
-        }
-        else {
-            return res.status(StatusCodes.CONFLICT).json(
-                new ApiResponse(StatusCodes.CONFLICT, { message: "Password not Matched" }, "Password not Match")
-            );
-        }
-
-
-    }
-
-})
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          { message: "Password has updated successfully" },
+          "Password has updated successfully",
+        ),
+      );
+  } else {
+    return res
+      .status(StatusCodes.CONFLICT)
+      .json(
+        new ApiResponse(
+          StatusCodes.CONFLICT,
+          { message: "Password not Matched" },
+          "Password not Match",
+        ),
+      );
+  }
+});
 
 const forgotPasswordApi = asyncHandler(async (req: Request, res: Response) => {
-    const { email } = req.body;
+  const { email } = req.body;
 
-    const isProvider = await prisma.provider.findFirst({ where: { email }, include: { user: true } });
-    const isClient = await prisma.client.findFirst({ where: { email }, include: { user: true } });
+  const user = await prisma.user.findFirst({ where: { email } });
 
-    const account = isProvider || isClient;
+  if (!user) {
+    return res
+      .status(StatusCodes.CONFLICT)
+      .json(
+        new ApiResponse(
+          StatusCodes.CONFLICT,
+          { error: `Email: ${email} is not found.` },
+          "Validation failed",
+        ),
+      );
+  }
 
-    if (!account) {
-        return res.status(StatusCodes.CONFLICT).json(
-            new ApiResponse(StatusCodes.CONFLICT, { error: `Email: ${email} is not found.` }, "Validation failed")
-        );
-    }
+  const { token, hashedToken } = generateResetToken();
 
-    const { token, hashedToken } = generateResetToken();
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
+    },
+  });
 
-    const updatedUser = await prisma.user.update({
-        where: { id: account.user.id },
-        data: {
-            resetPasswordToken: hashedToken,
-            resetPasswordExpires: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
-        },
-    });
+  try {
+    await sendResetPasswordEmail(email, user.fullName, token);
+  } catch (err) {
+    console.error("Failed to send reset email");
+  }
 
-  const respnse=  await sendResetPasswordEmail(email, account.user.fullName, token);
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------response",respnse);
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
-console.log("_--------------------------");
+  // Audit Log for Password Reset Request
+  await AuditLogService.createLog({
+    userId: user.id,
+    action: "REQUEST PASSWORD RESET",
+    resource: "USER",
+    resourceId: user.id,
+    details: { email },
+  });
 
-    return res.status(200).json(
-        new ApiResponse(200, { success: true, user: updatedUser }, "Reset link sent successfully")
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, { success: true }, "Reset link sent successfully"),
     );
 });
-
 
 const resetPasswordApi = asyncHandler(async (req: Request, res: Response) => {
-    const { token } = req.params;
-    const { newPassword } = req.body;
+  const { token } = req.params;
+  const { newPassword } = req.body;
 
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(token as string)
+    .digest("hex");
 
-    const user = await prisma.user.findFirst({
-        where: {
-            resetPasswordToken: hashedToken,
-            resetPasswordExpires: {
-                gt: new Date(),
-            },
-        },
-        include: { provider: true, client: true },
-    });
+  const user = await prisma.user.findFirst({
+    where: {
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { gt: new Date() },
+    },
+  });
 
-    if (!user) {
-        return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Invalid or expired token" }, "Token invalid")
-        );
-    }
+  if (!user) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(
+        new ApiResponse(
+          StatusCodes.BAD_REQUEST,
+          { error: "Invalid or expired token" },
+          "Token invalid",
+        ),
+      );
+  }
 
-    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+  const hashedNewPassword = await bcrypt.hash(newPassword, 12);
 
-    if (user.provider) {
-        await prisma.provider.update({
-            where: { id: user.provider.id },
-            data: {
-                password: hashedNewPassword,
-                user: {
-                    update: {
-                        resetPasswordToken: null,
-                        resetPasswordExpires: null,
-                    },
-                },
-            },
-        });
-    } else if (user.client) {
-        await prisma.client.update({
-            where: { id: user.client.id },
-            data: {
-                password: hashedNewPassword,
-                user: {
-                    update: {
-                        resetPasswordToken: null,
-                        resetPasswordExpires: null,
-                    },
-                },
-            },
-        });
-    }
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: hashedNewPassword,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    },
+  });
 
-    return res.status(200).json(
-        new ApiResponse(200, { success: true }, "Password has been reset successfully")
+  // Audit Log for Password Reset
+  await AuditLogService.createLog({
+    userId: user.id,
+    action: "RESET PASSWORD",
+    resource: "USER",
+    resourceId: user.id,
+    details: { message: "User reset their password" },
+  });
+
+  return res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        { message: "Password reset successful" },
+        "Success",
+      ),
     );
 });
 
+const startTrialApi = asyncHandler(async (req: Request, res: Response) => {
+  const { newProviderId, invitedById } = req.body;
 
+  if (!newProviderId) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(
+        new ApiResponse(
+          StatusCodes.BAD_REQUEST,
+          null,
+          "newProviderId is required.",
+        ),
+      );
+  }
 
+  await subscriptionService.startTrial(newProviderId, invitedById);
+
+  return res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        { message: "Trial started successfully." },
+        "OK",
+      ),
+    );
+});
+
+const verifyInvitationToken = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { token } = req.body;
+    if (!token) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(
+          new ApiResponse(StatusCodes.BAD_REQUEST, null, "Token is required."),
+        );
+    }
+    const invitation = await prisma.invitation.findUnique({
+      where: {
+        token: token,
+      },
+      include: {
+        invitedBy: {
+          select: {
+            user: {
+              select: {
+                fullName: true,
+                address: true,
+                // country: true,
+                state: true,
+                licenseNo: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!invitation || invitation.status !== "PENDING") {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json(
+          new ApiResponse(
+            StatusCodes.NOT_FOUND,
+            null,
+            "Invalid or expired token.",
+          ),
+        );
+    }
+
+    return res.status(StatusCodes.OK).json(
+      new ApiResponse(
+        StatusCodes.OK,
+        {
+          email: invitation.email,
+          invitedByName: invitation.invitedBy.user.fullName,
+        },
+        "OK",
+      ),
+    );
+  },
+);
+
+// Check if email or license number already exists (called before navigating to plan selection)
+const checkEmailExistsApi = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email, licenseNo } = req.body;
+
+    if (!email) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(
+          new ApiResponse(
+            StatusCodes.BAD_REQUEST,
+            { error: "Email is required" },
+            "Validation failed",
+          ),
+        );
+    }
+
+    const existingEmail = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingEmail) {
+      return res
+        .status(StatusCodes.CONFLICT)
+        .json(
+          new ApiResponse(
+            StatusCodes.CONFLICT,
+            { exists: true, field: "Email" },
+            "Email already registered",
+          ),
+        );
+    }
+
+    if (licenseNo) {
+      const existingLicense = await prisma.user.findFirst({
+        where: { licenseNo },
+      });
+
+      if (existingLicense) {
+        return res
+          .status(StatusCodes.CONFLICT)
+          .json(
+            new ApiResponse(
+              StatusCodes.CONFLICT,
+              { exists: true, field: "License Number" },
+              "License Number already registered",
+            ),
+          );
+      }
+    }
+
+    return res
+      .status(StatusCodes.OK)
+      .json(new ApiResponse(StatusCodes.OK, { exists: false }, "Available"));
+  },
+);
+
+const verifyEmailApi = asyncHandler(async (req: Request, res: Response) => {
+  const { token } = req.params;
+
+  if (!token) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(
+        new ApiResponse(
+          StatusCodes.BAD_REQUEST,
+          { error: "Token is required" },
+          "Validation failed",
+        ),
+      );
+  }
+
+  const user = await prisma.user.findFirst({
+    where: { verifyEmailToken: token as string },
+  });
+
+  if (!user) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(
+        new ApiResponse(
+          StatusCodes.BAD_REQUEST,
+          { error: "Invalid verification token" },
+          "Token invalid",
+        ),
+      );
+  }
+  if (user.isEmailVerified) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(
+        new ApiResponse(
+          StatusCodes.BAD_REQUEST,
+          { error: "Email already verified" },
+          "Email already verified",
+        ),
+      );
+  }
+
+  if (user.verifyEmailExpires && user.verifyEmailExpires < new Date()) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(
+        new ApiResponse(
+          StatusCodes.BAD_REQUEST,
+          { error: "Token expired. Please request a new verification link." },
+          "Token expired",
+        ),
+      );
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      isEmailVerified: true,
+      verifyEmailToken: null,
+      verifyEmailExpires: null,
+    },
+  });
+
+  // Audit Log for Email Verification
+  await AuditLogService.createLog({
+    userId: user.id,
+    action: "VERIFY EMAIL",
+    resource: "USER",
+    resourceId: user.id,
+    details: { message: "User verified their email address" },
+  });
+
+  return res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        { success: true },
+        "Email verified successfully.",
+      ),
+    );
+});
+
+const resendVerificationEmailApi = asyncHandler(
+  async (req: Request, res: Response) => {
+    const loginUserId = (req as any).user.id;
+
+    const user = await prisma.user.findUnique({ where: { id: loginUserId } });
+
+    if (!user) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json(
+          new ApiResponse(
+            StatusCodes.NOT_FOUND,
+            { error: "User not found" },
+            "Not found",
+          ),
+        );
+    }
+    if (user.isEmailVerified) {
+      return res
+        .status(StatusCodes.BAD_REQUEST)
+        .json(
+          new ApiResponse(
+            StatusCodes.BAD_REQUEST,
+            { error: "Email is already verified" },
+            "Already verified",
+          ),
+        );
+    }
+
+    const verifyToken = crypto.randomBytes(32).toString("hex");
+    const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await prisma.user.update({
+      where: { id: loginUserId },
+      data: {
+        verifyEmailToken: verifyToken,
+        verifyEmailExpires: verifyExpires,
+      },
+    });
+
+    try {
+      await sendVerifyEmailLink(user.email, user.fullName, verifyToken);
+    } catch (err) {
+      console.error("Failed to resend verification email:", err);
+      return res
+        .status(StatusCodes.INTERNAL_SERVER_ERROR)
+        .json(
+          new ApiResponse(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            { error: "Failed to send email" },
+            "Server error",
+          ),
+        );
+    }
+
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          { success: true },
+          "We've sent a new verification link to your email address. It will expire in 24 hours.",
+        ),
+      );
+  },
+);
 
 export {
-    signupApi, logInApi, blockUserApi, unblockUserApi, logoutApi, updateMeApi, deleteMeAccountApi, approveValidUser, rejectUser, restoreUser,
-    getMeApi, getAllUsersApi, findByLicenseNo, changePasswordApi, forgotPasswordApi, resetPasswordApi, getAllValidUsersApi
+  signupApi,
+  logInApi,
+  logoutApi,
+  changePasswordApi,
+  forgotPasswordApi,
+  resetPasswordApi,
+  startTrialApi,
+  verifyInvitationToken,
+  checkEmailExistsApi,
+  verifyEmailApi,
+  resendVerificationEmailApi,
 };

@@ -3,35 +3,179 @@ import { transporter } from "./NodeMailer";
 export const sendInvitationEmail = async (
   toEmail: string,
   providerName: string,
-  invitationChatLink: string
+  invitationChatLink: string,
 ) => {
+  const userName = toEmail.split("@")[0];
 
   const htmlContent = `
-    <div style="font-family: sans-serif; padding: 20px;">
-      <h2>Hello ${toEmail.split("@")[0]},</h2>
-      <p><strong>${providerName}</strong> has invited you to join new group.</p>
-      <p>Click the button below to Join the Chat:</p>
-      <a href="${invitationChatLink}/"
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Group Invitation</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+          margin: 0;
+          padding: 0;
+          background-color: #f1f5f9;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          -webkit-font-smoothing: antialiased;
+        }
+        
+        .wrapper {
+          width: 100%;
+          table-layout: fixed;
+          background-color: #f1f5f9;
+          padding-bottom: 40px;
+        }
+        
+        .main {
+          background-color: #ffffff;
+          margin: 40px auto;
+          width: 100%;
+          max-width: 600px;
+          border-spacing: 0;
+          color: #1e293b;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .header {
+          background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+          padding: 48px 32px;
+          text-align: center;
+        }
+        
+        .logo {
+          color: #ffffff;
+          font-size: 32px;
+          font-weight: 800;
+          letter-spacing: -0.025em;
+          margin-bottom: 8px;
+        }
+        
+        .header-title {
+          color: #ccfbf1;
+          font-size: 14px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin: 0;
+        }
+        
+        .content {
+          padding: 48px 40px;
+        }
+        
+        .greeting {
+          font-size: 24px;
+          font-weight: 700;
+          color: #0f172a;
+          margin: 0 0 16px 0;
+        }
+        
+        .intro-text {
+          font-size: 16px;
+          color: #475569;
+          line-height: 1.6;
+          margin: 0 0 32px 0;
+        }
+        
+        .cta-container {
+          text-align: center;
+          margin: 40px 0;
+        }
+        
+        .cta-button {
+          background-color: #0d9488;
+          color: #ffffff !important;
+          padding: 16px 48px;
+          border-radius: 12px;
+          font-size: 16px;
+          font-weight: 700;
+          text-decoration: none;
+          display: inline-block;
+          box-shadow: 0 4px 6px -1px rgba(13, 148, 136, 0.2);
+        }
+        
+        .footer {
+          margin: 0 auto;
+          width: 100%;
+          max-width: 600px;
+          padding: 32px;
+          text-align: center;
+          color: #64748b;
+          font-size: 13px;
+          line-height: 1.5;
+        }
+        
+        .highlight {
+          color: #0d9488;
+          font-weight: 600;
+        }
 
-         style="display:inline-block; padding:10px 20px; background-color:#0F766E; color:white; border-radius:4px; text-decoration:none; font-weight:bold;">
-         Join Now
-      </a>
+        @media (max-width: 600px) {
+          .content { padding: 32px 24px; }
+          .main { margin-top: 0; border-radius: 0; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="wrapper">
+        <div class="main">
+          <div class="header">
+            <div class="logo">Kolabme</div>
+            <p class="header-title">Group Invitation</p>
+          </div>
+          
+          <div class="content">
+            <h1 class="greeting">Hello ${userName},</h1>
+            <p class="intro-text">
+              <span class="highlight">${providerName}</span> has invited you to join a new group on Kolabme.
+            </p>
             
-        <p style="margin-top:20px;">If you didn’t expect this invitation, you can safely ignore this email.</p>
-      <p style="margin-top:20px;">Best regards,<br />The Kolabme Platform Team</p>
-    </div>
+            <p class="intro-text">
+              Click the button below to join the chat and start collaborating:
+            </p>
+
+            <div class="cta-container">
+              <a href="${invitationChatLink}/" class="cta-button">Join Now</a>
+            </div>
+            
+            <p class="intro-text" style="font-size: 15px; margin-bottom: 0;">
+              Best regards,<br>
+              <strong>The Kolabme Team</strong>
+            </p>
+
+            <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; margin-top: 40px;">
+              <p style="font-size: 12px; color: #94a3b8; text-align: center; margin: 0; line-height: 1.5;">
+                If you didn’t expect this invitation, you can safely ignore this email. This is an automated message from <strong>Kolabme</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="footer">
+          <p style="margin: 0;">
+            &copy; ${new Date().getFullYear()} Kolabme. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
   `;
 
   await transporter.sendMail({
     from: `"Kolabme Platform" <${process.env.NODE_MAILER_EMAIL}>`,
     to: toEmail,
-    subject: `${providerName} invited you to join the platform`,
+    subject: `Kolabme: You're invited to a new group!`,
     html: htmlContent,
   });
 };
-
-
-
 
 // <a href="${process.env.NODE_ENV === "DEVELOPMENT" ? process.env.FRONTEND_LOCAL_URL : process.env.FRONTEND_AWS_URL}/"
 //  <p><strong>${providerName}</strong> has invited you to join our collaborative platform.</p>

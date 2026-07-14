@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+
 import { asyncHandler } from "../../utils/asyncHandler";
 import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
@@ -8,6 +9,11 @@ import {
   decryptText,
   encryptText,
 } from "../../utils/encryptedMessage/EncryptedMessage";
+import { sendShareChatEmail } from "../../utils/nodeMailer/ShareChatEmail";
+import { getFrontendUrl } from "../../utils/nodeMailer/getFrontendUrl";
+import { emailQueue } from "../../services/EmailQueue";
+import { AuditLogService } from "../../services/AuditLogService";
+import { resolveChatUser } from "../../utils/resolveChatUser";
 
 const getAllSingleConservationMessage = asyncHandler(
   async (req: Request, res: Response) => {
@@ -16,6 +22,17 @@ const getAllSingleConservationMessage = asyncHandler(
     const skip = (page - 1) * limit;
 
     try {
+      // Get the user ID from the provider or client ID
+      const user = await resolveChatUser(loginUserId);
+
+      if (!user) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          message: "User not found",
+        });
+      }
+
+      const userIdToCheck = user.id;
+
       const chatChannel = await prisma.chatChannel.findUnique({
         where: { id: chatChannelId },
         select: {
@@ -30,7 +47,7 @@ const getAllSingleConservationMessage = asyncHandler(
 
       if (
         ![chatChannel.providerAId, chatChannel.providerBId].includes(
-          loginUserId,
+          userIdToCheck,
         )
       ) {
         return res
@@ -50,9 +67,15 @@ const getAllSingleConservationMessage = asyncHandler(
         skip,
         take: limit,
         include: {
-          sender: { include: { user: true } },
+          sender: {
+            select: {
+              id: true,
+              fullName: true,
+              profileImage: true,
+            },
+          },
           readReceipts: {
-            where: { providerId: loginUserId },
+            where: { userId: userIdToCheck },
           },
         },
       });
@@ -91,12 +114,28 @@ const getAllSingleConservationMessage = asyncHandler(
 
 const sendMessageToSingleConservation = asyncHandler(
   async (req: Request, res: Response) => {
-    const { chatChannelId, message, type, senderId } = req.body;
+    const { chatChannelId, message, type, senderId, isPhi, phiClientId } =
+      req.body;
     const files = req.files as Express.Multer.File[]; // files from multer
 
     try {
+      // Get the user ID from the provider or client ID
+      const user = await resolveChatUser(senderId);
+
+      if (!user) {
+        return res.status(StatusCodes.NOT_FOUND).json({
+          message: "User not found",
+        });
+      }
+
+      const userIdToUse = user.id;
+
       const channel = await prisma.chatChannel.findUnique({
         where: { id: chatChannelId },
+        include: {
+          providerA: true,
+          providerB: true,
+        },
       });
 
       if (!channel) {
@@ -115,26 +154,25 @@ const sendMessageToSingleConservation = asyncHandler(
 
       const chatMessage = await prisma.chatMessage.create({
         data: {
-          senderId,
+          senderId: userIdToUse,
           message: encryptedMessage || "",
           chatChannelId,
           mediaUrl: uploadedMediaUrls.join(","),
           type: type || "text",
+          isPhi: isPhi === "true" || isPhi === true,
+          phiClientId: phiClientId || null,
           readReceipts: {
             create: {
-              providerId: senderId,
+              userId: userIdToUse,
             },
           },
         },
         include: {
           sender: {
-            include: {
-              user: {
-                select: {
-                  fullName: true,
-                  profileImage: true,
-                },
-              },
+            select: {
+              id: true,
+              fullName: true,
+              profileImage: true,
             },
           },
         },
@@ -144,6 +182,8 @@ const sendMessageToSingleConservation = asyncHandler(
         where: { id: chatChannelId },
         data: {
           updatedAt: new Date().toISOString(),
+          deletedByA: false,
+          deletedByB: false,
         },
       });
 
@@ -151,6 +191,62 @@ const sendMessageToSingleConservation = asyncHandler(
         ...chatMessage,
         message: chatMessage.message ? decryptText(chatMessage.message) : "",
       };
+
+      const COOLDOWN_MINUTES = 20;
+      const now = new Date();
+
+      const isSenderA = userIdToUse === channel.providerAId;
+      const receiver = isSenderA ? channel.providerB : channel.providerA;
+      const lastEmailSentToReceiverAt = isSenderA
+        ? channel.lastEmailSentToB
+        : channel.lastEmailSentToA;
+      const updateField = isSenderA ? "lastEmailSentToB" : "lastEmailSentToA";
+
+      let shouldNotify = false;
+      if (!lastEmailSentToReceiverAt) {
+        shouldNotify = true;
+      } else {
+        const diffMs =
+          now.getTime() - new Date(lastEmailSentToReceiverAt).getTime();
+        const diffMins = diffMs / (1000 * 60);
+        if (diffMins >= COOLDOWN_MINUTES) {
+          shouldNotify = true;
+        }
+      }
+
+      if (shouldNotify) {
+        if (emailQueue) {
+          await emailQueue.add("send-chat-notification", {
+            email: receiver.email,
+            senderName: chatMessage.sender.fullName,
+            chatLink: `${getFrontendUrl()}/chat`,
+            chatType: "individual"
+          });
+        } else {
+          console.warn("[Email Debug] emailQueue is not initialized, skipping email.");
+        }
+
+        await prisma.chatChannel.update({
+          where: { id: chatChannelId },
+          data: { [updateField]: now },
+        });
+      }
+
+      // Audit Log for Chat Message
+      await AuditLogService.createLog({
+        userId: userIdToUse,
+        action: "SEND MESSAGE",
+        resource: "CHAT",
+        resourceId: chatMessage.id,
+        details: {
+          chatChannelId,
+          type: type || "text",
+          messageTimestamp: chatMessage.createdAt.toISOString(), // HIPAA requirement: timestamp of individual chat
+          hasMedia: files && files.length > 0,
+          isPhi: chatMessage.isPhi,
+          phiClientId: chatMessage.phiClientId,
+        },
+      });
 
       return res
         .status(StatusCodes.OK)
@@ -174,30 +270,53 @@ const deleteMessageToSingleConservation = asyncHandler(
   async (req: Request, res: Response) => {
     const { channelId, messageId, loginUserId } = req.body;
 
-    // Ensure the channel exists
-    const isChannelExist = await prisma.chatChannel.findFirst({
+    // Check if it's a 1-on-1 chat channel OR a group channel
+    const isOneOnOneChannel = await prisma.chatChannel.findFirst({
       where: { id: channelId },
     });
 
-    if (!isChannelExist) {
+    const isGroupChannel = !isOneOnOneChannel
+      ? await prisma.groupChat.findFirst({ where: { id: channelId } })
+      : null;
+
+    if (!isOneOnOneChannel && !isGroupChannel) {
       return res
         .status(StatusCodes.CONFLICT)
         .json(
           new ApiResponse(
             StatusCodes.CONFLICT,
-            { message: `This chat channe; does not exist.` },
+            { message: `This chat channel does not exist.` },
             "Channel Not Found",
           ),
         );
     }
 
-    // Ensure the message exists and check if the message is sent by the logged-in user
+    // Get the user ID from the provider or client ID
+    const user = await resolveChatUser(loginUserId);
+
+    if (!user) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "User not found",
+      });
+    }
+
+    const userIdToCheck = user.id;
+
+    // Build the message query based on channel type (1-on-1 vs group)
+    const messageQuery: any = {
+      id: messageId,
+      senderId: userIdToCheck, // Ensure the message is sent by the login user
+    };
+
+    if (isOneOnOneChannel) {
+      messageQuery.chatChannelId = channelId;
+    } else {
+      messageQuery.groupId = channelId;
+    }
+
+    // Ensure the message exists and belongs to the user
     const message = await prisma.chatMessage.findFirst({
-      where: {
-        id: messageId,
-        chatChannelId: channelId, // Ensure the message belongs to the channel
-        senderId: loginUserId, // Ensure the message is sent by the login user
-      },
+      where: messageQuery,
     });
 
     if (!message) {
@@ -230,15 +349,80 @@ const deleteMessageToSingleConservation = asyncHandler(
   },
 );
 
+const deleteChatChannelForUser = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { channelId, loginUserId } = req.body;
+
+    // Get the user ID from the provider or client ID
+    const user = await resolveChatUser(loginUserId);
+
+    if (!user) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "User not found",
+      });
+    }
+
+    const userId = user.id;
+
+    const channel = await prisma.chatChannel.findUnique({
+      where: { id: channelId },
+    });
+
+    if (!channel) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: "Chat channel not found" });
+    }
+
+    if (channel.providerAId === userId) {
+      await prisma.chatChannel.update({
+        where: { id: channelId },
+        data: { deletedByA: true },
+      });
+    } else if (channel.providerBId === userId) {
+      await prisma.chatChannel.update({
+        where: { id: channelId },
+        data: { deletedByB: true },
+      });
+    } else {
+      return res
+        .status(StatusCodes.FORBIDDEN)
+        .json({ message: "You are not authorized to delete this chat" });
+    }
+
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          null,
+          "Chat deleted for you successfully",
+        ),
+      );
+  },
+);
+
 const getAllConversations = asyncHandler(
   async (req: Request, res: Response) => {
     const { loginUserId } = req.body;
 
     try {
-      // Fetch all chat channels for the logged-in user
+      // Get the user ID from the provider or client ID
+      const user = await resolveChatUser(loginUserId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const userIdToUse = user.id;
+
+      // Fetch all chat channels for the logged-in user that are not deleted by them
       const chatChannels = await prisma.chatChannel.findMany({
         where: {
-          OR: [{ providerAId: loginUserId }, { providerBId: loginUserId }],
+          OR: [
+            { providerAId: userIdToUse, deletedByA: false },
+            { providerBId: userIdToUse, deletedByB: false },
+          ],
         },
         select: {
           id: true,
@@ -312,15 +496,26 @@ const markMessagesAsRead = asyncHandler(async (req: Request, res: Response) => {
   const { loginUserId, chatChannelId, groupId } = req.body;
 
   try {
+    // Get the user ID from the provider or client ID
+    const user = await resolveChatUser(loginUserId);
+
+    if (!user) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "User not found",
+      });
+    }
+
+    const userIdToUse = user.id;
+
     // Determine the filter based on chat type
     const messageFilter: any = {
       readReceipts: {
         none: {
-          providerId: loginUserId,
+          userId: userIdToUse,
         },
       },
       NOT: {
-        senderId: loginUserId,
+        senderId: userIdToUse,
       },
     };
 
@@ -340,14 +535,27 @@ const markMessagesAsRead = asyncHandler(async (req: Request, res: Response) => {
       select: { id: true },
     });
 
-    // Mark them as read
-    await prisma.readReceipt.createMany({
-      data: unreadMessages.map((msg) => ({
-        messageId: msg.id,
-        providerId: loginUserId,
-      })),
-      skipDuplicates: true,
-    });
+    if (unreadMessages.length > 0) {
+      if (chatChannelId) {
+        // Mark them as read in ReadReceipt table
+        await prisma.readReceipt.createMany({
+          data: unreadMessages.map((msg) => ({
+            messageId: msg.id,
+            userId: userIdToUse,
+          })),
+          skipDuplicates: true,
+        });
+      } else if (groupId) {
+        // Mark them as read in GroupReadReceipt table
+        await prisma.groupReadReceipt.createMany({
+          data: unreadMessages.map((msg) => ({
+            messageId: msg.id,
+            userId: userIdToUse,
+          })),
+          skipDuplicates: true,
+        });
+      }
+    }
 
     return res
       .status(StatusCodes.OK)
@@ -398,7 +606,13 @@ const getAllPublicSingleConservationMessage = asyncHandler(
         skip,
         take: limit,
         include: {
-          sender: { include: { user: true } },
+          sender: {
+            select: {
+              id: true,
+              fullName: true,
+              profileImage: true,
+            },
+          },
           readReceipts: true,
         },
       });
@@ -435,11 +649,63 @@ const getAllPublicSingleConservationMessage = asyncHandler(
   },
 );
 
+const shareChatByEmail = asyncHandler(async (req: Request, res: Response) => {
+  const { chatChannelId, email, loginUserId } = req.body;
+
+  if (!chatChannelId || !email || !loginUserId) {
+    return res.status(StatusCodes.BAD_REQUEST).json({
+      message: "chatChannelId, email, and loginUserId are required",
+    });
+  }
+
+  try {
+    const chatChannel = await prisma.chatChannel.findUnique({
+      where: { id: chatChannelId },
+    });
+
+    if (!chatChannel) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ message: "Chat channel not found" });
+    }
+
+    const sender = await prisma.user.findUnique({
+      where: { id: loginUserId },
+      select: { fullName: true },
+    });
+
+    const frontendUrl = getFrontendUrl();
+    const chatLink = `${frontendUrl}/invite-chat/individual/${chatChannelId}`;
+
+    await sendShareChatEmail(
+      email,
+      sender?.fullName || "A user",
+      chatLink,
+      "individual",
+    );
+
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          null,
+          "Chat shared successfully via email",
+        ),
+      );
+  } catch (error) {
+    console.error("Error sharing chat:", error);
+    return res.status(500).json({ message: "Error sharing chat", error });
+  }
+});
+
 export {
   getAllSingleConservationMessage,
   sendMessageToSingleConservation,
   deleteMessageToSingleConservation,
+  deleteChatChannelForUser,
   getAllConversations,
   getAllPublicSingleConservationMessage,
   markMessagesAsRead,
+  shareChatByEmail,
 };

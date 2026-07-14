@@ -21,7 +21,6 @@ const getHealthCheckStatus = asyncHandler(async (req: Request, res: Response) =>
             }
         }
 
-        // 3️⃣ Send response
         res.status(StatusCodes.OK).json({
             status: 'OK',
             server: serverStatus,

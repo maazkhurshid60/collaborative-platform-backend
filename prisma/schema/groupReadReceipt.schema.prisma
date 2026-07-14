@@ -1,9 +1,0 @@
-model GroupReadReceipt {
-  id         String      @id @default(uuid())
-  messageId  String
-  providerId String
-  readAt     DateTime    @default(now())
-  message    ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-
-  @@unique([messageId, providerId])
-}

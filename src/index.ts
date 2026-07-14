@@ -1,3 +1,6 @@
+import dotenv from "dotenv";
+dotenv.config({ path: ".env" });
+
 import cluster from "cluster";
 import http from "http";
 import { Server } from "http";
@@ -7,25 +10,40 @@ import logger from "./utils/logger";
 
 export let server: Server | null;
 
-// Use clustering only in production for better performance
-// In development, single process for faster restarts
+
 const shouldUseCluster = process.env.NODE_ENV === 'production' && process.env.USE_CLUSTER !== 'false';
 const workerCount = process.env.WORKER_COUNT ? parseInt(process.env.WORKER_COUNT) : Math.min(require('os').cpus().length, 4);
 
 if (shouldUseCluster && cluster.isPrimary) {
     logger.info(`Master process ${process.pid} is running with ${workerCount} workers`);
 
-    // Create workers
+
     for (let i = 0; i < workerCount; i++) {
         cluster.fork();
     }
+
+    // Initialize cron jobs in the primary process
+    const { setupCronJobs } = require("./utils/cron");
+    setupCronJobs();
+
+    // Start audit log queue worker in the primary process
+    const { initAuditLogWorker } = require("./services/AuditLogWorker");
+    initAuditLogWorker();
+
+    // Start email queue worker in the primary process
+    const { initEmailWorker } = require("./services/EmailWorker");
+    initEmailWorker();
+
+    // Start Kit queue worker in the primary process
+    const { initKitWorker } = require("./services/KitWorker");
+    initKitWorker();
 
     cluster.on('exit', (worker, code, signal) => {
         logger.warn(`Worker process ${worker.process.pid} died with code ${code} and signal ${signal}. Restarting...`);
         cluster.fork();
     });
 
-    // Graceful shutdown
+
     process.on('SIGTERM', () => {
         logger.info('Master received SIGTERM, shutting down gracefully');
         for (const id in cluster.workers) {
@@ -34,18 +52,33 @@ if (shouldUseCluster && cluster.isPrimary) {
     });
 
 } else {
-    // Single process mode (development) or worker process
     const server = http.createServer(app);
-    
+
     // Initialize Socket.IO with the created server
     setupSocket(server);
-    
+
+    // Initialize cron jobs in single process mode
+    const { setupCronJobs } = require("./utils/cron");
+    setupCronJobs();
+
+    // Start audit log queue worker
+    const { initAuditLogWorker } = require("./services/AuditLogWorker");
+    initAuditLogWorker();
+
+    // Start email queue worker
+    const { initEmailWorker } = require("./services/EmailWorker");
+    initEmailWorker();
+
+    // Start Kit queue worker
+    const { initKitWorker } = require("./services/KitWorker");
+    initKitWorker();
+
     const PORT = process.env.PORT || 3000;
-    
+
     // Start the server
     server.listen(PORT, () => {
         const processInfo = shouldUseCluster ? `Worker ${process.pid}` : `Single process ${process.pid}`;
-        logger.info(`🚀 ${processInfo} - Server running on port ${PORT}`);
+        logger.info(` ${processInfo} - Server running on port ${PORT}`);
     });
 
     // Graceful shutdown for worker process
@@ -57,3 +90,4 @@ if (shouldUseCluster && cluster.isPrimary) {
         });
     });
 }
+

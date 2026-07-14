@@ -1,10 +1,31 @@
-import { PrismaClient } from "@prisma/client"
+import { PrismaClient } from "../generated/prisma/client"
+import { PrismaPg } from "@prisma/adapter-pg"
+import pg from "pg"
+
+const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'staging' || process.env.NODE_ENV === 'production' || process.env.DATABASE_URL?.includes('rds.amazonaws.com')
+        ? { rejectUnauthorized: false }
+        : false,
+    max: 40, // Increased to allow more concurrent database connections
+    idleTimeoutMillis: 15000, 
+    connectionTimeoutMillis: 30000, // Increased to 30 seconds to handle DB wake-ups and high load
+})
+
+// Catch errors on idle clients so they don't crash the application
+pool.on('error', (err) => {
+    console.error('Unexpected error on idle client', err)
+})
+
+const adapter = new PrismaPg(pool)
 
 const prisma = new PrismaClient({
-    log: process.env.NODE_ENV === 'development' 
+    adapter,
+    log: process.env.NODE_ENV === 'development'
         ? ["warn", "error"] // Only show warnings and errors in development
         : ["error"], // Only show errors in production
-    errorFormat: 'minimal'
+    errorFormat: 'minimal',
+
 })
 
 // Graceful shutdown

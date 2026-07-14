@@ -5,6 +5,8 @@ import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { io } from "../../socket/socket";
 import { sendDocumentEmail } from "../../utils/nodeMailer/SendDocumentEmail";
+import logger from "../../utils/logger";
+import { AuditLogService } from "../../services/AuditLogService";
 
 const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
     const file = req.file as Express.Multer.File & { location: string };;
@@ -15,7 +17,6 @@ const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
         return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // Check if document already exists by name or S3 URL
     const existing = await prisma.document.findFirst({
         where: {
             OR: [{ name }, { url: file.location }],
@@ -26,13 +27,20 @@ const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
         return res.status(409).json({ error: 'Document already exists' });
     }
 
-    // ✅ Save document info with S3 URL
     const document = await prisma.document.create({
         data: {
             name,
-            url: file.location, // ✅ S3 URL here
+            url: file.location,
             type,
         },
+    });
+
+    await AuditLogService.createLog({
+        userId: (req as any).user?.id,
+        action: "UPLOAD_DOCUMENT",
+        resource: "DOCUMENT",
+        resourceId: document.id,
+        details: { name: document.name, type: document.type }
     });
 
     res.status(201).json({ message: 'Uploaded successfully', document });
@@ -40,11 +48,12 @@ const addDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
 
 const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
-    const { clientId } = req.body;
+    const { clientId, providerId } = req.body;
 
     if (!clientId) {
         return res.status(StatusCodes.BAD_REQUEST).json(
-            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Client ID is required" }, "Bad Request")
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Client ID is required" },
+                "Bad Request")
         );
     }
 
@@ -54,14 +63,14 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
     // Step 1: Fetch all master documents
     const allDocuments = await prisma.document.findMany({
-        include: { sharedRecords: true },
+        include: { sharedWith: true },
         orderBy: { createdAt: 'desc' },
         skip
     });
 
     // Step 2: Fetch shared documents with current client
     const sharedWithClient = await prisma.documentShareWith.findMany({
-        where: { clientId },
+        where: { clientId, ...(providerId && { providerId }) },
         include: { document: true },
     });
 
@@ -89,6 +98,15 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
     const totalDocuments = await prisma.document.count();
 
+    // Audit Log for Listing Documents
+    await AuditLogService.createLog({
+        userId: (req as any).user?.id,
+        action: "LIST DOCUMENTS",
+        resource: "DOCUMENT",
+        resourceId: clientId,
+        details: { providerId }
+    });
+
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, {
             message: "Documents fetched successfully.",
@@ -112,30 +130,20 @@ const getAllDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
 const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Response) => {
     const { providerId, clientId, documentId, senderId, clientEmail } = req.body;
+    logger.debug(`Document share request: providerId=${providerId}, clientId=${clientId}, senderId=${senderId}, documents=${documentId}`);
 
-    const alreadySharedDocs = await prisma.documentShareWith.findMany({
-        where: {
-            providerId,
-            clientId,
-            documentId: {
-                in: documentId
-            }
-        },
-        include: {
-            document: true
-        }
+    const clientRecord = await prisma.client.findUnique({
+        where: { id: clientId },
+        include: { user: { select: { fullName: true } } }
     });
 
-    if (alreadySharedDocs.length > 0) {
-        const alreadySharedDocNames = alreadySharedDocs.map(doc => doc.document.name);
-        const docList = alreadySharedDocNames.join(', ');
-
-
-        return res.status(409).json({
-            error: `The following documents have already been shared: ${docList}`,
-            alreadyShared: alreadySharedDocNames
-        });
+    if (!clientRecord) {
+        return res.status(StatusCodes.NOT_FOUND).json(
+            new ApiResponse(StatusCodes.NOT_FOUND, { error: "Client not found." }, "Not Found")
+        );
     }
+
+    // Removed existing share check to allow sharing multiple times with the same client
     const sharedDocuments = await Promise.all(
         documentId.map((documentId: string) =>
             prisma.documentShareWith.create({
@@ -155,7 +163,7 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
     for (const doc of sharedDocuments) {
         const clientUser = await prisma.user.findUnique({
             where: { id: doc.client.userId },
-            select: { id: true, fullName: true }
+            select: { id: true, fullName: true, email: true }
         });
 
         const providerUser = await prisma.user.findUnique({
@@ -164,7 +172,7 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
         });
 
         if (!clientUser || !providerUser) {
-            console.warn(`⚠️ User not found for client or provider.`);
+            logger.warn(`User not found for client or provider in document sharing.`);
             continue;
         }
 
@@ -183,11 +191,12 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
         });
 
         await sendDocumentEmail(
-            clientEmail,
+            clientUser.email,
             clientUser.fullName,
-            providerUser.fullName
+            providerUser.fullName,
+            doc.client.clientId || ""
         );
-        io.to(clientUser.id).emit('new_notification', clientNotification);
+        io.to(`notification_room_${clientUser.id}`).emit('new_notification', clientNotification);
 
         // Create notification for PROVIDER
         const providerNotification = await prisma.notification.create({
@@ -200,7 +209,20 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
             }
         });
 
-        io.to(providerUser.id).emit('new_notification', providerNotification);
+        io.to(`notification_room_${providerUser.id}`).emit('new_notification', providerNotification);
+
+        // Audit Log for Document Sharing
+        await AuditLogService.createLog({
+            userId: senderId,
+            action: "SHARE_DOCUMENT",
+            resource: "DOCUMENT",
+            resourceId: doc.documentId,
+            details: {
+                sharedWithClientId: clientId,
+                sharedWithClientName: clientUser.fullName,
+                documentName: doc.document.name
+            }
+        });
     }
 
     return res.status(StatusCodes.OK).json(
@@ -216,18 +238,7 @@ const documentSharedWithClientApi = asyncHandler(async (req: Request, res: Respo
 
 const documentSignByClientApi = asyncHandler(async (req: Request, res: Response) => {
     const { clientId, sharedDocumentId, isAgree, senderId, eSignature } = req.body;
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>", req.body);
-    console.log(">>>>>>>", clientId, sharedDocumentId, isAgree, senderId, eSignature);
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
-    console.log(">>>>>>>");
+    logger.debug(`Document sign request: clientId=${clientId}, sharedDocumentId=${sharedDocumentId}, isAgree=${isAgree}`);
 
 
     if (!clientId || !sharedDocumentId || !eSignature || isAgree === undefined) {
@@ -285,7 +296,10 @@ const documentSignByClientApi = asyncHandler(async (req: Request, res: Response)
             type: 'DOCUMENT_SIGNED'
         }
     });
-    io.to(providerUserId).emit('new_notification', providerNotification);
+
+    if (providerUserId !== clientUserId) {
+        io.to(`notification_room_${providerUserId}`).emit('new_notification', providerNotification);
+    }
 
     // 🔔 Create notification for Client
     const clientNotification = await prisma.notification.create({
@@ -298,7 +312,20 @@ const documentSignByClientApi = asyncHandler(async (req: Request, res: Response)
         }
     });
 
-    io.to(clientUserId).emit('new_notification', clientNotification);
+    io.to(`notification_room_${clientUserId}`).emit('new_notification', clientNotification);
+
+    // Audit Log for Document Signing
+    await AuditLogService.createLog({
+        userId: clientUserId,
+        action: "SIGN_DOCUMENT",
+        resource: "DOCUMENT",
+        resourceId: documentUpdated.documentId,
+        details: {
+            sharedDocumentId: sharedDocumentId,
+            documentName: documentUpdated.document.name,
+            providerId: documentUpdated.providerId
+        }
+    });
 
     return res.status(StatusCodes.OK).json(
         new ApiResponse(StatusCodes.OK, {
@@ -345,6 +372,14 @@ const deleteDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
     const isDocumentDelete = await prisma.document.delete({ where: { id } })
     if (isDocumentDelete) {
+        // Audit Log for Document Deletion
+        await AuditLogService.createLog({
+            userId: (req as any).user?.id,
+            action: "DELETE_DOCUMENT",
+            resource: "DOCUMENT",
+            resourceId: id,
+            details: { name: isDocumentExist.name }
+        });
 
         return res.status(StatusCodes.OK).json(
             new ApiResponse(StatusCodes.OK, { message: "Document has deleted successfully" }, "Success")
@@ -358,4 +393,107 @@ const deleteDocumentApi = asyncHandler(async (req: Request, res: Response) => {
 
 })
 
-export { addDocumentApi, getAllDocumentApi, documentSharedWithClientApi, documentSignByClientApi, getAllSharedDocumentWithClientApi, deleteDocumentApi }
+/**
+ * Paginated recipients for a single document, scoped to the calling provider.
+ *
+ * Drives the "Document Recipients" modal in the provider-side Document Sharing
+ * tab. Rows are sorted awaiting-first (so the provider sees outstanding work
+ * before completed signatures), then by recency.
+ *
+ * Query params:
+ *   - providerId  required — which provider's shares to consider
+ *   - page        default 1
+ *   - limit       default 10 (capped server-side at 100)
+ *   - status      optional: "signed" | "awaiting" — narrows the list
+ */
+const getDocumentRecipientsApi = asyncHandler(async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const providerId = (req.query.providerId as string) || (req.body?.providerId as string) || undefined;
+    const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 10, 1), 100);
+    const status = (req.query.status as string | undefined)?.toLowerCase();
+
+    if (!id) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "Document ID is required" }, "Bad Request")
+        );
+    }
+    if (!providerId) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, { error: "providerId is required" }, "Bad Request")
+        );
+    }
+
+    const where: any = { documentId: id, providerId };
+    if (status === "signed") where.eSignature = { not: null };
+    else if (status === "awaiting") where.eSignature = null;
+
+    const [rows, total] = await Promise.all([
+        prisma.documentShareWith.findMany({
+            where,
+            include: { client: { include: { user: true } } },
+            // Awaiting (eSignature null) sorts before signed when we asc-order by eSignature
+            // (Prisma + Postgres: NULLS FIRST for asc by default; for SQLite the same holds).
+            // Tie-break by most-recently-updated so the active items rise to the top.
+            orderBy: [{ eSignature: "asc" }, { updatedAt: "desc" }],
+            skip: (page - 1) * limit,
+            take: limit,
+        }),
+        prisma.documentShareWith.count({ where }),
+    ]);
+
+    const recipients = rows.map((r: any) => ({
+        id: r.id,
+        clientId: r.clientId,
+        fullName: r.client?.user?.fullName ?? "Unnamed client",
+        email: r.client?.user?.email ?? null,
+        isSigned: Boolean(r.eSignature),
+        eSignature: r.eSignature ?? null,
+        updatedAt: r.updatedAt,
+    }));
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, {
+            message: "Recipients fetched successfully.",
+            data: {
+                recipients,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.max(Math.ceil(total / limit), 1),
+                },
+            },
+        }, "Fetched.")
+    );
+});
+
+/**
+ * Returns the master document catalog with `sharedWith` rows joined in.
+ * Optionally scoped to a single provider so `sharedWith` only contains shares
+ * that belong to the calling provider — keeps the per-(doc, client) status
+ * derivation clean on the frontend.
+ *
+ * Used by the provider-side "Document Sharing" tab to drive a doc-first view.
+ */
+const getAllMasterDocumentsApi = asyncHandler(async (req: Request, res: Response) => {
+    const providerId = (req.query.providerId as string) || (req.body?.providerId as string) || undefined;
+
+    const documents = await prisma.document.findMany({
+        include: {
+            sharedWith: providerId
+                ? { where: { providerId } }
+                : true,
+        },
+        orderBy: { createdAt: 'desc' },
+    });
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, {
+            message: "Documents fetched successfully.",
+            data: { documents },
+        }, "Fetched.")
+    );
+});
+
+export { addDocumentApi, getAllDocumentApi, documentSharedWithClientApi, documentSignByClientApi, getAllSharedDocumentWithClientApi, deleteDocumentApi, getAllMasterDocumentsApi, getDocumentRecipientsApi }

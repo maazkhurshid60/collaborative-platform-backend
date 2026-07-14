@@ -4,6 +4,7 @@ import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { decryptText } from "../../utils/encryptedMessage/EncryptedMessage";
+import { resolveChatUser } from "../../utils/resolveChatUser";
 
 // ===============================
 // ✅ CREATE CHAT CHANNEL
@@ -17,17 +18,21 @@ const createChatChannel = asyncHandler(async (req: Request, res: Response) => {
       .json({ message: "Both providerId and toProviderId are required." });
   }
 
-  const [a, b] = [providerId, toProviderId].sort();
-
   try {
-    const providerA = await prisma.provider.findUnique({ where: { id: a } });
-    const providerB = await prisma.provider.findUnique({ where: { id: b } });
+    // Find the users (preventing admin chat)
+    const userA = await resolveChatUser(providerId);
+    const userB = await resolveChatUser(toProviderId);
 
-    if (!providerA || !providerB) {
+    if (!userA || !userB) {
       return res
         .status(400)
-        .json({ message: "One or both providers do not exist." });
+        .json({
+          message: "One or both users do not exist or are not authorized.",
+        });
     }
+
+    // Sort User IDs for consistent compound key
+    const [a, b] = [userA.id, userB.id].sort();
 
     // Check if channel exists
     let channel = await prisma.chatChannel.findFirst({
@@ -44,10 +49,23 @@ const createChatChannel = asyncHandler(async (req: Request, res: Response) => {
         .json(
           new ApiResponse(
             StatusCodes.CREATED,
-            { channel },
+            { newChatChannel: channel },
             "Chat Channel created",
           ),
         );
+    }
+
+    // If the channel exists, make sure it's unhidden for the person reaching out
+    if (channel.providerAId === userA.id) {
+      await prisma.chatChannel.update({
+        where: { id: channel.id },
+        data: { deletedByA: false },
+      });
+    } else if (channel.providerBId === userA.id) {
+      await prisma.chatChannel.update({
+        where: { id: channel.id },
+        data: { deletedByB: false },
+      });
     }
 
     return res
@@ -55,7 +73,7 @@ const createChatChannel = asyncHandler(async (req: Request, res: Response) => {
       .json(
         new ApiResponse(
           StatusCodes.OK,
-          { channel },
+          { newChatChannel: channel },
           "Chat Channel already exists",
         ),
       );
@@ -70,30 +88,81 @@ const createChatChannel = asyncHandler(async (req: Request, res: Response) => {
 // ✅ GET ALL CHAT CHANNELS
 // ===============================
 const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
-  const { loginUserId } = req.body;
+  const { loginUserId, search } = req.body;
 
-  // Fetch all channels for user
+  // Resolve user
+  const user = await resolveChatUser(loginUserId);
+
+  if (!user) {
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .json(
+        new ApiResponse(
+          StatusCodes.NOT_FOUND,
+          null,
+          "User not found or not authorized",
+        ),
+      );
+  }
+
+  const userIdToSearch = user.id;
+
+  // Fetch all channels for user that are not deleted by them
   const findAllChatChannel = await prisma.chatChannel.findMany({
     where: {
-      OR: [{ providerAId: loginUserId }, { providerBId: loginUserId }],
+      AND: [
+        {
+          OR: [
+            { providerAId: userIdToSearch, deletedByA: false },
+            { providerBId: userIdToSearch, deletedByB: false },
+          ],
+        },
+        ...(search
+          ? [
+              {
+                OR: [
+                  {
+                    providerA: {
+                      fullName: { contains: search, mode: "insensitive" as any },
+                    },
+                  },
+                  {
+                    providerB: {
+                      fullName: { contains: search, mode: "insensitive" as any },
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
+      ],
     },
     include: {
-      providerA: { include: { user: true } },
-      providerB: { include: { user: true } },
+      providerA: {
+        select: {
+          id: true,
+          fullName: true,
+          profileImage: true,
+        },
+      },
+      providerB: {
+        select: {
+          id: true,
+          fullName: true,
+          profileImage: true,
+        },
+      },
     },
   });
 
   const channelIds = findAllChatChannel.map((c) => c.id);
 
-  // ===============================
-  // ✅ BULK UNREAD COUNT
-  // ===============================
   const unreadCounts = await prisma.chatMessage.groupBy({
     by: ["chatChannelId"],
     where: {
       chatChannelId: { in: channelIds },
-      senderId: { not: loginUserId },
-      readReceipts: { none: { providerId: loginUserId } },
+      senderId: { not: userIdToSearch },
+      readReceipts: { none: { userId: userIdToSearch } },
     },
     _count: { id: true },
   });
@@ -109,6 +178,15 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
     where: { chatChannelId: { in: channelIds } },
     orderBy: { createdAt: "desc" },
     distinct: ["chatChannelId"],
+    select: {
+      id: true,
+      message: true,
+      createdAt: true,
+      senderId: true,
+      chatChannelId: true,
+      type: true,
+      mediaUrl: true,
+    },
   });
 
   const lastMessageMap = Object.fromEntries(
@@ -118,9 +196,6 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
     ]),
   );
 
-  // ===============================
-  // 🔥 FINAL ENRICHED RESPONSE
-  // ===============================
   const enrichedChannels = findAllChatChannel.map((channel) => ({
     ...channel,
     totalUnread: unreadMap[channel.id] || 0,
@@ -138,9 +213,6 @@ const getAllChatChannel = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
-// ===============================
-// ❌ DELETE CHAT CHANNEL
-// ===============================
 const deleteChatChannel = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.body;
 
@@ -182,4 +254,94 @@ const deleteChatChannel = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
-export { createChatChannel, getAllChatChannel, deleteChatChannel };
+const getAllUsersForChat = asyncHandler(async (req: Request, res: Response) => {
+  const { loginUserId } = req.body;
+  const user = await resolveChatUser(loginUserId);
+
+  if (!user) {
+    return res
+      .status(StatusCodes.NOT_FOUND)
+      .json(new ApiResponse(StatusCodes.NOT_FOUND, null, "User not found"));
+  }
+
+  // Fetch the full user to see their role and relations
+  const fullUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    include: {
+      provider: {
+        include: { clientList: { select: { client: { select: { userId: true } } } } }
+      },
+      client: {
+        include: { providerList: { select: { provider: { select: { userId: true } } } } }
+      }
+    }
+  });
+
+  let userWhereClause: any = {
+    id: { not: user.id },
+    isApprove: "APPROVED",
+    role: { not: "superAdmin" },
+  };
+
+  if (fullUser?.role === "provider" && fullUser.provider) {
+    // A provider can chat with ALL other providers, but ONLY their own clients
+    const myClientUserIds = fullUser.provider.clientList.map(pc => pc.client.userId);
+    userWhereClause.OR = [
+      { role: "provider" },
+      { role: "client", id: { in: myClientUserIds } }
+    ];
+  } else if (fullUser?.role === "client" && fullUser.client) {
+    // A client can ONLY chat with their assigned providers
+    const myProviderUserIds = fullUser.client.providerList.map(pc => pc.provider.userId);
+    userWhereClause.id = { in: myProviderUserIds, not: user.id };
+  }
+
+  const users = await prisma.user.findMany({
+    where: userWhereClause,
+    select: {
+      id: true,
+      fullName: true,
+      email: true,
+      profileImage: true,
+      role: true,
+      status: true,
+      isApprove: true,
+      provider: {
+        select: {
+          speciality: true,
+        },
+      },
+    },
+  });
+
+  const formattedUsers = users.map((u) => ({
+    id: u.id,
+    speciality: u.provider?.speciality || null,
+    user: {
+      id: u.id,
+      fullName: u.fullName,
+      email: u.email,
+      profileImage: u.profileImage,
+      role: u.role,
+      status: u.status,
+      isApprove: u.isApprove,
+    },
+  }));
+
+  return res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        { users: formattedUsers },
+        "Users fetched successfully",
+      ),
+    );
+});
+
+export {
+  createChatChannel,
+  getAllChatChannel,
+  deleteChatChannel,
+  getAllUsersForChat,
+};

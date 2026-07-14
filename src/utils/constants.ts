@@ -8,7 +8,7 @@ export const CPUS_COUNT = os.cpus().length;
 
 export const WHITE_LIST_DOMAINS: string[] = ['http://localhost:5173', 'http://localhost:4173', "https://collaborative-platform-frontend.vercel.app", "https://www.collaborateme.com/", "https://www.collaborateme.com"];
 export const ALLOWED_METHODS: string[] = ['GET', 'PUT', 'POST', 'PATCH', 'DELETE', 'OPTIONS'];
-export const ALLOWED_HEADERS: string[] = ['Content-Type', 'Authorization'];
+export const ALLOWED_HEADERS: string[] = ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'];
 
 
 // export const cookiesOptions: CookieOptions = {

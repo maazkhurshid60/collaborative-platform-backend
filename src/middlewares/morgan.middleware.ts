@@ -15,7 +15,7 @@ export default morgan(morganFormat as any, {
                 const parts = message.trim().split(' ');
                 const status = parseInt(parts[3]);
                 const responseTime = parseFloat(parts[parts.length - 2]);
-                
+
                 if (status >= 400 || responseTime > 1000) {
                     logger.warn(message.trim());
                 }
@@ -25,8 +25,8 @@ export default morgan(morganFormat as any, {
     // Skip logging for health checks and static files
     skip: (req, res) => {
         if (!req.url) return false;
-        return req.url.includes('/health') || 
-               req.url.includes('/uploads') ||
-               req.url.includes('favicon.ico');
+        return req.url.includes('/health') ||
+            req.url.includes('/uploads') ||
+            req.url.includes('favicon.ico');
     }
 });

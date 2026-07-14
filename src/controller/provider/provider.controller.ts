@@ -3,14 +3,14 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import prisma from "../../db/db.config";
 import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
-import { Role } from "@prisma/client";
+import { Role } from "../../generated/prisma/enums";
 import { providerSchema } from "../../schema/provider/provider.schema";
+import { SubscriptionService } from "../../services/SubscriptionService";
 
 
 const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) => {
     const { loginUserId } = req.body;
 
-    // Get the login user details
     const loginUser = await prisma.user.findUnique({ where: { id: loginUserId } });
 
     if (!loginUser) {
@@ -22,20 +22,52 @@ const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) 
     const limit = parseInt(req.query.limit as string) || 10;
     const skip = (page - 1) * limit
     const allProviders = await prisma.provider.findMany({
-        skip, take: limit, orderBy: {
+        skip,
+        take: limit,
+        orderBy: {
             createdAt: 'desc'  // 👈 Get latest first
-        }, include: {
-            user: true, sharedDocument: { include: { document: true, client: { include: { user: true } } } }, clientList: {
-                include: {
+        },
+        select: {
+            id: true,
+            speciality: true,
+            createdAt: true,
+            updatedAt: true,
+            user: {
+                select: {
+                    id: true,
+                    email: true,
+                    fullName: true,
+                    profileImage: true,
+                    gender: true,
+                    age: true,
+                    contactNo: true,
+                    address: true,
+                    status: true,
+                    licenseNo: true,
+                    role: true,
+                    isApprove: true,
+                    //           country: true,
+                    state: true,
+                    blockedMembers: true,
+                }
+            },
+            clientList: {
+                select: {
                     client: {
-                        include: { user: true }
+                        select: {
+                            clientShowToOthers: true,
+                            user: {
+                                select: {
+                                    fullName: true
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     })
-    //Only those providers will be shown which are not blocked by the login user
-    const filteredProviders = allProviders.filter(provider => !loginUser.blockedMembers.includes(provider.user.id))
+    const filteredProviders = allProviders.filter(provider => !loginUser.blockedMembers.includes(provider.user.id) && provider.user.id !== loginUserId)
     const totalDocument = filteredProviders.length
 
     res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { totalDocument: totalDocument, providers: filteredProviders }, "All Providers fetched successfully"))
@@ -45,10 +77,48 @@ const getAllUnblockProviders = asyncHandler(async (req: Request, res: Response) 
 
 const getTotalProviders = asyncHandler(async (req: Request, res: Response) => {
 
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit
-    const allProviders = await prisma.provider.findMany({ skip, take: limit, include: { user: true, sharedDocument: { include: { document: true, client: { include: { user: true } } } } } })
+    const allProviders = await prisma.provider.findMany({
+        take: 1000,
+        select: {
+            id: true,
+            speciality: true,
+            createdAt: true,
+            updatedAt: true,
+            user: {
+                select: {
+                    id: true,
+                    email: true,
+                    fullName: true,
+                    profileImage: true,
+                    gender: true,
+                    age: true,
+                    contactNo: true,
+                    address: true,
+                    status: true,
+                    licenseNo: true,
+                    role: true,
+                    isApprove: true,
+                    //         country: true,
+                    state: true,
+                    blockedMembers: true,
+                }
+            },
+            clientList: {
+                select: {
+                    client: {
+                        select: {
+                            clientShowToOthers: true,
+                            user: {
+                                select: {
+                                    fullName: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    })
 
 
     res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { totalDocument: allProviders.length, providers: allProviders }, "All Providers fetched successfully"))
@@ -57,28 +127,39 @@ const getTotalProviders = asyncHandler(async (req: Request, res: Response) => {
 
 const deletProvider = asyncHandler(async (req: Request, res: Response) => {
     const { providerId } = req.body
-    const isProviderExist = await prisma.provider.findFirst({ where: { id: providerId } })
+    const isProviderExist = await prisma.provider.findFirst({
+        where: { id: providerId },
+        include: { user: true }
+    })
     if (!isProviderExist) {
         return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, { error: "Provider does not exist." }, ""))
     }
+
+    try {
+        const subscriptionService = new SubscriptionService();
+        await subscriptionService.cancelStripeSubscription(isProviderExist.userId);
+    } catch (error) {
+        console.error("Failed to safely cancel stripe sub during account delete", error);
+    }
+
     const isProviderDeleted = await prisma.provider.delete({ where: { id: providerId } })
     if (!isProviderDeleted) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(new ApiResponse(StatusCodes.INTERNAL_SERVER_ERROR, { error: "Internal Server Error." }, ""))
     }
-    return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { isProviderDeleted }, `${isProviderDeleted.email} deleted successfully`))
+    return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, { isProviderDeleted }, `${isProviderExist.user.email} deleted successfully`))
 })
 
 const updateProvider = asyncHandler(async (req: Request, res: Response) => {
 
-    // Validate data
-    const providerData = providerSchema.safeParse(req.body);
+    const ageVal = req.body.age ? Number(req.body.age) : undefined;
+    const providerData = providerSchema.safeParse({ ...req.body, age: ageVal });
     if (!providerData.success) {
         return res.status(StatusCodes.BAD_REQUEST).json(
             new ApiResponse(StatusCodes.BAD_REQUEST, { error: providerData.error.errors }, "Validation Failed")
         );
     }
 
-    const { fullName, gender, age, contactNo, address, status, licenseNo, email, password, providerId, specialty } = providerData.data;
+    const { fullName, gender, age, contactNo, address, status, licenseNo, email, providerId, speciality } = providerData.data;
 
     const isProviderExist = await prisma.provider.findFirst({ where: { id: providerId } });
     if (!isProviderExist) {
@@ -87,11 +168,11 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const isEmailExist = await prisma.provider.findFirst({
+    const isEmailExist = await prisma.user.findFirst({
         where: {
             email,
             id: {
-                not: providerId
+                not: isProviderExist.userId
             }
         }
     });
@@ -122,8 +203,14 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
         );
     }
 
-    const updatedproviderData = { email, specialty };
-    const updatedUserData = { fullName, gender, age, contactNo, address, status, licenseNo, role: Role.provider };
+    const updatedproviderData = { speciality };
+    const updatedUserData: any = { fullName, email, gender, age, contactNo, address, status, licenseNo, role: Role.provider };
+
+    if (req.file) {
+        updatedUserData.profileImage = (req.file as any).location;
+    } else if (req.body.profileImage === "null") {
+        updatedUserData.profileImage = null;
+    }
 
 
     const isUserUpdated = await prisma.user.update({
@@ -145,7 +232,6 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
         new ApiResponse(StatusCodes.OK, { updatedData }, "Provider updated successfully")
     );
 });
-
 
 
 

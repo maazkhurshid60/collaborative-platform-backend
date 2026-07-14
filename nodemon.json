@@ -1,5 +1,7 @@
 {
-  "watch": ["src/**/*"],
+  "watch": [
+    "src/**/*"
+  ],
   "ext": "ts,js",
   "ignore": [
     "src/**/*.spec.ts",
@@ -14,7 +16,7 @@
     "NODE_ENV": "development",
     "USE_CLUSTER": "false"
   },
-  "delay": 1000,
+  "delay": 500,
   "restartable": "rs",
   "colours": true,
   "legacyWatch": false,
