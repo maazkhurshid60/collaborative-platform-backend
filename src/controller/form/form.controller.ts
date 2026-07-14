@@ -9,6 +9,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import logger from "../../utils/logger";
 import { AuditLogService } from "../../services/AuditLogService";
 import { sendFormTemplateEmail } from "../../utils/nodeMailer/SendFormTemplateEmail";
+import { getFrontendUrl } from "../../utils/nodeMailer/getFrontendUrl";
 
 const addFormTemplateApi = asyncHandler(async (req: Request, res: Response) => {
   const { title, description, schema } = req.body;
@@ -264,23 +265,21 @@ const shareFormApi = asyncHandler(async (req: Request, res: Response) => {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + (expirationDays || 7));
 
-  const share: any = await prisma.$transaction(async (tx) => {
-    return await tx.formShare.create({
-      data: {
-        templateId,
-        clientId,
-        providerId,
-        token,
-        expiresAt,
-        status: "PENDING",
-        providerData: providerData || null,
-      },
-      include: {
-        template: true,
-        client: { include: { user: true } },
-        provider: { include: { user: true } },
-      },
-    });
+  const share: any = await prisma.formShare.create({
+    data: {
+      templateId,
+      clientId,
+      providerId,
+      token,
+      expiresAt,
+      status: "PENDING",
+      providerData: providerData || null,
+    },
+    include: {
+      template: true,
+      client: { include: { user: true } },
+      provider: { include: { user: true } },
+    },
   });
 
   // Handle real-time socket notification if shared directly with a client
@@ -318,7 +317,7 @@ const shareFormApi = asyncHandler(async (req: Request, res: Response) => {
     },
   });
 
-  const secureLink = `${process.env.FRONTEND_URL || "https://app.kolabme.com"}/public/forms/${token}`;
+  const secureLink = `${getFrontendUrl() || "https://app.kolabme.com"}/public/forms/${token}`;
 
   // Send email asynchronously to the client if shared directly
   if (share.client?.user) {

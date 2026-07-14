@@ -1,4 +1,5 @@
 import { transporter } from "./NodeMailer";
+import { getFrontendUrl } from "./getFrontendUrl";
 
 export const sendDocumentEmail = async (
   toEmail: string,
@@ -6,7 +7,7 @@ export const sendDocumentEmail = async (
   providerName: string,
   clientId: string,
 ) => {
-  const loginUrl = `${process.env.NODE_ENV === "development" ? process.env.FRONTEND_LOCAL_URL : process.env.FRONTEND_AWS_URL}/documents`;
+  const loginUrl = `${getFrontendUrl() || "https://app.kolabme.com"}/documents`;
 
   const htmlContent = `
     <!DOCTYPE html>
