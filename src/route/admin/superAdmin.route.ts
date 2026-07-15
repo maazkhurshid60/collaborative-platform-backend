@@ -19,6 +19,7 @@ import {
 
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
 import { authorizeRoles } from "../../middlewares/roleCheck.middleware";
+import { getContactQueries } from "../../controller/contact/contact.controller";
 
 const router = Router();
 
@@ -28,8 +29,9 @@ router.use(authorizeRoles("superAdmin"));
 router.get("/first", getSuperAdminFirst);
 router.get("/dashboard/stats", getSuperAdminDashboardStats);
 
-router.get("/:id", getSuperAdminById);
+router.get("/contact-queries", getContactQueries);
 
+router.get("/:id", getSuperAdminById);
 
 router.patch("/:id", uploadImg.single('profileImage'), updateSuperAdminById);
 
