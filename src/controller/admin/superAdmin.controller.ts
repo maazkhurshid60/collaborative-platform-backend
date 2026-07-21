@@ -5,6 +5,8 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { Prisma } from "../../generated/prisma/client";
 import { Role, Approve, PaymentStatus } from "../../generated/prisma/enums";
+import { kitQueue } from "../../services/KitQueue";
+import logger from "../../utils/logger";
 
 export const getSuperAdminFirst = asyncHandler(
   async (_req: Request, res: Response) => {
@@ -217,6 +219,15 @@ export const updateSubscription = asyncHandler(
       },
       include: { user: true },
     });
+
+    if (kitQueue && subscription.user?.email) {
+      kitQueue.add("sync-subscriber", {
+        email: subscription.user.email,
+        fullName: subscription.user.fullName || undefined,
+      }).catch((err: any) => {
+        logger.error(`Error queuing Kit sync for user ${subscription.user.email}:`, err);
+      });
+    }
 
     return res
       .status(StatusCodes.OK)

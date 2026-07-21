@@ -140,6 +140,39 @@ export class KitV4ApiClient {
       throw error;
     }
   }
+
+  /**
+   * Removes a tag from a subscriber by their email address.
+   */
+  public async removeTagByEmail(email: string, tagId: string): Promise<void> {
+    if (!kitConfig.apiKey) {
+      throw new Error("Kit V4 API Key is missing. Cannot remove tag.");
+    }
+
+    try {
+      const url = `${kitConfig.baseUrl}/tags/${tagId}/subscribers`;
+
+      await axios.delete(url, {
+        headers: {
+          "X-Kit-Api-Key": kitConfig.apiKey,
+          "Content-Type": "application/json",
+        },
+        data: {
+          email_address: email,
+        },
+        timeout: 10000,
+      });
+
+      logger.info(`Successfully removed tag ${tagId} from email ${email}`);
+    } catch (error: any) {
+      const errResponse = error.response?.data;
+      logger.error(
+        `Failed to remove tag ${tagId} from email ${email}:`,
+        errResponse || error.message,
+      );
+      throw error;
+    }
+  }
 }
 
 export const kitApiClient = new KitV4ApiClient();

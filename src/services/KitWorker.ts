@@ -45,10 +45,10 @@ export const initKitWorker = () => {
           include: { subscription: true },
         });
 
-        const displayName = user?.fullName || fullName || "";
+        // const displayName = user?.fullName || fullName || "";
 
         // Sync/upsert subscriber in Kit and get ID
-        const subscriberId = await kitApiClient.upsertSubscriber(email, displayName);
+        // const subscriberId = await kitApiClient.upsertSubscriber(email, displayName);
 
         // Handle tags if the user is a provider
         if (user && user.role === "provider") {
@@ -67,10 +67,14 @@ export const initKitWorker = () => {
               await kitApiClient.assignTagByEmail(email, premiumTagId);
             }
             // Remove Free User tag
-            if (freeTagId && subscriberId) {
-              await kitApiClient.removeTag(subscriberId, freeTagId).catch((err) => {
-                logger.warn(`Kit Worker: Failed to remove Free User tag from ${email}: ${err.message}`);
-              });
+            if (freeTagId) {
+              await kitApiClient
+                .removeTagByEmail(email, freeTagId)
+                .catch((err) => {
+                  logger.warn(
+                    `Kit Worker: Failed to remove Free User tag from ${email}: ${err.message}`,
+                  );
+                });
             }
           } else {
             // Apply Free User tag
@@ -78,10 +82,14 @@ export const initKitWorker = () => {
               await kitApiClient.assignTagByEmail(email, freeTagId);
             }
             // Remove Premium User tag
-            if (premiumTagId && subscriberId) {
-              await kitApiClient.removeTag(subscriberId, premiumTagId).catch((err) => {
-                logger.warn(`Kit Worker: Failed to remove Premium User tag from ${email}: ${err.message}`);
-              });
+            if (premiumTagId) {
+              await kitApiClient
+                .removeTagByEmail(email, premiumTagId)
+                .catch((err) => {
+                  logger.warn(
+                    `Kit Worker: Failed to remove Premium User tag from ${email}: ${err.message}`,
+                  );
+                });
             }
           }
         }
