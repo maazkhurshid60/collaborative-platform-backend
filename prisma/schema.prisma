@@ -27,6 +27,7 @@ model User {
   blockedMembers        String[]           @default([])
   privateKey            String?
   publicKey             String?
+  baaAcceptedAt         DateTime?          // Timestamp when provider accepted the BAA
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
   hasUsedFreeTrial      Boolean            @default(false)
@@ -436,5 +437,15 @@ model ContactQuery {
   phone     String
   message   String
   createdAt DateTime @default(now())
+}
+
+// BAA (Business Associate Agreement) — single active document managed by Super Admin
+model BaaDocument {
+  id        String   @id @default(uuid())
+  title     String   @default("Business Associate Agreement")
+  content   String   // Rich text / HTML content
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 

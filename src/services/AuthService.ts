@@ -26,6 +26,7 @@ export class AuthService {
       publicKey,
       privateKey,
       planType,
+      baaAccepted,
     } = userData;
 
     // 1. Convert gender string to Enum
@@ -148,6 +149,10 @@ export class AuthService {
           hasUsedFreeTrial: Boolean(
             userData.subscriptionId || (planType === "FREE" && stripeData),
           ),
+          // Store BAA acceptance timestamp for providers
+          ...(role === Role.provider && baaAccepted === true
+            ? { baaAcceptedAt: new Date() }
+            : {}),
           ...(userData.subscriptionId && {
             subscription: {
               create: {

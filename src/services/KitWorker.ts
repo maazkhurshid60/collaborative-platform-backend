@@ -48,10 +48,13 @@ export const initKitWorker = () => {
         // const displayName = user?.fullName || fullName || "";
 
         // Sync/upsert subscriber in Kit and get ID
-        // const subscriberId = await kitApiClient.upsertSubscriber(email, displayName);
 
         // Handle tags if the user is a provider
         if (user && user.role === "provider") {
+          const subscriberId = await kitApiClient.upsertSubscriber(
+            email,
+            fullName,
+          );
           const isPremium = !!(
             user.subscription &&
             user.subscription.status === "ACTIVE" &&
