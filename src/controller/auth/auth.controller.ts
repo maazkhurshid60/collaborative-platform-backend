@@ -33,6 +33,26 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
         ),
       );
   }
+
+  // BAA enforcement: If the user is a provider, check BAA acceptance
+  if (req.body.role === "provider") {
+    const activeBaa = await prisma.baaDocument.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+
+    if (activeBaa && req.body.baaAccepted !== true) {
+      return res.status(StatusCodes.FORBIDDEN).json(
+        new ApiResponse(
+          StatusCodes.FORBIDDEN,
+          null,
+          "You must accept the Business Associate Agreement (BAA) to register as a provider.",
+        ),
+      );
+    }
+  }
+
   const completeUserData = await authService.signup(req.body);
 
   const verifyToken = crypto.randomBytes(32).toString("hex");

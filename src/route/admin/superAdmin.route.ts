@@ -15,6 +15,9 @@ import {
   bulkDeleteAuditLogs,
   getAllSubmittedDocuments,
   getSuperAdminDashboardStats,
+  createOrUpdateBaa,
+  getAdminBaa,
+  getBaaAcceptedProviders,
 } from "../../controller/admin/superAdmin.controller";
 
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
@@ -28,6 +31,11 @@ router.use(authorizeRoles("superAdmin"));
 
 router.get("/first", getSuperAdminFirst);
 router.get("/dashboard/stats", getSuperAdminDashboardStats);
+
+// BAA (Business Associate Agreement) - placed above dynamic params
+router.get("/baa", getAdminBaa);
+router.post("/baa", createOrUpdateBaa);
+router.get("/baa-providers", getBaaAcceptedProviders);
 
 router.get("/contact-queries", getContactQueries);
 

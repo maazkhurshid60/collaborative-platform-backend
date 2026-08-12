@@ -34,6 +34,9 @@ export class KitV4ApiClient {
       return subscriberId;
     } catch (error) {
       if (axios.isAxiosError(error)) {
+        console.log("Status:", error.response?.status);
+        console.log("Data:", error.response?.data);
+        console.log("URL:", error.config?.url);
         const axiosError = error as AxiosError;
 
         // 400 errors usually mean invalid email format - unrecoverable

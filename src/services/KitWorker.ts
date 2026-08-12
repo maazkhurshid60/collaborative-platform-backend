@@ -16,7 +16,7 @@ if (process.env.NODE_ENV !== "test") {
   });
 
   kitWorkerConnection.on("error", (error) => {
-    logger.error("BullMQ Kit Worker Redis connection error:", error);
+    logger.error("BullMQ Kit Worker Redis connection error :", error);
   });
 }
 
@@ -25,8 +25,6 @@ export const initKitWorker = () => {
     logger.debug("Skipping Kit Worker initialization in test environment");
     return null;
   }
-
-  logger.info("Initializing Kit Queue Worker...");
 
   const worker = new Worker(
     "kit-sync-queue",
@@ -45,13 +43,8 @@ export const initKitWorker = () => {
           include: { subscription: true },
         });
 
-        // const displayName = user?.fullName || fullName || "";
-
-        // Sync/upsert subscriber in Kit and get ID
-        // const subscriberId = await kitApiClient.upsertSubscriber(email, displayName);
-
-        // Handle tags if the user is a provider
         if (user && user.role === "provider") {
+          await kitApiClient.upsertSubscriber(email, fullName);
           const isPremium = !!(
             user.subscription &&
             user.subscription.status === "ACTIVE" &&

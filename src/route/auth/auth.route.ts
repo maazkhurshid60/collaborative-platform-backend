@@ -15,6 +15,8 @@ import {
   resendVerificationEmailApi,
 } from "../../controller/auth/auth.controller";
 
+import { getActiveBaa } from "../../controller/admin/superAdmin.controller";
+
 import {
   generate2FA,
   enable2FA,
@@ -27,6 +29,9 @@ const authRouter = Router();
 authRouter.post("/signup", signupApi);
 authRouter.post("/check-email", checkEmailExistsApi);
 authRouter.post("/login", logInApi);
+
+// Public endpoint — no auth required — fetches active BAA for provider signup
+authRouter.get("/baa", getActiveBaa);
 authRouter.post("/logout", authJWT, logoutApi);
 authRouter.patch("/change-password", authJWT, changePasswordApi);
 authRouter.post("/forgot-password", forgotPasswordApi);

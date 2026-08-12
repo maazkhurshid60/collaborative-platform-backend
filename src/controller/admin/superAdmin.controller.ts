@@ -599,3 +599,145 @@ export const getSuperAdminDashboardStats = asyncHandler(
     );
   },
 );
+
+// ─── BAA (Business Associate Agreement) ───────────────────────────────────────
+
+/**
+ * POST /super-admin/baa
+ * Admin creates or updates the single active BAA document.
+ */
+export const createOrUpdateBaa = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { title, content } = req.body;
+
+    if (!content || typeof content !== "string" || content.trim().length === 0) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "BAA content is required",
+      });
+    }
+
+    // Upsert: deactivate any existing docs, then create/update the active one
+    const existingBaa = await prisma.baaDocument.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    let baaDoc;
+    if (existingBaa) {
+      baaDoc = await prisma.baaDocument.update({
+        where: { id: existingBaa.id },
+        data: {
+          title: title || "Business Associate Agreement",
+          content: content.trim(),
+        },
+      });
+    } else {
+      baaDoc = await prisma.baaDocument.create({
+        data: {
+          title: title || "Business Associate Agreement",
+          content: content.trim(),
+          isActive: true,
+        },
+      });
+    }
+
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          baaDoc,
+          existingBaa ? "BAA document updated successfully" : "BAA document created successfully",
+        ),
+      );
+  },
+);
+
+/**
+ * GET /super-admin/baa
+ * Admin fetches the current active BAA document.
+ */
+export const getAdminBaa = asyncHandler(
+  async (_req: Request, res: Response) => {
+    const baaDoc = await prisma.baaDocument.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          baaDoc ?? null,
+          "BAA document fetched successfully",
+        ),
+      );
+  },
+);
+
+/**
+ * GET /api/v1/auth/baa  (public — no auth required)
+ * Providers read the active BAA during signup.
+ */
+export const getActiveBaa = asyncHandler(
+  async (_req: Request, res: Response) => {
+    const baaDoc = await prisma.baaDocument.findFirst({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, title: true, content: true, updatedAt: true },
+    });
+
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          baaDoc ?? null,
+          "Active BAA fetched successfully",
+        ),
+      );
+  },
+);
+
+/**
+ * GET /super-admin/baa-providers
+ * Fetch all providers who have accepted the BAA (i.e. baaAcceptedAt is not null).
+ */
+export const getBaaAcceptedProviders = asyncHandler(
+  async (_req: Request, res: Response) => {
+    const providers = await prisma.user.findMany({
+      where: {
+        role: "provider",
+        baaAcceptedAt: { not: null },
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        baaAcceptedAt: true,
+        status: true,
+        provider: {
+          select: {
+            speciality: true,
+          },
+        },
+      },
+      orderBy: {
+        baaAcceptedAt: "desc",
+      },
+    });
+
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          providers,
+          "BAA accepted providers fetched successfully",
+        ),
+      );
+  },
+);
+
