@@ -87,6 +87,105 @@ model Provider {
   user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   clientList     ProviderOnClient[]
   formShares     FormShare[]
+  profile        ProviderProfile?
+  queries        ProviderQuery[]
+}
+
+// Public-facing, provider-editable profile ("Book a therapist" style page).
+// Kept separate from Provider/User so the always-loaded auth payload doesn't
+// carry this optional, potentially large content.
+model ProviderProfile {
+  id         String   @id @default(uuid())
+  providerId String   @unique
+  slug       String   @unique
+  isPublished Boolean @default(false)
+
+  professionalTitle      String?
+  credentials            String?
+  yearsOfExperience      Int?
+
+  shortIntroduction      String?
+  aboutMe                String?
+  professionalPhilosophy String?
+  whyIDoThisWork         String?
+
+  specialties         String[] @default([])
+  conditionsTreated   String[] @default([])
+  areasOfExpertise    String[] @default([])
+  services            String[] @default([])
+  clientFocus         String[] @default([])
+  treatmentApproaches String[] @default([])
+  languages           String[] @default([])
+
+  acceptingNewPatients   Boolean @default(true)
+  allowQueries           Boolean @default(true)
+  offersOnlineSessions   Boolean @default(false)
+  offersInPersonSessions Boolean @default(false)
+  offersHomeVisits       Boolean @default(false)
+  officeHours            String?
+
+  previousOrganizations String[] @default([])
+  clinicalExperience    String?
+
+  websiteUrl    String?
+  introVideoUrl String?
+  socialLinks   Json? // { linkedin?, facebook?, instagram?, twitter? }
+
+  education   Json? // [{ degree, university, graduationYear }]
+  licenses    Json? // [{ licenseType, licenseNumber, state, country, expirationDate, boardCertification }]
+  locations   Json? // [{ clinicName, address, city, state, country, isPrimary, latitude, longitude }]
+  memberships Json? // [{ organization, membershipType }]
+  awards      Json? // [{ title, type, year, url }]
+
+  clinicPhotos String[] @default([])
+  certificates String[] @default([])
+
+  consultationFee   Float?
+  followUpFee       Float?
+  slidingScale      Boolean  @default(false)
+  paymentMethods    String[] @default([])
+  insuranceAccepted String[] @default([])
+
+  emergencyContactInstructions String?
+  crisisResources              String?
+
+  consentFormUrl   String?
+  intakeFormUrl    String?
+  privacyPolicyUrl String?
+  hipaaNoticeUrl   String?
+
+  // Platform-controlled verification — deliberately NOT in the provider's own
+  // editable field list; only settable via the superAdmin endpoint.
+  identityVerified  Boolean @default(false)
+  backgroundChecked Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+}
+
+// A public visitor's inquiry to a specific provider, submitted from that
+// provider's public profile page. Guest-only (no client account required) —
+// the provider decides separately whether to onboard them as an actual
+// client via the existing invite flow. Submission itself is gated by the
+// provider's "Accepting New Patients" toggle (ProviderProfile.acceptingNewPatients) —
+// there's no further accept/decline step once a query is submitted.
+model ProviderQuery {
+  id         String @id @default(uuid())
+  providerId String
+
+  guestName  String
+  guestEmail String
+  guestPhone String?
+  message    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
 }
 
 model SuperAdmin {
@@ -337,6 +436,7 @@ enum NotificationType {
   DOCUMENT_SHARED
   DOCUMENT_SIGNED
   MENTIONED_IN_CHAT
+  QUERY_SUBMITTED
 }
 
 enum PlanType {

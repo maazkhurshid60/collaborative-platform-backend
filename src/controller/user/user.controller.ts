@@ -118,6 +118,12 @@ const getAllUsersApi = asyncHandler(async (req: Request, res: Response) => {
               },
             },
           },
+          profile: {
+            select: {
+              identityVerified: true,
+              backgroundChecked: true,
+            },
+          },
         },
       },
     },
