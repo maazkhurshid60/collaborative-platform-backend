@@ -3,6 +3,8 @@ import { ApiError } from "../utils/apiError";
 import { StatusCodes } from "http-status-codes";
 import { Approve } from "../generated/prisma/enums";
 import { io } from "../socket/socket";
+import { emailQueue } from "./EmailQueue";
+import logger from "../utils/logger";
 
 export class ProviderQueryService {
     // Public — no auth. Only allowed when the profile is published, the
@@ -54,6 +56,22 @@ export class ProviderQueryService {
         });
 
         io.to(`notification_room_${provider.userId}`).emit("new_notification", notification);
+
+        if (emailQueue) {
+            try {
+                await emailQueue.add("send-query-received-email", {
+                    providerEmail: provider.user.email,
+                    guestName: data.guestName,
+                    guestEmail: data.guestEmail,
+                    guestPhone: data.guestPhone,
+                    message: data.message,
+                });
+            } catch (error) {
+                logger.error("[ProviderQueryService] Failed to queue send-query-received-email:", error);
+            }
+        } else {
+            logger.warn("[ProviderQueryService] emailQueue not initialized, skipping query notification email");
+        }
 
         return query;
     }

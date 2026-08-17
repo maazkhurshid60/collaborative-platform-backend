@@ -8,53 +8,53 @@ datasource db {
 }
 
 model User {
-  id                    String             @id @default(uuid())
-  fullName              String
-  email                 String             @unique
-  password              String
-  profileImage          String?
-  gender                Gender             @default(MALE)
-  age                   Int?
-  contactNo             String?
-  address               String?
-  status                String
-  role                  Role
-  isApprove             Approve            @default(PENDING)
-  licenseNo             String?            @unique
-  isLicenseValid        Boolean            @default(false)
-  country               String?
-  state                 String
-  blockedMembers        String[]           @default([])
-  privateKey            String?
-  publicKey             String?
-  baaAcceptedAt         DateTime?          // Timestamp when provider accepted the BAA
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
-  hasUsedFreeTrial      Boolean            @default(false)
-  stripeCustomerId      String?            @unique
-  resetPasswordExpires  DateTime?
-  resetPasswordToken    String?
-  isEmailVerified       Boolean            @default(false)
-  verifyEmailToken      String?
-  verifyEmailExpires    DateTime?
-  twoFactorSecret       String?
-  isTwoFactorEnabled    Boolean            @default(false)
-  twoFactorRecoveryCodes String[]          @default([])
-  chatChannelsA         ChatChannel[]      @relation("ChatA")
-  chatChannelsB         ChatChannel[]      @relation("ChatB")
-  messages              ChatMessage[]
-  client                Client?
-  groupMemberships      GroupMembers[]
-  groupReadReceipts     GroupReadReceipt[]
-  receivedNotifications Notification[]     @relation("RecipientRelation")
-  sentNotifications     Notification[]     @relation("SenderRelation")
-  payments              Payment[]
-  provider              Provider?
-  readReceipts          ReadReceipt[]
-  subscription          Subscription?
-  superAdmin            SuperAdmin?
-  mentionedIn           ChatMessage[]      @relation("MessageMentions")
-  auditLogs             AuditLog[]
+  id                     String             @id @default(uuid())
+  fullName               String
+  email                  String             @unique
+  password               String
+  profileImage           String?
+  gender                 Gender             @default(MALE)
+  age                    Int?
+  contactNo              String?
+  address                String?
+  status                 String
+  role                   Role
+  isApprove              Approve            @default(PENDING)
+  licenseNo              String?            @unique
+  isLicenseValid         Boolean            @default(false)
+  country                String?
+  state                  String
+  blockedMembers         String[]           @default([])
+  privateKey             String?
+  publicKey              String?
+  baaAcceptedAt          DateTime? // Timestamp when provider accepted the BAA
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+  hasUsedFreeTrial       Boolean            @default(false)
+  stripeCustomerId       String?            @unique
+  resetPasswordExpires   DateTime?
+  resetPasswordToken     String?
+  isEmailVerified        Boolean            @default(false)
+  verifyEmailToken       String?
+  verifyEmailExpires     DateTime?
+  twoFactorSecret        String?
+  isTwoFactorEnabled     Boolean            @default(false)
+  twoFactorRecoveryCodes String[]           @default([])
+  chatChannelsA          ChatChannel[]      @relation("ChatA")
+  chatChannelsB          ChatChannel[]      @relation("ChatB")
+  messages               ChatMessage[]
+  client                 Client?
+  groupMemberships       GroupMembers[]
+  groupReadReceipts      GroupReadReceipt[]
+  receivedNotifications  Notification[]     @relation("RecipientRelation")
+  sentNotifications      Notification[]     @relation("SenderRelation")
+  payments               Payment[]
+  provider               Provider?
+  readReceipts           ReadReceipt[]
+  subscription           Subscription?
+  superAdmin             SuperAdmin?
+  mentionedIn            ChatMessage[]      @relation("MessageMentions")
+  auditLogs              AuditLog[]
 }
 
 model Client {
@@ -72,37 +72,41 @@ model Client {
   receivedDocument            DocumentShareWith[]
   providerList                ProviderOnClient[]
   formShares                  FormShare[]
+  appointments                Appointment[]
 }
 
 model Provider {
-  id             String              @id @default(uuid())
-  userId         String              @unique
+  id             String                 @id @default(uuid())
+  userId         String                 @unique
   speciality     String
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  createdClients Client[]            @relation("ClientCreator")
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  createdClients Client[]               @relation("ClientCreator")
   sharedDocument DocumentShareWith[]
   groupChats     GroupChat[]
   invitations    Invitation[]
-  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   clientList     ProviderOnClient[]
   formShares     FormShare[]
   profile        ProviderProfile?
   queries        ProviderQuery[]
+  availability   ProviderAvailability[]
+  timeOff        ProviderTimeOff[]
+  appointments   Appointment[]
 }
 
 // Public-facing, provider-editable profile ("Book a therapist" style page).
 // Kept separate from Provider/User so the always-loaded auth payload doesn't
 // carry this optional, potentially large content.
 model ProviderProfile {
-  id         String   @id @default(uuid())
-  providerId String   @unique
-  slug       String   @unique
+  id          String  @id @default(uuid())
+  providerId  String  @unique
+  slug        String  @unique
   isPublished Boolean @default(false)
 
-  professionalTitle      String?
-  credentials            String?
-  yearsOfExperience      Int?
+  professionalTitle String?
+  credentials       String?
+  yearsOfExperience Int?
 
   shortIntroduction      String?
   aboutMe                String?
@@ -123,6 +127,12 @@ model ProviderProfile {
   offersInPersonSessions Boolean @default(false)
   offersHomeVisits       Boolean @default(false)
   officeHours            String?
+
+  // Booking system — recurring weekly hours + time off are computed into slots on
+  // demand (no stored Slot table); see ProviderAvailability / ProviderTimeOff below.
+  timezone                   String? // IANA string, e.g. "America/New_York"; weekly hours are interpreted in this timezone
+  appointmentDurationMinutes Int     @default(50)
+  bufferMinutes              Int     @default(0)
 
   previousOrganizations String[] @default([])
   clinicalExperience    String?
@@ -188,6 +198,87 @@ model ProviderQuery {
   @@index([providerId])
 }
 
+// Recurring weekly availability. One row per enabled day for v1 — a single
+// window per day (multiple windows/day is a later upgrade). Slots are computed
+// on demand from this + ProviderTimeOff + existing Appointments, never stored.
+model ProviderAvailability {
+  id         String @id @default(uuid())
+  providerId String
+
+  dayOfWeek Int // 0 (Sunday) – 6 (Saturday)
+  startTime String // "09:00", interpreted in ProviderProfile.timezone
+  endTime   String // "17:00"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+}
+
+// Specific blocked date ranges that override the weekly schedule (vacation,
+// holidays, one-off unavailability).
+model ProviderTimeOff {
+  id         String @id @default(uuid())
+  providerId String
+
+  startDate DateTime
+  endDate   DateTime
+  reason    String? // optional note, provider-facing only
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+}
+
+// A confirmed booking made by a public visitor against a provider's computed
+// availability. Guest-only (no client account required) — mirrors ProviderQuery's
+// guest-contact-info approach rather than auto-creating a Client record.
+model Appointment {
+  id         String  @id @default(uuid())
+  providerId String
+  clientId   String? // nullable — for later/manual matching to an onboarded Client
+
+  startTime DateTime // stored UTC
+  endTime   DateTime // stored UTC
+
+  status      AppointmentStatus      @default(PENDING)
+  sessionType AppointmentSessionType
+
+  guestName  String
+  guestEmail String
+  guestPhone String?
+  notes      String? // booker-provided notes/reason for visit
+
+  cancelToken String @unique // lets the guest cancel via an emailed link without logging in
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  client   Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@unique([providerId, startTime])
+  @@index([providerId])
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  DECLINED
+}
+
+enum AppointmentSessionType {
+  ONLINE
+  IN_PERSON
+  HOME_VISIT
+}
+
 model SuperAdmin {
   id        String   @id @default(uuid())
   userId    String   @unique
@@ -222,7 +313,7 @@ model ChatMessage {
   mediaUrl          String?
   type              String
   isPhi             Boolean            @default(false)
-  phiClientId       String?            // Associated client if message contains PHI
+  phiClientId       String? // Associated client if message contains PHI
   createdAt         DateTime           @default(now())
   chatChannel       ChatChannel?       @relation(fields: [chatChannelId], references: [id])
   group             GroupChat?         @relation(fields: [groupId], references: [id])
@@ -250,7 +341,7 @@ model DocumentShareWith {
   providerId    String?
   eSignature    String?
   isAgree       Boolean   @default(false)
-  signedFileKey String?   // S3 key of the signed PDF (set after embedding)
+  signedFileKey String? // S3 key of the signed PDF (set after embedding)
   signedAt      DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -263,9 +354,9 @@ model DocumentField {
   id         String   @id @default(uuid())
   documentId String
   document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  fieldType  String   // "signature" | "date" | "text" | "initial"
+  fieldType  String // "signature" | "date" | "text" | "initial"
   page       Int
-  position   Json     // { x, y, width, height } as 0–1 fractions of page dimensions
+  position   Json // { x, y, width, height } as 0–1 fractions of page dimensions
   assignedTo String   @default("client")
   label      String?
   required   Boolean  @default(true)
@@ -273,19 +364,19 @@ model DocumentField {
 }
 
 model GroupChat {
-  id          String         @id @default(uuid())
-  name        String
-  providerId  String
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id               String         @id @default(uuid())
+  name             String
+  providerId       String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
   // When false, only the group creator (providerId) can add members or send
   // email invites. When true (default), any member of the group can.
   // Defaults to true so existing groups keep their current behaviour.
-  membersCanInvite Boolean   @default(true)
-  messages    ChatMessage[]
-  provider    Provider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  members     GroupMembers[]
-  invitations Invitation[]
+  membersCanInvite Boolean        @default(true)
+  messages         ChatMessage[]
+  provider         Provider       @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  members          GroupMembers[]
+  invitations      Invitation[]
 }
 
 model GroupMembers {
@@ -437,6 +528,8 @@ enum NotificationType {
   DOCUMENT_SIGNED
   MENTIONED_IN_CHAT
   QUERY_SUBMITTED
+  APPOINTMENT_BOOKED
+  APPOINTMENT_CANCELLED
 }
 
 enum PlanType {
@@ -458,70 +551,70 @@ enum SubscriptionStatus {
 model AuditLog {
   id         String   @id @default(uuid())
   userId     String?
-  action     String   // LOGIN, LOGOUT, SEND_MESSAGE, etc.
-  resource   String   // AUTH, CHAT, etc.
-  resourceId String?  // e.g., messageId
-  details    Json?    // metadata: IP, user agent, or message content metadata
+  action     String // LOGIN, LOGOUT, SEND_MESSAGE, etc.
+  resource   String // AUTH, CHAT, etc.
+  resourceId String? // e.g., messageId
+  details    Json? // metadata: IP, user agent, or message content metadata
   timestamp  DateTime @default(now())
   user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
 model FormTemplate {
-  id          String              @id @default(uuid())
+  id          String      @id @default(uuid())
   title       String
   description String?
-  version     Int                 @default(1)
-  schema      Json                // Contains JSON Form Schema (fields, types, validations)
-  isActive    Boolean             @default(true)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  version     Int         @default(1)
+  schema      Json // Contains JSON Form Schema (fields, types, validations)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   shares      FormShare[]
 }
 
 model FormShare {
-  id            String            @id @default(uuid())
-  templateId    String
-  clientId      String?
-  providerId    String
-  token         String            @unique // High-entropy secure UUID or HMAC token
-  status        FormShareStatus   @default(PENDING) // PENDING, SUBMITTED, EXPIRED
-  expiresAt     DateTime
-  providerData  Json?             // Pre-filled data by provider before sharing
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  
-  template      FormTemplate      @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  client        Client?           @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  provider      Provider          @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  submission    FormSubmission?
+  id           String          @id @default(uuid())
+  templateId   String
+  clientId     String?
+  providerId   String
+  token        String          @unique // High-entropy secure UUID or HMAC token
+  status       FormShareStatus @default(PENDING) // PENDING, SUBMITTED, EXPIRED
+  expiresAt    DateTime
+  providerData Json? // Pre-filled data by provider before sharing
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  template   FormTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  client     Client?         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  provider   Provider        @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  submission FormSubmission?
 }
 
 model FormSubmission {
-  id           String             @id @default(uuid())
-  shareId      String             @unique
-  submittedBy  String             // Client ID or authenticated user ID
-  submittedAt  DateTime           @default(now())
-  data         Json               // Submitted structured form values
-  signature    String             // Base64 image path or cryptographic e-signature representation
-  ipAddress    String
-  userAgent    String
-  isLocked     Boolean            @default(true) // Always true; immutable once saved
-  pdfUrl       String?
-  
-  share        FormShare          @relation(fields: [shareId], references: [id], onDelete: Cascade)
-  auditLogs    FormAuditTrail[]
+  id          String   @id @default(uuid())
+  shareId     String   @unique
+  submittedBy String // Client ID or authenticated user ID
+  submittedAt DateTime @default(now())
+  data        Json // Submitted structured form values
+  signature   String // Base64 image path or cryptographic e-signature representation
+  ipAddress   String
+  userAgent   String
+  isLocked    Boolean  @default(true) // Always true; immutable once saved
+  pdfUrl      String?
+
+  share     FormShare        @relation(fields: [shareId], references: [id], onDelete: Cascade)
+  auditLogs FormAuditTrail[]
 }
 
 model FormAuditTrail {
-  id           String             @id @default(uuid())
+  id           String   @id @default(uuid())
   submissionId String?
-  action       String             // "LINK_ACCESSED" | "VALIDATION_FAILED" | "SUBMITTED" | "RECORD_LOCKED"
+  action       String // "LINK_ACCESSED" | "VALIDATION_FAILED" | "SUBMITTED" | "RECORD_LOCKED"
   ipAddress    String
   userAgent    String
   details      Json?
-  timestamp    DateTime           @default(now())
-  
-  submission   FormSubmission?    @relation(fields: [submissionId], references: [id], onDelete: SetNull)
+  timestamp    DateTime @default(now())
+
+  submission FormSubmission? @relation(fields: [submissionId], references: [id], onDelete: SetNull)
 }
 
 enum FormShareStatus {
@@ -543,9 +636,8 @@ model ContactQuery {
 model BaaDocument {
   id        String   @id @default(uuid())
   title     String   @default("Business Associate Agreement")
-  content   String   // Rich text / HTML content
+  content   String // Rich text / HTML content
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-

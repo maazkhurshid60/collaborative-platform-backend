@@ -53,6 +53,43 @@ const EDITABLE_FIELDS = [
     // they're platform-controlled and only settable via setVerificationFlags (superAdmin only).
 ] as const;
 
+// The subset of EDITABLE_FIELDS that counts toward the public-facing "profile
+// completeness" score — the fields that most matter for a visitor deciding
+// whether to reach out, not every niche/admin field a provider can fill in.
+// A provider must clear COMPLETENESS_THRESHOLD_PERCENT before they're allowed
+// to publish (see setPublished).
+const COMPLETENESS_THRESHOLD_PERCENT = 50;
+
+type CompletenessCheck = (profile: Record<string, any>) => boolean;
+
+const COMPLETENESS_CHECKS: CompletenessCheck[] = [
+    (p) => Boolean(p.professionalTitle?.trim()),
+    (p) => Boolean(p.credentials?.trim()),
+    (p) => typeof p.yearsOfExperience === "number" && p.yearsOfExperience > 0,
+    (p) => Boolean(p.shortIntroduction?.trim()),
+    (p) => Boolean(p.aboutMe?.trim()),
+    (p) => Array.isArray(p.specialties) && p.specialties.length > 0,
+    (p) => Array.isArray(p.services) && p.services.length > 0,
+    (p) => Array.isArray(p.languages) && p.languages.length > 0,
+    (p) => Boolean(p.offersOnlineSessions || p.offersInPersonSessions || p.offersHomeVisits),
+    (p) => Boolean(p.officeHours?.trim()),
+    (p) => p.consultationFee != null || p.followUpFee != null,
+    (p) => Array.isArray(p.locations) && p.locations.length > 0,
+];
+
+function computeCompleteness(profile: Record<string, any> | null | undefined) {
+    const total = COMPLETENESS_CHECKS.length;
+    const filled = COMPLETENESS_CHECKS.reduce(
+        (count, check) => count + (profile && check(profile) ? 1 : 0),
+        0,
+    );
+    return {
+        completenessPercent: Math.round((filled / total) * 100),
+        completenessFilled: filled,
+        completenessTotal: total,
+    };
+}
+
 function slugify(input: string) {
     return input
         .toLowerCase()
@@ -85,14 +122,15 @@ export class ProviderProfileService {
             throw new ApiError(StatusCodes.NOT_FOUND, "Provider not found");
         }
 
-        if (provider.profile) return provider.profile;
+        if (provider.profile) return { ...provider.profile, ...computeCompleteness(provider.profile) };
 
-        return prisma.providerProfile.create({
+        const created = await prisma.providerProfile.create({
             data: {
                 providerId: provider.id,
                 slug: generateSlug(provider.user.fullName),
             },
         });
+        return { ...created, ...computeCompleteness(created) };
     }
 
     async updateForLoginUser(loginUserId: string, data: Record<string, any>) {
@@ -105,7 +143,7 @@ export class ProviderProfileService {
             throw new ApiError(StatusCodes.NOT_FOUND, "Provider not found");
         }
 
-        return prisma.providerProfile.upsert({
+        const updated = await prisma.providerProfile.upsert({
             where: { providerId: provider.id },
             create: {
                 providerId: provider.id,
@@ -114,6 +152,7 @@ export class ProviderProfileService {
             },
             update: pickEditableFields(data),
         });
+        return { ...updated, ...computeCompleteness(updated) };
     }
 
     async setPublished(loginUserId: string, isPublished: boolean) {
@@ -126,13 +165,35 @@ export class ProviderProfileService {
             throw new ApiError(StatusCodes.NOT_FOUND, "Provider not found");
         }
 
+        if (isPublished) {
+            const { completenessPercent } = computeCompleteness(provider.profile);
+            if (completenessPercent < COMPLETENESS_THRESHOLD_PERCENT) {
+                throw new ApiError(
+                    StatusCodes.BAD_REQUEST,
+                    `Your public profile is only ${completenessPercent}% complete. Fill in at least ${COMPLETENESS_THRESHOLD_PERCENT}% before publishing.`,
+                );
+            }
+
+            // Publishing also requires the account itself to be admin-approved —
+            // otherwise the profile would silently never appear anywhere public
+            // (getPublicBySlug/searchPublished/booking all re-check this), leaving
+            // the provider confused about why "Published" doesn't actually show up.
+            if (provider.user.isApprove !== Approve.APPROVED) {
+                throw new ApiError(
+                    StatusCodes.BAD_REQUEST,
+                    "Your account is still pending admin approval. Your profile can't go live until your account is approved — you can still finish setting it up in the meantime.",
+                );
+            }
+        }
+
         const slug = provider.profile?.slug || generateSlug(provider.user.fullName);
 
-        return prisma.providerProfile.upsert({
+        const updated = await prisma.providerProfile.upsert({
             where: { providerId: provider.id },
             create: { providerId: provider.id, slug, isPublished },
             update: { isPublished, slug },
         });
+        return { ...updated, ...computeCompleteness(updated) };
     }
 
     // superAdmin only — sets platform-controlled verification flags for a provider,

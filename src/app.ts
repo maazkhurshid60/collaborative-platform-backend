@@ -20,6 +20,8 @@ import clientRouter from "./route/client/client.route";
 import providerRouter from "./route/provider/provider.route";
 import providerProfileRouter from "./route/providerProfile/providerProfile.route";
 import providerQueryRouter from "./route/providerQuery/providerQuery.route";
+import availabilityRouter from "./route/availability/availability.route";
+import appointmentRouter from "./route/appointment/appointment.route";
 import chatRouter from "./route/chat/chat.route";
 import chatChannelRouter from "./route/chatChannel/chatChannel.route";
 import chatGroupRouter from "./route/chatGroup/chatGroup.route";
@@ -107,6 +109,8 @@ app.use("/api/v1/provider", authJWT, providerRouter);
 app.use("/api/v1/provider-profile", providerProfileRouter);
 // Not gated with a blanket authJWT here — the /public/:slug submit route inside must stay unauthenticated.
 app.use("/api/v1/provider-query", providerQueryRouter);
+app.use("/api/v1/availability", availabilityRouter);
+app.use("/api/v1/appointments", appointmentRouter);
 app.use("/api/v1/chat", authJWT, chatRouter);
 app.use("/api/v1/public-chat", publicChatRouter);
 app.use("/api/v1/chat-channel", authJWT, chatChannelRouter);

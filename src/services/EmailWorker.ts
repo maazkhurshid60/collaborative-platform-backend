@@ -2,6 +2,12 @@ import { Worker, Job } from "bullmq";
 import Redis from "ioredis";
 import logger from "../utils/logger";
 import { sendNewMessageEmail } from "../utils/nodeMailer/SendNewMessageEmail";
+import {
+  sendBookingRequestEmailToProvider,
+  sendBookingAcceptedEmailToGuest,
+  sendBookingDeclinedEmailToGuest,
+} from "../utils/nodeMailer/BookingEmails";
+import { sendQueryReceivedEmailToProvider } from "../utils/nodeMailer/QueryEmails";
 
 const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
 
@@ -29,8 +35,9 @@ export const initEmailWorker = () => {
       const { email, senderName, chatLink, chatType, chatName } = job.data;
 
       try {
+        logger.debug(`[EmailWorker] Processing job ${job.id} (${job.name})`);
+
         if (job.name === "send-chat-notification") {
-          logger.debug(`[EmailWorker] Processing job ${job.id} for ${email}`);
           await sendNewMessageEmail(
             email,
             senderName,
@@ -38,12 +45,22 @@ export const initEmailWorker = () => {
             chatType,
             chatName,
           );
-          logger.debug(
-            `[EmailWorker] Successfully sent email for job ${job.id}`,
-          );
+        } else if (job.name === "send-booking-request-email") {
+          await sendBookingRequestEmailToProvider(job.data);
+        } else if (job.name === "send-booking-accepted-email") {
+          await sendBookingAcceptedEmailToGuest(job.data);
+        } else if (job.name === "send-booking-declined-email") {
+          await sendBookingDeclinedEmailToGuest(job.data);
+        } else if (job.name === "send-query-received-email") {
+          await sendQueryReceivedEmailToProvider(job.data);
         } else {
           logger.warn(`[EmailWorker] Unknown job name: ${job.name}`);
+          return { success: false };
         }
+
+        logger.debug(
+          `[EmailWorker] Successfully sent email for job ${job.id}`,
+        );
 
         return { success: true };
       } catch (error) {
