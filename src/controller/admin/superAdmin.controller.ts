@@ -741,3 +741,76 @@ export const getBaaAcceptedProviders = asyncHandler(
   },
 );
 
+/**
+ * GET /super-admin/appointments/all
+ * Fetch all appointments and meeting call audit logs for superAdmin.
+ */
+export const getAllAppointmentsAdmin = asyncHandler(
+  async (req: Request, res: Response) => {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string) || "";
+    const status = (req.query.status as string) || "";
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (status && status !== "ALL") {
+      where.status = status;
+    }
+
+    if (search) {
+      where.OR = [
+        { guestName: { contains: search, mode: "insensitive" } },
+        { guestEmail: { contains: search, mode: "insensitive" } },
+        { provider: { user: { fullName: { contains: search, mode: "insensitive" } } } },
+        { provider: { user: { email: { contains: search, mode: "insensitive" } } } },
+      ];
+    }
+
+    const [appointments, totalCount] = await Promise.all([
+      prisma.appointment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { startTime: "desc" },
+        include: {
+          provider: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                },
+              },
+            },
+          },
+          callLogs: {
+            orderBy: { occurredAt: "asc" },
+          },
+        },
+      }),
+      prisma.appointment.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return res.status(StatusCodes.OK).json(
+      new ApiResponse(
+        StatusCodes.OK,
+        {
+          appointments,
+          pagination: {
+            totalCount,
+            totalPages,
+            currentPage: page,
+            limit,
+          },
+        },
+        "Appointments and meeting audit logs fetched successfully",
+      ),
+    );
+  },
+);
+

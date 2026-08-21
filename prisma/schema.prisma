@@ -92,7 +92,8 @@ model Provider {
   queries        ProviderQuery[]
   availability   ProviderAvailability[]
   timeOff        ProviderTimeOff[]
-  appointments   Appointment[]
+  appointments   Appointment[]          @relation("HostProvider")
+  bookedSessions Appointment[]          @relation("BookingProvider")
 }
 
 // Public-facing, provider-editable profile ("Book a therapist" style page).
@@ -239,9 +240,10 @@ model ProviderTimeOff {
 // availability. Guest-only (no client account required) — mirrors ProviderQuery's
 // guest-contact-info approach rather than auto-creating a Client record.
 model Appointment {
-  id         String  @id @default(uuid())
-  providerId String
-  clientId   String? // nullable — for later/manual matching to an onboarded Client
+  id                String  @id @default(uuid())
+  providerId        String
+  bookingProviderId String? // nullable — set when booked by another Provider in dashboard
+  clientId          String? // nullable — for later/manual matching to an onboarded Client
 
   startTime DateTime // stored UTC
   endTime   DateTime // stored UTC
@@ -256,14 +258,41 @@ model Appointment {
 
   cancelToken String @unique // lets the guest cancel via an emailed link without logging in
 
+  // Self-hosted WebRTC video calling (ONLINE sessions only). meetingRoomId is the
+  // Socket.IO signaling room name; join is gated by a separate short-lived signed
+  // token (never this id) plus a server-side time-window + participant check —
+  // see AppointmentService / socket.ts.
+  meetingRoomId String?
+  meetingUrl    String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  client   Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  provider        Provider             @relation("HostProvider", fields: [providerId], references: [id], onDelete: Cascade)
+  bookingProvider Provider?            @relation("BookingProvider", fields: [bookingProviderId], references: [id], onDelete: SetNull)
+  client          Client?              @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  callLogs        AppointmentCallLog[]
 
   @@unique([providerId, startTime])
   @@index([providerId])
+  @@index([bookingProviderId])
+}
+
+// Metadata-only audit trail for video calls — never call content, SDP, or
+// media. Access-controlled like other PHI-adjacent data (see the plan doc).
+model AppointmentCallLog {
+  id             String   @id @default(uuid())
+  appointmentId  String
+  participantId  String // provider's userId, or a fixed "guest" marker (single guest per appointment)
+  role           String // "guest" | "provider"
+  event          String // "join" | "leave" | "expired" | "auth_failed" | "completed" | "missed" | "declined"
+  durationSeconds Int?   // Duration in seconds if event is "completed"
+  connectionMeta Json? // ICE/TURN fallback info only — never content
+  occurredAt     DateTime @default(now())
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId])
 }
 
 enum AppointmentStatus {

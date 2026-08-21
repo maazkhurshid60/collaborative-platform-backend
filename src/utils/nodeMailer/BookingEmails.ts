@@ -25,6 +25,7 @@ export interface BookingDecisionEmailData {
   timezoneLabel: string;
   sessionType: string;
   cancelUrl?: string;
+  callJoinUrl?: string;
 }
 
 export async function sendBookingRequestEmailToProvider(data: BookingRequestEmailData) {

@@ -48,6 +48,7 @@ const allowedOrigins = [
   "https://www.collaborateme.com",
   "https://collaborateme.com",
   "https://app.kolabme.com",
+  "https://kolabme.com",
 ];
 
 app.use(

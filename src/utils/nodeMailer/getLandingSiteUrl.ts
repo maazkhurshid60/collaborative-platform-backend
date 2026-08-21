@@ -6,3 +6,10 @@ export const getLandingSiteUrl = () => {
     ? "http://localhost:3000"
     : "https://kolabme.com";
 };
+
+// The authenticated platform dashboard app
+export const getAppSiteUrl = () => {
+  return (process.env.NODE_ENV || "").toUpperCase() === "DEVELOPMENT"
+    ? "http://localhost:5173"
+    : "https://app.kolabme.com";
+};

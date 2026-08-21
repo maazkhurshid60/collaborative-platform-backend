@@ -2,13 +2,26 @@ import prisma from "../db/db.config";
 import { ApiError } from "../utils/apiError";
 import { StatusCodes } from "http-status-codes";
 import { AppointmentStatus } from "../generated/prisma/enums";
-import { addCalendarDays, getZonedParts, parseHHMM, zonedTimeToUtc, US_TIMEZONES } from "../utils/timezone";
+import {
+  addCalendarDays,
+  getZonedParts,
+  parseHHMM,
+  zonedTimeToUtc,
+  US_TIMEZONES,
+} from "../utils/timezone";
 import { ProviderProfileService } from "./ProviderProfileService";
 
 const providerProfileService = new ProviderProfileService();
 
 const MAX_ADVANCE_BOOKING_DAYS = 60;
-const MIN_LEAD_TIME_MINUTES = 120;
+const MIN_LEAD_TIME_MINUTES = 15; //120;
+// Extra headroom added ONLY when generating the list a guest browses (not when
+// re-validating a specific slot at booking time). Without this, the earliest
+// slot in any list sits exactly at now+MIN_LEAD_TIME_MINUTES with zero slack —
+// by the time a guest finishes the booking form, "now" has moved forward and
+// that same slot falls inside the cutoff, so re-validation always rejects it.
+// This buffer gives the guest real time to fill out the form.
+export const LIST_SAFETY_BUFFER_MINUTES = 3;
 
 interface Interval {
   start: Date;
@@ -29,10 +42,18 @@ function subtractIntervals(base: Interval, blocked: Interval[]): Interval[] {
       }
 
       if (block.start > window.start) {
-        next.push({ start: window.start, end: new Date(Math.min(block.start.getTime(), window.end.getTime())) });
+        next.push({
+          start: window.start,
+          end: new Date(Math.min(block.start.getTime(), window.end.getTime())),
+        });
       }
       if (block.end < window.end) {
-        next.push({ start: new Date(Math.max(block.end.getTime(), window.start.getTime())), end: window.end });
+        next.push({
+          start: new Date(
+            Math.max(block.end.getTime(), window.start.getTime()),
+          ),
+          end: window.end,
+        });
       }
     }
 
@@ -42,14 +63,20 @@ function subtractIntervals(base: Interval, blocked: Interval[]): Interval[] {
   return remaining;
 }
 
-function sliceIntoSlots(windows: Interval[], durationMinutes: number): Interval[] {
+function sliceIntoSlots(
+  windows: Interval[],
+  durationMinutes: number,
+): Interval[] {
   const durationMs = durationMinutes * 60000;
   const slots: Interval[] = [];
 
   for (const window of windows) {
     let cursor = window.start.getTime();
     while (cursor + durationMs <= window.end.getTime()) {
-      slots.push({ start: new Date(cursor), end: new Date(cursor + durationMs) });
+      slots.push({
+        start: new Date(cursor),
+        end: new Date(cursor + durationMs),
+      });
       cursor += durationMs;
     }
   }
@@ -59,7 +86,9 @@ function sliceIntoSlots(windows: Interval[], durationMinutes: number): Interval[
 
 export class AvailabilityService {
   private async getProviderOrThrow(loginUserId: string) {
-    const provider = await prisma.provider.findUnique({ where: { userId: loginUserId } });
+    const provider = await prisma.provider.findUnique({
+      where: { userId: loginUserId },
+    });
     if (!provider) {
       throw new ApiError(StatusCodes.NOT_FOUND, "Provider not found");
     }
@@ -83,17 +112,25 @@ export class AvailabilityService {
 
     for (const day of days) {
       if (day.dayOfWeek < 0 || day.dayOfWeek > 6) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, "dayOfWeek must be between 0 and 6");
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          "dayOfWeek must be between 0 and 6",
+        );
       }
       const start = parseHHMM(day.startTime);
       const end = parseHHMM(day.endTime);
       if (end.hour * 60 + end.minute <= start.hour * 60 + start.minute) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, "endTime must be after startTime");
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          "endTime must be after startTime",
+        );
       }
     }
 
     return prisma.$transaction(async (tx) => {
-      await tx.providerAvailability.deleteMany({ where: { providerId: provider.id } });
+      await tx.providerAvailability.deleteMany({
+        where: { providerId: provider.id },
+      });
       if (days.length === 0) return [];
       return tx.providerAvailability.createManyAndReturn({
         data: days.map((d) => ({
@@ -108,7 +145,9 @@ export class AvailabilityService {
 
   async getMyBookingSettings(loginUserId: string) {
     const provider = await this.getProviderOrThrow(loginUserId);
-    const profile = await prisma.providerProfile.findUnique({ where: { providerId: provider.id } });
+    const profile = await prisma.providerProfile.findUnique({
+      where: { providerId: provider.id },
+    });
     return {
       timezone: profile?.timezone ?? null,
       appointmentDurationMinutes: profile?.appointmentDurationMinutes ?? 50,
@@ -118,26 +157,42 @@ export class AvailabilityService {
 
   async setMyBookingSettings(
     loginUserId: string,
-    settings: { timezone?: string; appointmentDurationMinutes?: number; bufferMinutes?: number },
+    settings: {
+      timezone?: string;
+      appointmentDurationMinutes?: number;
+      bufferMinutes?: number;
+    },
   ) {
     const provider = await this.getProviderOrThrow(loginUserId);
 
     const data: Record<string, unknown> = {};
     if (settings.timezone !== undefined) {
       if (!(US_TIMEZONES as readonly string[]).includes(settings.timezone)) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, "Please select a valid US timezone");
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          "Please select a valid US timezone",
+        );
       }
       data.timezone = settings.timezone;
     }
     if (settings.appointmentDurationMinutes !== undefined) {
-      if (settings.appointmentDurationMinutes < 5 || settings.appointmentDurationMinutes > 480) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, "Session length must be between 5 and 480 minutes");
+      if (
+        settings.appointmentDurationMinutes < 5 ||
+        settings.appointmentDurationMinutes > 480
+      ) {
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          "Session length must be between 5 and 480 minutes",
+        );
       }
       data.appointmentDurationMinutes = settings.appointmentDurationMinutes;
     }
     if (settings.bufferMinutes !== undefined) {
       if (settings.bufferMinutes < 0 || settings.bufferMinutes > 120) {
-        throw new ApiError(StatusCodes.BAD_REQUEST, "Buffer must be between 0 and 120 minutes");
+        throw new ApiError(
+          StatusCodes.BAD_REQUEST,
+          "Buffer must be between 0 and 120 minutes",
+        );
       }
       data.bufferMinutes = settings.bufferMinutes;
     }
@@ -160,17 +215,29 @@ export class AvailabilityService {
     });
   }
 
-  async addMyTimeOff(loginUserId: string, data: { startDate: string; endDate: string; reason?: string }) {
+  async addMyTimeOff(
+    loginUserId: string,
+    data: { startDate: string; endDate: string; reason?: string },
+  ) {
     const provider = await this.getProviderOrThrow(loginUserId);
 
     const startDate = new Date(data.startDate);
     const endDate = new Date(data.endDate);
-    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || endDate <= startDate) {
+    if (
+      Number.isNaN(startDate.getTime()) ||
+      Number.isNaN(endDate.getTime()) ||
+      endDate <= startDate
+    ) {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid date range");
     }
 
     return prisma.providerTimeOff.create({
-      data: { providerId: provider.id, startDate, endDate, reason: data.reason },
+      data: {
+        providerId: provider.id,
+        startDate,
+        endDate,
+        reason: data.reason,
+      },
     });
   }
 
@@ -190,25 +257,33 @@ export class AvailabilityService {
   // Public — computes bookable slots for a provider between `from` and `to`
   // (both UTC instants) from weekly availability minus time off minus existing
   // confirmed appointments (+ buffer). Nothing is stored; recomputed each call.
-  async computeAvailableSlots(providerId: string, from: Date, to: Date) {
-    const [profile, weeklyAvailability, timeOff, appointments] = await Promise.all([
-      prisma.providerProfile.findUnique({ where: { providerId } }),
-      prisma.providerAvailability.findMany({ where: { providerId } }),
-      prisma.providerTimeOff.findMany({ where: { providerId } }),
-      prisma.appointment.findMany({
-        where: {
-          providerId,
-          // A PENDING request tentatively holds the slot too, so it can't be
-          // double-booked while the provider is still deciding.
-          status: { in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
-          startTime: { lt: to },
-          endTime: { gt: from },
-        },
-      }),
-    ]);
+  // `extraLeadBufferMinutes` should be 0 for the strict re-check at booking
+  // time, and LIST_SAFETY_BUFFER_MINUTES when generating a list a guest browses.
+  async computeAvailableSlots(providerId: string, from: Date, to: Date, extraLeadBufferMinutes = 0) {
+    const [profile, weeklyAvailability, timeOff, appointments] =
+      await Promise.all([
+        prisma.providerProfile.findUnique({ where: { providerId } }),
+        prisma.providerAvailability.findMany({ where: { providerId } }),
+        prisma.providerTimeOff.findMany({ where: { providerId } }),
+        prisma.appointment.findMany({
+          where: {
+            providerId,
+            // A PENDING request tentatively holds the slot too, so it can't be
+            // double-booked while the provider is still deciding.
+            status: {
+              in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
+            },
+            startTime: { lt: to },
+            endTime: { gt: from },
+          },
+        }),
+      ]);
 
     if (!profile?.timezone || weeklyAvailability.length === 0) {
-      return { timezone: profile?.timezone ?? null, slots: [] as { startTime: string; endTime: string }[] };
+      return {
+        timezone: profile?.timezone ?? null,
+        slots: [] as { startTime: string; endTime: string }[],
+      };
     }
 
     const timezone = profile.timezone;
@@ -216,8 +291,12 @@ export class AvailabilityService {
     const bufferMs = profile.bufferMinutes * 60000;
 
     const now = new Date();
-    const earliestBookable = new Date(now.getTime() + MIN_LEAD_TIME_MINUTES * 60000);
-    const latestBookable = new Date(now.getTime() + MAX_ADVANCE_BOOKING_DAYS * 24 * 60 * 60000);
+    const earliestBookable = new Date(
+      now.getTime() + (MIN_LEAD_TIME_MINUTES + extraLeadBufferMinutes) * 60000,
+    );
+    const latestBookable = new Date(
+      now.getTime() + MAX_ADVANCE_BOOKING_DAYS * 24 * 60 * 60000,
+    );
 
     const rangeStart = from > earliestBookable ? from : earliestBookable;
     const rangeEnd = to < latestBookable ? to : latestBookable;
@@ -225,9 +304,14 @@ export class AvailabilityService {
       return { timezone, slots: [] };
     }
 
-    const availabilityByDay = new Map(weeklyAvailability.map((a) => [a.dayOfWeek, a]));
+    const availabilityByDay = new Map(
+      weeklyAvailability.map((a) => [a.dayOfWeek, a]),
+    );
 
-    const timeOffIntervals: Interval[] = timeOff.map((t) => ({ start: t.startDate, end: t.endDate }));
+    const timeOffIntervals: Interval[] = timeOff.map((t) => ({
+      start: t.startDate,
+      end: t.endDate,
+    }));
     const bookedIntervals: Interval[] = appointments.map((a) => ({
       start: new Date(a.startTime.getTime() - bufferMs),
       end: new Date(a.endTime.getTime() + bufferMs),
@@ -236,13 +320,21 @@ export class AvailabilityService {
     const allSlots: Interval[] = [];
 
     const initialParts = getZonedParts(rangeStart, timezone);
-    let cursorParts: { year: number; month: number; day: number } = initialParts;
+    let cursorParts: { year: number; month: number; day: number } =
+      initialParts;
     let guard = 0;
     // Bound the loop generously; MAX_ADVANCE_BOOKING_DAYS already caps range width.
     while (guard <= MAX_ADVANCE_BOOKING_DAYS + 2) {
       guard += 1;
 
-      const dayStartUtc = zonedTimeToUtc(cursorParts.year, cursorParts.month, cursorParts.day, 0, 0, timezone);
+      const dayStartUtc = zonedTimeToUtc(
+        cursorParts.year,
+        cursorParts.month,
+        cursorParts.day,
+        0,
+        0,
+        timezone,
+      );
       if (dayStartUtc >= rangeEnd) break;
 
       const weekday = getZonedParts(dayStartUtc, timezone).weekday;
@@ -251,17 +343,32 @@ export class AvailabilityService {
       if (dayRule) {
         const start = parseHHMM(dayRule.startTime);
         const end = parseHHMM(dayRule.endTime);
-        const windowStart = zonedTimeToUtc(cursorParts.year, cursorParts.month, cursorParts.day, start.hour, start.minute, timezone);
-        const windowEnd = zonedTimeToUtc(cursorParts.year, cursorParts.month, cursorParts.day, end.hour, end.minute, timezone);
+        const windowStart = zonedTimeToUtc(
+          cursorParts.year,
+          cursorParts.month,
+          cursorParts.day,
+          start.hour,
+          start.minute,
+          timezone,
+        );
+        const windowEnd = zonedTimeToUtc(
+          cursorParts.year,
+          cursorParts.month,
+          cursorParts.day,
+          end.hour,
+          end.minute,
+          timezone,
+        );
 
-        const clampedStart = windowStart < rangeStart ? rangeStart : windowStart;
+        const clampedStart =
+          windowStart < rangeStart ? rangeStart : windowStart;
         const clampedEnd = windowEnd > rangeEnd ? rangeEnd : windowEnd;
 
         if (clampedEnd > clampedStart) {
-          const openWindows = subtractIntervals({ start: clampedStart, end: clampedEnd }, [
-            ...timeOffIntervals,
-            ...bookedIntervals,
-          ]);
+          const openWindows = subtractIntervals(
+            { start: clampedStart, end: clampedEnd },
+            [...timeOffIntervals, ...bookedIntervals],
+          );
           allSlots.push(...sliceIntoSlots(openWindows, durationMinutes));
         }
       }
@@ -273,12 +380,27 @@ export class AvailabilityService {
 
     return {
       timezone,
-      slots: allSlots.map((s) => ({ startTime: s.start.toISOString(), endTime: s.end.toISOString() })),
+      slots: allSlots.map((s) => ({
+        startTime: s.start.toISOString(),
+        endTime: s.end.toISOString(),
+      })),
     };
   }
 
-  async isSlotStillAvailable(providerId: string, startTime: Date, endTime: Date) {
-    const { slots } = await this.computeAvailableSlots(providerId, startTime, endTime);
-    return slots.some((s) => s.startTime === startTime.toISOString() && s.endTime === endTime.toISOString());
+  async isSlotStillAvailable(
+    providerId: string,
+    startTime: Date,
+    endTime: Date,
+  ) {
+    const { slots } = await this.computeAvailableSlots(
+      providerId,
+      startTime,
+      endTime,
+    );
+    return slots.some(
+      (s) =>
+        s.startTime === startTime.toISOString() &&
+        s.endTime === endTime.toISOString(),
+    );
   }
 }

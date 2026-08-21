@@ -2,6 +2,112 @@ import { Server } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import Redis from "ioredis";
 import logger from "../utils/logger";
+import prisma from "../db/db.config";
+import { AppointmentStatus, AppointmentSessionType } from "../generated/prisma/enums";
+import { CALL_GRACE_MINUTES, getIceServers, isWithinCallJoinWindow, verifyCallToken } from "../utils/callAuth";
+
+// ─── Video call signaling (self-hosted WebRTC) ──────────────────────────────
+// Room name alone (`call_${appointmentId}`) is guessable/enumerable, so it is
+// NOT sufficient to join — every join_call re-verifies the join token, the
+// appointment's real status, and the time window server-side. See
+// VIDEO_CALLING_AND_NOTIFICATIONS_PLAN.md §2 for the full rationale.
+
+interface CallAuthResult {
+    role: "guest" | "provider";
+    participantId: string;
+    endTime: Date;
+    guestName?: string;
+}
+
+async function authorizeCallJoin(appointmentId: string, token: string | undefined): Promise<CallAuthResult | null> {
+    if (!token) return null;
+
+    const payload = verifyCallToken(token);
+    if (!payload || payload.appointmentId !== appointmentId) return null;
+
+    const appointment = await prisma.appointment.findUnique({
+        where: { id: appointmentId },
+        include: { provider: true, bookingProvider: true },
+    });
+    if (!appointment) return null;
+    if (appointment.status !== AppointmentStatus.CONFIRMED) return null;
+    if (appointment.sessionType !== AppointmentSessionType.ONLINE) return null;
+    if (!isWithinCallJoinWindow(appointment.startTime, appointment.endTime)) return null;
+
+    if (payload.role === "provider") {
+        const isHost = payload.participantId === appointment.provider.userId;
+        const isBookingProvider = appointment.bookingProvider && payload.participantId === appointment.bookingProvider.userId;
+        if (!isHost && !isBookingProvider) return null;
+    }
+
+    return {
+        role: payload.role,
+        participantId: payload.participantId,
+        endTime: appointment.endTime,
+        guestName: appointment.guestName || "Guest",
+    };
+}
+
+async function logCallEvent(
+    appointmentId: string,
+    role: "guest" | "provider",
+    participantId: string,
+    event: "join" | "leave" | "expired" | "auth_failed" | "completed" | "missed" | "declined",
+    durationSeconds?: number,
+) {
+    try {
+        await prisma.appointmentCallLog.create({
+            data: {
+                appointmentId,
+                role,
+                participantId,
+                event,
+                durationSeconds: durationSeconds ?? null,
+            },
+        });
+    } catch (err: any) {
+        logger.error(`Failed to write call log (${event}) for appointment ${appointmentId}: ${err.message}`);
+    }
+}
+
+// Rooms currently believed active, so the periodic sweep below only has to
+// check rooms that actually had a join — not scan the whole appointments
+// table every tick. Purely a local optimization; the sweep re-derives the
+// authoritative "should this be ended" answer from the DB regardless.
+const activeCallRooms = new Map<string, { appointmentId: string; endTime: Date }>();
+
+// Enforces call end server-side, not just at the join gate — two participants
+// already on a call shouldn't be able to run it indefinitely past the
+// scheduled end. Runs on every instance; harmless if redundant (ending an
+// already-empty room is a no-op).
+function startCallExpirySweep(io: Server) {
+    setInterval(async () => {
+        const graceMs = CALL_GRACE_MINUTES * 60000;
+        const now = Date.now();
+
+        for (const [room, info] of activeCallRooms) {
+            if (info.endTime.getTime() + graceMs > now) continue;
+
+            try {
+                const sockets = await io.in(room).fetchSockets();
+                for (const s of sockets) {
+                    const participant = (s.data as { callParticipant?: CallAuthResult }).callParticipant;
+                    if (participant) {
+                        await logCallEvent(info.appointmentId, participant.role, participant.participantId, "expired");
+                    }
+                    s.leave(room);
+                }
+                if (sockets.length > 0) {
+                    io.to(room).emit("call_expired", { reason: "endTime_exceeded" });
+                }
+            } catch (err: any) {
+                logger.error(`Call expiry sweep failed for room ${room}: ${err.message}`);
+            }
+
+            activeCallRooms.delete(room);
+        }
+    }, 60000);
+}
 
 
 
@@ -31,7 +137,10 @@ export function setupSocket(server: any) {
                 'https://collaborative-platform-frontend.vercel.app',
                 "https://www.collaborateme.com/",
                 "https://www.collaborateme.com",
-                "https://app.kolabme.com"
+                "https://app.kolabme.com",
+                'http://localhost:3000',
+                'https://kolabme.com',
+                'https://www.kolabme.com',
             ],
             credentials: true,
         },
@@ -48,6 +157,8 @@ export function setupSocket(server: any) {
     */
     io.adapter(createAdapter(pubClient, subClient));
     logger.info("Redis apdapter is ready, socket.io is now spreading in multi servers");
+
+    startCallExpirySweep(io);
 
     io.on("connection", async (socket: any) => {
         const providerId = socket.handshake.query.providerId;
@@ -143,10 +254,238 @@ export function setupSocket(server: any) {
             }
         });
 
+        // ─── Video call signaling (self-hosted WebRTC) ───────────────────
+        // 1:1 only (provider ↔ guest) — no SFU needed. Every join re-verifies
+        // the token, appointment status, and time window; knowing the room
+        // name alone is never sufficient.
+        // ─── Video call signaling (self-hosted WebRTC) ───────────────────
+        // 1:1 only (provider ↔ guest). Every join re-verifies the token,
+        // appointment status, and time window. Guests enter a Waiting Room
+        // until the Provider explicitly admits them via `admit_guest`.
+        socket.on('join_call', async ({ appointmentId, token }: { appointmentId: string; token?: string }) => {
+            try {
+                const auth = await authorizeCallJoin(appointmentId, token);
+                if (!auth) {
+                    socket.emit('call_error', { message: 'Unable to join this call.' });
+                    logCallEvent(appointmentId, 'guest', 'unknown', 'auth_failed');
+                    return;
+                }
+
+                const room = `call_${appointmentId}`;
+                const waitingRoom = `waiting_room_${appointmentId}`;
+                socket.data.callParticipant = auth;
+
+                // --- PROVIDER JOIN FLOW ---
+                if (auth.role === 'provider') {
+                    socket.join(room);
+                    activeCallRooms.set(room, { appointmentId, endTime: auth.endTime });
+
+                    const { iceServers, turnCredentials } = getIceServers(appointmentId, auth.participantId);
+                    if (!turnCredentials) {
+                        logger.warn('TURN_SHARED_SECRET not set — falling back to STUN-only ICE servers for local/dev testing.');
+                    }
+                    socket.emit('call_authorized', { turnCredentials, iceServers });
+                    socket.emit('call_joined', { turnCredentials, iceServers });
+
+                    // Check if another participant is already in this call room
+                    const roomSockets = await io.in(room).fetchSockets();
+                    if (roomSockets.length > 1) {
+                        // Notify existing peer(s) in the room to initiate WebRTC offer exchange
+                        socket.to(room).emit('peer_joined', { iceServers });
+                    }
+
+                    // Check if any guest is currently in the waiting room for this call
+                    const waitingSockets = await io.in(waitingRoom).fetchSockets();
+                    if (waitingSockets.length > 0) {
+                        const guestSocket = waitingSockets[0];
+                        const guestAuth = (guestSocket.data as { callParticipant?: CallAuthResult }).callParticipant;
+                        socket.emit('guest_waiting_approval', {
+                            socketId: guestSocket.id,
+                            guestName: guestAuth?.guestName || 'Guest',
+                            appointmentId,
+                        });
+                    }
+
+                    logCallEvent(appointmentId, auth.role, auth.participantId, 'join');
+                    return;
+                }
+
+                socket.on("call_ringing", ({ appointmentId }: { appointmentId: string }) => {
+                    const room = `call_${appointmentId}`;
+                    io.to(room).emit("target_ringing", { appointmentId });
+                });
+
+                // --- GUEST JOIN FLOW (Enters Waiting Room) ---
+                socket.join(waitingRoom);
+                socket.emit('guest_waiting_approval_pending', {
+                    message: 'Waiting for the provider to admit you into the call...',
+                });
+
+                // Notify provider in `room` if they are already in the call
+                const providerSockets = await io.in(room).fetchSockets();
+                if (providerSockets.length > 0) {
+                    io.to(room).emit('guest_waiting_approval', {
+                        socketId: socket.id,
+                        guestName: auth.guestName || 'Guest',
+                        appointmentId,
+                    });
+                }
+            } catch (err: any) {
+                logger.error(`Error in join_call: ${err.message}`);
+                socket.emit('call_error', { message: 'Unable to join this call.' });
+            }
+        });
+
+        // Provider admits a waiting guest into the active call room
+        socket.on('admit_guest', async ({ appointmentId, guestSocketId }: { appointmentId: string; guestSocketId: string }) => {
+            try {
+                const room = `call_${appointmentId}`;
+                const waitingRoom = `waiting_room_${appointmentId}`;
+                const participant = (socket.data as { callParticipant?: CallAuthResult }).callParticipant;
+
+                if (!participant || participant.role !== 'provider' || !socket.rooms.has(room)) {
+                    return;
+                }
+
+                const guestSocket = io.sockets.sockets.get(guestSocketId);
+                if (!guestSocket) return;
+
+                const guestAuth = (guestSocket.data as { callParticipant?: CallAuthResult }).callParticipant;
+                if (!guestAuth) return;
+
+                // Move guest from waiting room to active call room
+                guestSocket.leave(waitingRoom);
+                guestSocket.join(room);
+
+                const { iceServers, turnCredentials } = getIceServers(appointmentId, guestAuth.participantId);
+                guestSocket.emit('call_admitted', {});
+                guestSocket.emit('call_authorized', { turnCredentials, iceServers });
+
+                // Notify provider in `room` (except the admitted guest) so WebRTC offer creation begins
+                socket.to(room).emit('peer_joined', {});
+                logCallEvent(appointmentId, guestAuth.role, guestAuth.participantId, 'join');
+            } catch (err: any) {
+                logger.error(`Error in admit_guest: ${err.message}`);
+            }
+        });
+
+        // Provider denies entry to a waiting guest
+        socket.on('deny_guest', async ({ appointmentId, guestSocketId }: { appointmentId: string; guestSocketId: string }) => {
+            try {
+                const room = `call_${appointmentId}`;
+                const waitingRoom = `waiting_room_${appointmentId}`;
+                const participant = (socket.data as { callParticipant?: CallAuthResult }).callParticipant;
+
+                if (!participant || participant.role !== 'provider' || !socket.rooms.has(room)) {
+                    return;
+                }
+
+                const guestSocket = io.sockets.sockets.get(guestSocketId);
+                if (!guestSocket) return;
+
+                const guestAuth = (guestSocket.data as { callParticipant?: CallAuthResult }).callParticipant;
+                if (guestAuth) {
+                    logCallEvent(appointmentId, guestAuth.role, guestAuth.participantId, 'declined');
+                }
+
+                guestSocket.emit('call_denied', { message: 'The host has denied your request to join.' });
+                guestSocket.leave(waitingRoom);
+            } catch (err: any) {
+                logger.error(`Error in deny_guest: ${err.message}`);
+            }
+        });
+
+        socket.on('call_missed', ({ appointmentId }: { appointmentId: string }) => {
+            const participant = (socket.data as { callParticipant?: CallAuthResult }).callParticipant;
+            if (participant) {
+                logCallEvent(appointmentId, participant.role, participant.participantId, 'missed');
+            }
+        });
+
+        socket.on('webrtc_offer', ({ appointmentId, sdp }: { appointmentId: string; sdp: unknown }) => {
+            const room = `call_${appointmentId}`;
+            if (!socket.rooms.has(room)) return;
+            socket.to(room).emit('webrtc_offer', { sdp });
+        });
+
+        socket.on('webrtc_answer', ({ appointmentId, sdp }: { appointmentId: string; sdp: unknown }) => {
+            const room = `call_${appointmentId}`;
+            if (!socket.rooms.has(room)) return;
+            socket.to(room).emit('webrtc_answer', { sdp });
+        });
+
+        socket.on('ice_candidate', ({ appointmentId, candidate }: { appointmentId: string; candidate: unknown }) => {
+            const room = `call_${appointmentId}`;
+            if (!socket.rooms.has(room)) return;
+            socket.to(room).emit('ice_candidate', { candidate });
+        });
+
+        socket.on('leave_call', ({ appointmentId, durationSeconds }: { appointmentId: string; durationSeconds?: number }) => {
+            const room = `call_${appointmentId}`;
+            const participant = (socket.data as { callParticipant?: CallAuthResult }).callParticipant;
+            if (participant) {
+                if (durationSeconds && durationSeconds > 0) {
+                    logCallEvent(appointmentId, participant.role, participant.participantId, 'completed', durationSeconds);
+                } else {
+                    logCallEvent(appointmentId, participant.role, participant.participantId, 'leave');
+                }
+            }
+            // Tell whoever is still in the room the call is over
+            socket.to(room).emit('call_ended', { reason: 'ended_by_peer' });
+            socket.leave(room);
+        });
+
+        // ─── Screen-share approval (guest must be admitted by the provider) ──
+        // The provider (host) is the call authority: they can start sharing
+        // immediately, and only they can approve/deny a guest's request. Both
+        // checks are re-verified here against socket.data.callParticipant —
+        // set once at join_call time — never trusted from the client alone.
+        socket.on('screen_share_request', ({ appointmentId }: { appointmentId: string }) => {
+            const room = `call_${appointmentId}`;
+            const participant = (socket.data as { callParticipant?: CallAuthResult }).callParticipant;
+            if (!participant || participant.role !== 'guest' || !socket.rooms.has(room)) return;
+            socket.to(room).emit('screen_share_requested', {});
+        });
+
+        socket.on('screen_share_response', ({ appointmentId, approved }: { appointmentId: string; approved: boolean }) => {
+            const room = `call_${appointmentId}`;
+            const participant = (socket.data as { callParticipant?: CallAuthResult }).callParticipant;
+            if (!participant || participant.role !== 'provider' || !socket.rooms.has(room)) return;
+            socket.to(room).emit('screen_share_response', { approved });
+        });
+
+        socket.on('screen_share_started', ({ appointmentId }: { appointmentId: string }) => {
+            const room = `call_${appointmentId}`;
+            if (!socket.rooms.has(room)) return;
+            socket.to(room).emit('screen_share_started', {});
+        });
+
+        socket.on('screen_share_stopped', ({ appointmentId }: { appointmentId: string }) => {
+            const room = `call_${appointmentId}`;
+            if (!socket.rooms.has(room)) return;
+            socket.to(room).emit('screen_share_stopped', {});
+        });
+
 
         /*
         In the end we disconnect the socket 
         */
+
+        // Fires before Socket.IO removes the socket from its rooms, so
+        // `socket.rooms` still tells us which active call (if any) this
+        // socket was in — covers a closed tab/crash/dropped network where
+        // the client never gets a chance to emit `leave_call`.
+        socket.on('disconnecting', () => {
+            const participant = (socket.data as { callParticipant?: CallAuthResult }).callParticipant;
+            if (!participant) return;
+
+            for (const room of socket.rooms) {
+                if (!room.startsWith('call_')) continue;
+                const appointmentId = room.slice('call_'.length);
+                logCallEvent(appointmentId, participant.role, participant.participantId, 'leave');
+                socket.to(room).emit('call_ended', { reason: 'ended_by_peer' });
+            }
+        });
 
         socket.on('disconnect', () => {
             logger.info(`Disconnected | providerId: ${providerId},userId: ${userId}`)

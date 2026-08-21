@@ -5,7 +5,7 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import { ApiResponse } from "../../utils/apiResponse";
 import { ApiError } from "../../utils/apiError";
 import { AppointmentService } from "../../services/AppointmentService";
-import { AvailabilityService } from "../../services/AvailabilityService";
+import { AvailabilityService, LIST_SAFETY_BUFFER_MINUTES } from "../../services/AvailabilityService";
 import prisma from "../../db/db.config";
 
 const appointmentService = new AppointmentService();
@@ -14,7 +14,7 @@ const availabilityService = new AvailabilityService();
 const VALID_SESSION_TYPES = ["ONLINE", "IN_PERSON", "HOME_VISIT"];
 
 const getPublicAvailableSlotsApi = asyncHandler(async (req: Request, res: Response) => {
-  const slug = String(req.params.slug);
+  const identifier = String(req.params.slug);
   const { from, to } = req.query;
 
   const fromDate = from ? new Date(String(from)) : new Date();
@@ -26,12 +26,40 @@ const getPublicAvailableSlotsApi = asyncHandler(async (req: Request, res: Respon
       .json(new ApiResponse(StatusCodes.BAD_REQUEST, null, "Invalid date range"));
   }
 
-  const profile = await prisma.providerProfile.findUnique({ where: { slug } });
-  if (!profile || !profile.isPublished) {
+  let profile = await prisma.providerProfile.findFirst({
+    where: {
+      OR: [
+        { slug: identifier },
+        { providerId: identifier },
+        { id: identifier },
+        { provider: { userId: identifier } },
+      ],
+    },
+  });
+
+  let providerId = profile?.providerId;
+
+  if (!providerId) {
+    const provider = await prisma.provider.findFirst({
+      where: {
+        OR: [{ id: identifier }, { userId: identifier }],
+      },
+    });
+    if (provider) {
+      providerId = provider.id;
+    }
+  }
+
+  if (!providerId) {
     return res.status(StatusCodes.NOT_FOUND).json(new ApiResponse(StatusCodes.NOT_FOUND, null, "Provider not found"));
   }
 
-  const result = await availabilityService.computeAvailableSlots(profile.providerId, fromDate, toDate);
+  const result = await availabilityService.computeAvailableSlots(
+    providerId,
+    fromDate,
+    toDate,
+    LIST_SAFETY_BUFFER_MINUTES,
+  );
   return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, result, "OK"));
 });
 
@@ -60,6 +88,30 @@ const bookPublicAppointmentApi = asyncHandler(async (req: Request, res: Response
   return res
     .status(StatusCodes.CREATED)
     .json(new ApiResponse(StatusCodes.CREATED, appointment, "Booking request submitted successfully"));
+});
+
+const bookProviderAppointmentApi = asyncHandler(async (req: Request, res: Response) => {
+  const loginUserId = (req as any).user.id;
+  const { targetProviderId, startTime, sessionType, notes } = req.body;
+
+  if (
+    !String(targetProviderId || "").trim() ||
+    !String(startTime || "").trim() ||
+    !VALID_SESSION_TYPES.includes(sessionType)
+  ) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Please fill out all required fields.");
+  }
+
+  const appointment = await appointmentService.bookProviderAppointment(loginUserId, {
+    targetProviderId,
+    startTime,
+    sessionType,
+    notes,
+  });
+
+  return res
+    .status(StatusCodes.CREATED)
+    .json(new ApiResponse(StatusCodes.CREATED, appointment, "Consultation session request submitted successfully"));
 });
 
 const getMyAppointmentsApi = asyncHandler(async (req: Request, res: Response) => {
@@ -119,13 +171,61 @@ const cancelByGuestTokenApi = asyncHandler(async (req: Request, res: Response) =
     .json(new ApiResponse(StatusCodes.OK, appointment, "Appointment cancelled successfully"));
 });
 
+const getMyCallJoinInfoApi = asyncHandler(async (req: Request, res: Response) => {
+  const loginUserId = (req as any).user.id;
+  const appointmentId = String(req.params.appointmentId);
+
+  const joinInfo = await appointmentService.getProviderCallJoinInfo(loginUserId, appointmentId);
+  return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, joinInfo, "OK"));
+});
+
+const getPublicCallInfoApi = asyncHandler(async (req: Request, res: Response) => {
+  const token = String(req.params.token);
+  const callInfo = await appointmentService.getPublicCallInfo(token);
+  return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, callInfo, "OK"));
+});
+
+const startInstantCallApi = asyncHandler(async (req: Request, res: Response) => {
+  const loginUserId = (req as any).user.id;
+  const { targetProviderId, callType } = req.body;
+
+  if (!String(targetProviderId || "").trim()) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Target provider ID is required.");
+  }
+
+  const mode = callType === "audio" ? "audio" : "video";
+
+  const result = await appointmentService.startInstantCall(loginUserId, {
+    targetProviderId,
+    callType: mode,
+  });
+
+  return res
+    .status(StatusCodes.CREATED)
+    .json(new ApiResponse(StatusCodes.CREATED, result, "Instant call initiated successfully"));
+});
+
+const getAppointmentCallLogsApi = asyncHandler(async (req: Request, res: Response) => {
+  const appointmentId = String(req.params.appointmentId);
+  const logs = await prisma.appointmentCallLog.findMany({
+    where: { appointmentId },
+    orderBy: { occurredAt: "desc" },
+  });
+  return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, logs, "Call logs fetched successfully"));
+});
+
 export {
   getPublicAvailableSlotsApi,
   bookPublicAppointmentApi,
+  bookProviderAppointmentApi,
+  startInstantCallApi,
   getMyAppointmentsApi,
   cancelMyAppointmentApi,
   acceptMyAppointmentApi,
   declineMyAppointmentApi,
   getPublicAppointmentByTokenApi,
   cancelByGuestTokenApi,
+  getMyCallJoinInfoApi,
+  getPublicCallInfoApi,
+  getAppointmentCallLogsApi,
 };
