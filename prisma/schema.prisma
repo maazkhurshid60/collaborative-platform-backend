@@ -124,6 +124,7 @@ model ProviderProfile {
 
   acceptingNewPatients   Boolean @default(true)
   allowQueries           Boolean @default(true)
+  showCalendar           Boolean @default(false)
   offersOnlineSessions   Boolean @default(false)
   offersInPersonSessions Boolean @default(false)
   offersHomeVisits       Boolean @default(false)
@@ -134,6 +135,7 @@ model ProviderProfile {
   timezone                   String? // IANA string, e.g. "America/New_York"; weekly hours are interpreted in this timezone
   appointmentDurationMinutes Int     @default(50)
   bufferMinutes              Int     @default(0)
+  isRecurringWeekly          Boolean @default(true)
 
   previousOrganizations String[] @default([])
   clinicalExperience    String?
@@ -559,6 +561,7 @@ enum NotificationType {
   QUERY_SUBMITTED
   APPOINTMENT_BOOKED
   APPOINTMENT_CANCELLED
+  MISSED_CALL
 }
 
 enum PlanType {

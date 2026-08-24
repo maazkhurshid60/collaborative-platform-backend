@@ -152,6 +152,7 @@ export class AvailabilityService {
       timezone: profile?.timezone ?? null,
       appointmentDurationMinutes: profile?.appointmentDurationMinutes ?? 50,
       bufferMinutes: profile?.bufferMinutes ?? 0,
+      isRecurringWeekly: profile?.isRecurringWeekly ?? true,
     };
   }
 
@@ -161,6 +162,7 @@ export class AvailabilityService {
       timezone?: string;
       appointmentDurationMinutes?: number;
       bufferMinutes?: number;
+      isRecurringWeekly?: boolean;
     },
   ) {
     const provider = await this.getProviderOrThrow(loginUserId);
@@ -196,6 +198,9 @@ export class AvailabilityService {
       }
       data.bufferMinutes = settings.bufferMinutes;
     }
+    if (settings.isRecurringWeekly !== undefined) {
+      data.isRecurringWeekly = Boolean(settings.isRecurringWeekly);
+    }
 
     // Ensures a ProviderProfile row exists (with a proper generated slug) before
     // writing booking settings onto it.
@@ -221,14 +226,17 @@ export class AvailabilityService {
   ) {
     const provider = await this.getProviderOrThrow(loginUserId);
 
-    const startDate = new Date(data.startDate);
-    const endDate = new Date(data.endDate);
-    if (
-      Number.isNaN(startDate.getTime()) ||
-      Number.isNaN(endDate.getTime()) ||
-      endDate <= startDate
-    ) {
+    let startDate = new Date(data.startDate);
+    let endDate = new Date(data.endDate);
+
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid date range");
+    }
+
+    // Set start to start of day and end to end of day if dates match or single day time-off
+    if (endDate <= startDate) {
+      endDate = new Date(startDate);
+      endDate.setHours(23, 59, 59, 999);
     }
 
     return prisma.providerTimeOff.create({
@@ -341,6 +349,21 @@ export class AvailabilityService {
       const dayRule = availabilityByDay.get(weekday);
 
       if (dayRule) {
+        // If recurrence is disabled, only compute slots for the current calendar week
+        if (profile.isRecurringWeekly === false) {
+          const startOfCurrentWeek = new Date(now);
+          startOfCurrentWeek.setDate(now.getDate() - now.getDay());
+          startOfCurrentWeek.setHours(0, 0, 0, 0);
+
+          const endOfCurrentWeek = new Date(startOfCurrentWeek);
+          endOfCurrentWeek.setDate(startOfCurrentWeek.getDate() + 6);
+          endOfCurrentWeek.setHours(23, 59, 59, 999);
+
+          if (dayStartUtc < startOfCurrentWeek || dayStartUtc > endOfCurrentWeek) {
+            cursorParts = addCalendarDays(cursorParts, 1);
+            continue;
+          }
+        }
         const start = parseHHMM(dayRule.startTime);
         const end = parseHHMM(dayRule.endTime);
         const windowStart = zonedTimeToUtc(

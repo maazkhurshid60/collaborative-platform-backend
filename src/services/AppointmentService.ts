@@ -327,6 +327,20 @@ export class AppointmentService {
       data: { meetingRoomId, meetingUrl },
     });
 
+    // Log call initiation so it immediately appears in Call History
+    try {
+      await prisma.appointmentCallLog.create({
+        data: {
+          appointmentId: appointment.id,
+          participantId: bookingUserId,
+          role: "provider",
+          event: "join",
+        },
+      });
+    } catch (err) {
+      logger.error("[AppointmentService] Failed to create initial call log:", err);
+    }
+
     const callerToken = signCallToken({
       appointmentId: appointment.id,
       role: "provider",
@@ -637,6 +651,102 @@ export class AppointmentService {
       endTime: appointment.endTime.toISOString(),
       canJoinNow,
     };
+  }
+
+  // Fetch all direct call logs between logged-in provider and target provider
+  async getDirectCallLogs(loginUserId: string, targetIdentifier: string) {
+    let loginProvider = await prisma.provider.findUnique({
+      where: { userId: loginUserId },
+    });
+    if (!loginProvider) {
+      loginProvider = await prisma.provider.findUnique({
+        where: { id: loginUserId },
+      });
+    }
+    if (!loginProvider) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Caller provider not found");
+    }
+
+    let targetProvider = await prisma.provider.findUnique({
+      where: { id: targetIdentifier },
+      include: { user: true },
+    });
+
+    if (!targetProvider) {
+      const profile = await prisma.providerProfile.findUnique({
+        where: { slug: targetIdentifier },
+        include: { provider: { include: { user: true } } },
+      });
+      if (profile) {
+        targetProvider = profile.provider as any;
+      }
+    }
+
+    if (!targetProvider) {
+      targetProvider = await prisma.provider.findFirst({
+        where: { userId: targetIdentifier },
+        include: { user: true },
+      });
+    }
+
+    if (!targetProvider) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Target provider not found");
+    }
+
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        OR: [
+          { providerId: loginProvider.id, bookingProviderId: targetProvider.id },
+          { providerId: targetProvider.id, bookingProviderId: loginProvider.id },
+        ],
+      },
+      include: {
+        callLogs: {
+          orderBy: { occurredAt: "desc" },
+        },
+        provider: { include: { user: true } },
+        bookingProvider: { include: { user: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+
+    return appointments;
+  }
+
+  // Fetch all call logs for the logged-in provider across all appointments and direct calls
+  async getAllMyCallLogs(loginUserId: string) {
+    let loginProvider = await prisma.provider.findUnique({
+      where: { userId: loginUserId },
+    });
+    if (!loginProvider) {
+      loginProvider = await prisma.provider.findUnique({
+        where: { id: loginUserId },
+      });
+    }
+    if (!loginProvider) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Provider not found");
+    }
+
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        OR: [
+          { providerId: loginProvider.id },
+          { bookingProviderId: loginProvider.id },
+        ],
+      },
+      include: {
+        callLogs: {
+          orderBy: { occurredAt: "desc" },
+        },
+        provider: { include: { user: true } },
+        bookingProvider: { include: { user: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+
+    return appointments;
   }
 
   // Metadata-only audit trail — never call content, SDP, or media. See socket.ts callers.

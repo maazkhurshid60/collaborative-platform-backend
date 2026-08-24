@@ -374,21 +374,21 @@ const deleteChatChannelForUser = asyncHandler(
         .json({ message: "Chat channel not found" });
     }
 
-    if (channel.providerAId === userId) {
-      await prisma.chatChannel.update({
-        where: { id: channelId },
-        data: { deletedByA: true },
-      });
-    } else if (channel.providerBId === userId) {
-      await prisma.chatChannel.update({
-        where: { id: channelId },
-        data: { deletedByB: true },
-      });
-    } else {
+    if (channel.providerAId !== userId && channel.providerBId !== userId) {
       return res
         .status(StatusCodes.FORBIDDEN)
         .json({ message: "You are not authorized to delete this chat" });
     }
+
+    // Delete all messages associated with the chat channel
+    await prisma.chatMessage.deleteMany({
+      where: { chatChannelId: channelId },
+    });
+
+    // Delete the chat channel
+    await prisma.chatChannel.delete({
+      where: { id: channelId },
+    });
 
     return res
       .status(StatusCodes.OK)
@@ -396,7 +396,7 @@ const deleteChatChannelForUser = asyncHandler(
         new ApiResponse(
           StatusCodes.OK,
           null,
-          "Chat deleted for you successfully",
+          "Chat and all associated messages deleted successfully",
         ),
       );
   },

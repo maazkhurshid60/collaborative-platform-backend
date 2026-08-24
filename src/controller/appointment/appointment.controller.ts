@@ -214,6 +214,20 @@ const getAppointmentCallLogsApi = asyncHandler(async (req: Request, res: Respons
   return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, logs, "Call logs fetched successfully"));
 });
 
+const getDirectCallLogsApi = asyncHandler(async (req: Request, res: Response) => {
+  const loginUserId = (req as any).user?.id || (req as any).user?.userId;
+  const targetProviderId = String(req.query.targetProviderId);
+
+  const logs = await appointmentService.getDirectCallLogs(loginUserId, targetProviderId);
+  return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, logs, "Direct call logs fetched successfully"));
+});
+
+const getAllMyCallLogsApi = asyncHandler(async (req: Request, res: Response) => {
+  const loginUserId = (req as any).user?.id || (req as any).user?.userId;
+  const logs = await appointmentService.getAllMyCallLogs(loginUserId);
+  return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, logs, "All call logs fetched successfully"));
+});
+
 export {
   getPublicAvailableSlotsApi,
   bookPublicAppointmentApi,
@@ -228,4 +242,6 @@ export {
   getMyCallJoinInfoApi,
   getPublicCallInfoApi,
   getAppointmentCallLogsApi,
+  getDirectCallLogsApi,
+  getAllMyCallLogsApi,
 };

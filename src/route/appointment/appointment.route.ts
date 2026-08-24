@@ -14,6 +14,8 @@ import {
     getMyCallJoinInfoApi,
     getPublicCallInfoApi,
     getAppointmentCallLogsApi,
+    getDirectCallLogsApi,
+    getAllMyCallLogsApi,
 } from "../../controller/appointment/appointment.controller";
 
 const appointmentRouter = Router();
@@ -36,6 +38,8 @@ appointmentRouter.get("/public/call/:token", getPublicCallInfoApi);
 appointmentRouter.post("/book-provider", authJWT, bookProviderAppointmentApi);
 appointmentRouter.post("/start-instant-call", authJWT, startInstantCallApi);
 appointmentRouter.get("/me", authJWT, getMyAppointmentsApi);
+appointmentRouter.get("/direct-call-logs", authJWT, getDirectCallLogsApi);
+appointmentRouter.get("/my-call-logs", authJWT, getAllMyCallLogsApi);
 appointmentRouter.patch("/me/:appointmentId/cancel", authJWT, cancelMyAppointmentApi);
 appointmentRouter.patch("/me/:appointmentId/accept", authJWT, acceptMyAppointmentApi);
 appointmentRouter.patch("/me/:appointmentId/decline", authJWT, declineMyAppointmentApi);

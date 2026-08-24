@@ -395,10 +395,40 @@ export function setupSocket(server: any) {
             }
         });
 
-        socket.on('call_missed', ({ appointmentId }: { appointmentId: string }) => {
+        socket.on('call_missed', async ({ appointmentId }: { appointmentId: string }) => {
             const participant = (socket.data as { callParticipant?: CallAuthResult }).callParticipant;
             if (participant) {
                 logCallEvent(appointmentId, participant.role, participant.participantId, 'missed');
+            }
+
+            try {
+                const appointment = await prisma.appointment.findUnique({
+                    where: { id: appointmentId },
+                    include: {
+                        provider: { include: { user: true } },
+                        bookingProvider: { include: { user: true } },
+                    },
+                });
+
+                if (appointment && appointment.provider) {
+                    const recipientUserId = appointment.provider.userId;
+                    const callerName = appointment.bookingProvider?.user?.fullName || appointment.guestName || "Provider";
+                    const senderUserId = appointment.bookingProvider?.userId || null;
+
+                    const notification = await prisma.notification.create({
+                        data: {
+                            title: "Missed Call",
+                            message: `You missed a call from ${callerName}.`,
+                            type: "MISSED_CALL",
+                            recipientId: recipientUserId,
+                            senderId: senderUserId,
+                        },
+                    });
+
+                    io.to(`notification_room_${recipientUserId}`).emit("new_notification", notification);
+                }
+            } catch (err) {
+                logger.error("[Socket] Failed to create missed call notification:", err);
             }
         });
 

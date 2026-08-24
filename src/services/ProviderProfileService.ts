@@ -3,7 +3,7 @@ import crypto from "crypto";
 import prisma from "../db/db.config";
 import { ApiError } from "../utils/apiError";
 import { StatusCodes } from "http-status-codes";
-import { Approve } from "../generated/prisma/enums";
+import { Approve, SubscriptionStatus } from "../generated/prisma/enums";
 
 const EDITABLE_FIELDS = [
     "professionalTitle",
@@ -22,6 +22,7 @@ const EDITABLE_FIELDS = [
     "languages",
     "acceptingNewPatients",
     "allowQueries",
+    "showCalendar",
     "offersOnlineSessions",
     "offersInPersonSessions",
     "offersHomeVisits",
@@ -158,7 +159,7 @@ export class ProviderProfileService {
     async setPublished(loginUserId: string, isPublished: boolean) {
         const provider = await prisma.provider.findUnique({
             where: { userId: loginUserId },
-            include: { user: true, profile: true },
+            include: { user: { include: { subscription: true } }, profile: true },
         });
 
         if (!provider) {
@@ -166,6 +167,16 @@ export class ProviderProfileService {
         }
 
         if (isPublished) {
+            const subscription = provider.user.subscription;
+            const isPaidActive = subscription && subscription.status === SubscriptionStatus.ACTIVE;
+
+            if (!isPaidActive) {
+                throw new ApiError(
+                    StatusCodes.FORBIDDEN,
+                    "Public profiles are only available for providers on a paid subscription plan. Please upgrade your plan to make your profile public.",
+                );
+            }
+
             const { completenessPercent } = computeCompleteness(provider.profile);
             if (completenessPercent < COMPLETENESS_THRESHOLD_PERCENT) {
                 throw new ApiError(
@@ -222,14 +233,19 @@ export class ProviderProfileService {
         });
     }
 
-    // Public — no auth. Small, curated result set (published + approved providers only),
+    // Public — no auth. Small, curated result set (published + approved providers with active paid subscription only),
     // so filtering in JS after one findMany is simpler and plenty fast at this scale;
     // revisit with DB-level filtering if the published-provider count grows large.
     async searchPublished(filters: { query?: string; specialty?: string }) {
         const profiles = await prisma.providerProfile.findMany({
             where: {
                 isPublished: true,
-                provider: { user: { isApprove: Approve.APPROVED } },
+                provider: {
+                    user: {
+                        isApprove: Approve.APPROVED,
+                        subscription: { status: SubscriptionStatus.ACTIVE },
+                    },
+                },
             },
             include: { provider: { include: { user: true } } },
             orderBy: { updatedAt: "desc" },
@@ -281,7 +297,7 @@ export class ProviderProfileService {
         const profile = await prisma.providerProfile.findUnique({
             where: { slug },
             include: {
-                provider: { include: { user: true } },
+                provider: { include: { user: { include: { subscription: true } } } },
             },
         });
 
@@ -291,8 +307,9 @@ export class ProviderProfileService {
         const { user } = provider;
 
         // Extra safety net: never surface a profile for a provider whose account
-        // isn't admin-approved, even if they somehow flipped isPublished on.
+        // isn't admin-approved or doesn't have an active paid subscription.
         if (user.isApprove !== Approve.APPROVED) return null;
+        if (user.subscription?.status !== SubscriptionStatus.ACTIVE) return null;
 
         return {
             ...profileFields,

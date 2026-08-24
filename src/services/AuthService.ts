@@ -136,8 +136,7 @@ export class AuthService {
           isApprove: userData.subscriptionId
             ? Approve.APPROVED
             : Approve.PENDING,
-          //   country,
-          state,
+          state: state || "",
           publicKey: publicKey ?? null,
           privateKey: privateKey ?? null,
           isLicenseValid: false,

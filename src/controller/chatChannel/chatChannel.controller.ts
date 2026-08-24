@@ -5,6 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import { ApiResponse } from "../../utils/apiResponse";
 import { decryptText } from "../../utils/encryptedMessage/EncryptedMessage";
 import { resolveChatUser } from "../../utils/resolveChatUser";
+import { SubscriptionStatus } from "../../generated/prisma/enums";
 
 // ===============================
 // ✅ CREATE CHAT CHANNEL
@@ -40,6 +41,30 @@ const createChatChannel = asyncHandler(async (req: Request, res: Response) => {
     });
 
     if (!channel) {
+      // Check 10 1-on-1 chat conversations limit for Free Plan providers
+      const initiatorUser = await prisma.user.findUnique({
+        where: { id: userA.id },
+        include: { subscription: true },
+      });
+
+      const isPaidActive =
+        initiatorUser?.subscription?.status === SubscriptionStatus.ACTIVE;
+
+      if (!isPaidActive && initiatorUser?.role === "provider") {
+        const existingCount = await prisma.chatChannel.count({
+          where: {
+            OR: [{ providerAId: userA.id }, { providerBId: userA.id }],
+          },
+        });
+
+        if (existingCount >= 10) {
+          return res.status(StatusCodes.FORBIDDEN).json({
+            message:
+              "Free plan limit reached: You can have a maximum of 10 one-on-one chat conversations. Please upgrade your plan to start more conversations.",
+          });
+        }
+      }
+
       channel = await prisma.chatChannel.create({
         data: { providerAId: a, providerBId: b },
       });
