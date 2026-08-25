@@ -43,13 +43,15 @@ const signupApi = asyncHandler(async (req: Request, res: Response) => {
     });
 
     if (activeBaa && req.body.baaAccepted !== true) {
-      return res.status(StatusCodes.FORBIDDEN).json(
-        new ApiResponse(
-          StatusCodes.FORBIDDEN,
-          null,
-          "You must accept the Business Associate Agreement (BAA) to register as a provider.",
-        ),
-      );
+      return res
+        .status(StatusCodes.FORBIDDEN)
+        .json(
+          new ApiResponse(
+            StatusCodes.FORBIDDEN,
+            null,
+            "You must accept the Business Associate Agreement (BAA) to register as a provider.",
+          ),
+        );
     }
   }
 

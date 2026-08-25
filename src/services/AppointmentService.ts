@@ -91,6 +91,9 @@ export class AppointmentService {
     if (Number.isNaN(startTime.getTime())) {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid start time");
     }
+    if (startTime.getTime() <= Date.now()) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "Appointments can only be scheduled for future dates and times.");
+    }
     const endTime = new Date(startTime.getTime() + profile.appointmentDurationMinutes * 60000);
 
     // Re-validate inside a transaction so two guests racing for the same slot
@@ -477,6 +480,48 @@ export class AppointmentService {
     return updated;
   }
 
+  async resendAppointmentEmail(loginUserId: string, appointmentId: string) {
+    const provider = await prisma.provider.findUnique({
+      where: { userId: loginUserId },
+      include: { user: true, profile: true },
+    });
+    if (!provider) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Provider not found");
+    }
+
+    const appointment = await prisma.appointment.findFirst({
+      where: {
+        id: appointmentId,
+        OR: [{ providerId: provider.id }, { bookingProviderId: provider.id }],
+      },
+    });
+    if (!appointment) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Appointment not found");
+    }
+
+    const isOnline = appointment.sessionType === AppointmentSessionType.ONLINE;
+    const baseUrl = appointment.bookingProviderId ? getAppSiteUrl() : getLandingSiteUrl();
+    const meetingUrl = appointment.meetingUrl || (isOnline ? `${baseUrl}/call/${appointment.id}` : null);
+
+    const emailData: Record<string, unknown> = {
+      ...this.buildDecisionEmailData(provider, appointment),
+      cancelUrl: `${getLandingSiteUrl()}/appointments/cancel/${appointment.cancelToken}`,
+    };
+
+    if (isOnline && meetingUrl) {
+      const guestCallToken = signCallToken({
+        appointmentId: appointment.id,
+        role: "guest",
+        participantId: "guest",
+      });
+      emailData.callJoinUrl = `${meetingUrl}?token=${guestCallToken}`;
+    }
+
+    await queueEmail("send-booking-accepted-email", emailData);
+
+    return { message: "Meeting link email resent successfully." };
+  }
+
   private async getPendingAppointmentOrThrow(loginUserId: string, appointmentId: string) {
     const provider = await prisma.provider.findUnique({
       where: { userId: loginUserId },
@@ -614,6 +659,33 @@ export class AppointmentService {
     const token = signCallToken({ appointmentId: appointment.id, role: "provider", participantId: loginUserId });
     const appMeetingUrl = (appointment.meetingUrl || "").replace(getLandingSiteUrl(), getAppSiteUrl());
     return { joinUrl: `${appMeetingUrl || `${getAppSiteUrl()}/call/${appointment.id}`}?token=${token}` };
+  }
+
+  // Mints a shareable guest call link for an appointment without 10-min window check so it can be copied & shared anytime
+  async getAppointmentShareLink(loginUserId: string, appointmentId: string) {
+    const provider = await this.getProviderOrThrow(loginUserId);
+
+    const appointment = await prisma.appointment.findFirst({
+      where: {
+        id: appointmentId,
+        OR: [{ providerId: provider.id }, { bookingProviderId: provider.id }],
+      },
+    });
+    if (!appointment) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Appointment not found");
+    }
+    if (appointment.sessionType !== AppointmentSessionType.ONLINE) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "This appointment doesn't have a video call set up.");
+    }
+    if (appointment.status !== AppointmentStatus.CONFIRMED) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "This appointment isn't confirmed.");
+    }
+
+    const token = signCallToken({ appointmentId: appointment.id, role: "guest", participantId: "guest" });
+    const baseUrl = appointment.bookingProviderId ? getAppSiteUrl() : getLandingSiteUrl();
+    const meetingUrl = appointment.meetingUrl || `${baseUrl}/call/${appointment.id}`;
+
+    return { shareUrl: `${meetingUrl}?token=${token}` };
   }
 
   // Public — no auth. Verifies a call join token (guest or provider) and

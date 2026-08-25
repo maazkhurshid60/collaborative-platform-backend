@@ -228,6 +228,22 @@ const getAllMyCallLogsApi = asyncHandler(async (req: Request, res: Response) => 
   return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, logs, "All call logs fetched successfully"));
 });
 
+const resendAppointmentEmailApi = asyncHandler(async (req: Request, res: Response) => {
+  const loginUserId = (req as any).user.id || (req as any).user?.userId;
+  const appointmentId = String(req.params.appointmentId);
+
+  const result = await appointmentService.resendAppointmentEmail(loginUserId, appointmentId);
+  return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, result, "Meeting email resent successfully"));
+});
+
+const getAppointmentShareLinkApi = asyncHandler(async (req: Request, res: Response) => {
+  const loginUserId = (req as any).user.id || (req as any).user?.userId;
+  const appointmentId = String(req.params.appointmentId);
+
+  const result = await appointmentService.getAppointmentShareLink(loginUserId, appointmentId);
+  return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, result, "Share link generated successfully"));
+});
+
 export {
   getPublicAvailableSlotsApi,
   bookPublicAppointmentApi,
@@ -237,6 +253,8 @@ export {
   cancelMyAppointmentApi,
   acceptMyAppointmentApi,
   declineMyAppointmentApi,
+  resendAppointmentEmailApi,
+  getAppointmentShareLinkApi,
   getPublicAppointmentByTokenApi,
   cancelByGuestTokenApi,
   getMyCallJoinInfoApi,

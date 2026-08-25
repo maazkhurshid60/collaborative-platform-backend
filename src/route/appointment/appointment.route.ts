@@ -9,6 +9,8 @@ import {
     cancelMyAppointmentApi,
     acceptMyAppointmentApi,
     declineMyAppointmentApi,
+    resendAppointmentEmailApi,
+    getAppointmentShareLinkApi,
     getPublicAppointmentByTokenApi,
     cancelByGuestTokenApi,
     getMyCallJoinInfoApi,
@@ -43,6 +45,8 @@ appointmentRouter.get("/my-call-logs", authJWT, getAllMyCallLogsApi);
 appointmentRouter.patch("/me/:appointmentId/cancel", authJWT, cancelMyAppointmentApi);
 appointmentRouter.patch("/me/:appointmentId/accept", authJWT, acceptMyAppointmentApi);
 appointmentRouter.patch("/me/:appointmentId/decline", authJWT, declineMyAppointmentApi);
+appointmentRouter.post("/me/:appointmentId/resend-email", authJWT, resendAppointmentEmailApi);
+appointmentRouter.get("/me/:appointmentId/share-link", authJWT, getAppointmentShareLinkApi);
 appointmentRouter.get("/me/:appointmentId/call-join", authJWT, getMyCallJoinInfoApi);
 appointmentRouter.get("/me/:appointmentId/call-logs", authJWT, getAppointmentCallLogsApi);
 

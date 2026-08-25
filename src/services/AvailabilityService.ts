@@ -401,9 +401,12 @@ export class AvailabilityService {
 
     allSlots.sort((a, b) => a.start.getTime() - b.start.getTime());
 
+    // Filter out past slots so backend returns only future bookable slots
+    const futureSlots = allSlots.filter((s) => s.start.getTime() > now.getTime());
+
     return {
       timezone,
-      slots: allSlots.map((s) => ({
+      slots: futureSlots.map((s) => ({
         startTime: s.start.toISOString(),
         endTime: s.end.toISOString(),
       })),

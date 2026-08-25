@@ -52,7 +52,7 @@ export const clientSchema = userSchema.extend({
 export const providerSchema = userSchema.extend({
     speciality: z.string().optional(),
     inviteToken: z.string().optional(),
-    licenseNo: licenseNoValidator.optional(),
+    licenseNo: z.string().optional().nullable(),
 })
 // Super Admin Schema (Extends User)
 export const superAdminSchema = userSchema.extend({

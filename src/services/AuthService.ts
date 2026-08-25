@@ -41,6 +41,11 @@ export class AuthService {
     else if (genderInput === "other" || genderInput === "OTHER")
       genderEnum = Gender.OTHER;
 
+    const cleanLicenseNo =
+      licenseNo && typeof licenseNo === "string" && licenseNo.trim() !== ""
+        ? licenseNo.trim()
+        : null;
+
     // 2. Check for duplicate email or licenseNo
     const existingEmail = await prisma.user.findFirst({ where: { email } });
     if (existingEmail) {
@@ -50,14 +55,14 @@ export class AuthService {
       );
     }
 
-    if (licenseNo) {
+    if (cleanLicenseNo) {
       const existingLicense = await prisma.user.findFirst({
-        where: { licenseNo },
+        where: { licenseNo: cleanLicenseNo },
       });
       if (existingLicense) {
         throw new ApiError(
           StatusCodes.CONFLICT,
-          `License Number ${licenseNo} is already registered.`,
+          `License Number ${cleanLicenseNo} is already registered.`,
         );
       }
     }
@@ -131,7 +136,7 @@ export class AuthService {
           contactNo: contactNo ?? null,
           address: address ?? null,
           status: status || "active",
-          licenseNo: licenseNo ?? null,
+          licenseNo: cleanLicenseNo,
           role,
           isApprove: userData.subscriptionId
             ? Approve.APPROVED
@@ -192,7 +197,10 @@ export class AuthService {
         });
       } else if (role === Role.provider) {
         roleRecord = await tx.provider.create({
-          data: { userId: userCreated.id, speciality: userData.speciality },
+          data: {
+            userId: userCreated.id,
+            speciality: userData.speciality || "General Practice",
+          },
           include: { user: true },
         });
       } else if (role === Role.superAdmin) {
@@ -214,14 +222,21 @@ export class AuthService {
     }
 
     // 6. Sync user to Kit via BullMQ (both providers and clients)
-    console.log(`[Kit Sync Debug] Checking if we should sync user. Role: ${role}, email: ${email}, kitQueue exists: ${!!kitQueue}`);
+    console.log(
+      `[Kit Sync Debug] Checking if we should sync user. Role: ${role}, email: ${email}, kitQueue exists: ${!!kitQueue}`,
+    );
     if ((role === Role.provider || role === Role.client) && kitQueue) {
       console.log(`[Kit Sync Debug] Enqueueing Kit sync job for ${email}...`);
-      kitQueue.add("sync-subscriber", { email, fullName }).then(job => {
-        console.log(`[Kit Sync Debug] Successfully enqueued Kit sync job ${job.id}`);
-      }).catch((err) => {
-        console.error("Failed to enqueue Kit sync job:", err);
-      });
+      kitQueue
+        .add("sync-subscriber", { email, fullName })
+        .then((job) => {
+          console.log(
+            `[Kit Sync Debug] Successfully enqueued Kit sync job ${job.id}`,
+          );
+        })
+        .catch((err) => {
+          console.error("Failed to enqueue Kit sync job:", err);
+        });
     }
 
     return await this.getCompleteUserData((userResult as any).userId, role);
