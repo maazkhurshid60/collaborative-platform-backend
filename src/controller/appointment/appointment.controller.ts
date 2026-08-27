@@ -244,6 +244,47 @@ const getAppointmentShareLinkApi = asyncHandler(async (req: Request, res: Respon
   return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, result, "Share link generated successfully"));
 });
 
+const rescheduleAppointmentApi = asyncHandler(async (req: Request, res: Response) => {
+  const loginUserId = (req as any).user.id || (req as any).user?.userId;
+  const appointmentId = String(req.params.appointmentId);
+  const { newStartTime, reason } = req.body;
+
+  const result = await appointmentService.rescheduleAppointment(
+    loginUserId,
+    appointmentId,
+    newStartTime,
+    reason,
+  );
+  return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, result, "Appointment rescheduled successfully"));
+});
+
+const deleteSingleCallLogApi = asyncHandler(async (req: Request, res: Response) => {
+  const loginUserId = (req as any).user.id || (req as any).user?.userId;
+  const appointmentId = String(req.params.appointmentId);
+
+  const result = await appointmentService.deleteSingleCallLog(loginUserId, appointmentId);
+  return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, result, "Call log deleted successfully"));
+});
+
+const bulkDeleteCallLogsApi = asyncHandler(async (req: Request, res: Response) => {
+  const loginUserId = (req as any).user.id || (req as any).user?.userId;
+  const { appointmentIds } = req.body;
+
+  if (!Array.isArray(appointmentIds) || appointmentIds.length === 0) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Please provide an array of appointmentIds to delete");
+  }
+
+  const result = await appointmentService.bulkDeleteCallLogs(loginUserId, appointmentIds);
+  return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, result, "Call logs deleted successfully"));
+});
+
+const clearAllCallLogsApi = asyncHandler(async (req: Request, res: Response) => {
+  const loginUserId = (req as any).user.id || (req as any).user?.userId;
+
+  const result = await appointmentService.clearAllCallLogs(loginUserId);
+  return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, result, "All call logs cleared successfully"));
+});
+
 export {
   getPublicAvailableSlotsApi,
   bookPublicAppointmentApi,
@@ -255,6 +296,10 @@ export {
   declineMyAppointmentApi,
   resendAppointmentEmailApi,
   getAppointmentShareLinkApi,
+  rescheduleAppointmentApi,
+  deleteSingleCallLogApi,
+  bulkDeleteCallLogsApi,
+  clearAllCallLogsApi,
   getPublicAppointmentByTokenApi,
   cancelByGuestTokenApi,
   getMyCallJoinInfoApi,

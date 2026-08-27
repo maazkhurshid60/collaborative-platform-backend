@@ -11,6 +11,10 @@ import {
     declineMyAppointmentApi,
     resendAppointmentEmailApi,
     getAppointmentShareLinkApi,
+    rescheduleAppointmentApi,
+    deleteSingleCallLogApi,
+    bulkDeleteCallLogsApi,
+    clearAllCallLogsApi,
     getPublicAppointmentByTokenApi,
     cancelByGuestTokenApi,
     getMyCallJoinInfoApi,
@@ -42,9 +46,13 @@ appointmentRouter.post("/start-instant-call", authJWT, startInstantCallApi);
 appointmentRouter.get("/me", authJWT, getMyAppointmentsApi);
 appointmentRouter.get("/direct-call-logs", authJWT, getDirectCallLogsApi);
 appointmentRouter.get("/my-call-logs", authJWT, getAllMyCallLogsApi);
+appointmentRouter.delete("/me/call-logs/clear-all", authJWT, clearAllCallLogsApi);
+appointmentRouter.post("/me/call-logs/bulk-delete", authJWT, bulkDeleteCallLogsApi);
+appointmentRouter.delete("/me/call-logs/:appointmentId", authJWT, deleteSingleCallLogApi);
 appointmentRouter.patch("/me/:appointmentId/cancel", authJWT, cancelMyAppointmentApi);
 appointmentRouter.patch("/me/:appointmentId/accept", authJWT, acceptMyAppointmentApi);
 appointmentRouter.patch("/me/:appointmentId/decline", authJWT, declineMyAppointmentApi);
+appointmentRouter.patch("/me/:appointmentId/reschedule", authJWT, rescheduleAppointmentApi);
 appointmentRouter.post("/me/:appointmentId/resend-email", authJWT, resendAppointmentEmailApi);
 appointmentRouter.get("/me/:appointmentId/share-link", authJWT, getAppointmentShareLinkApi);
 appointmentRouter.get("/me/:appointmentId/call-join", authJWT, getMyCallJoinInfoApi);

@@ -280,7 +280,7 @@ const deleteChatChannel = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const getAllUsersForChat = asyncHandler(async (req: Request, res: Response) => {
-  const { loginUserId } = req.body;
+  const { loginUserId, search } = req.body;
   const user = await resolveChatUser(loginUserId);
 
   if (!user) {
@@ -304,17 +304,32 @@ const getAllUsersForChat = asyncHandler(async (req: Request, res: Response) => {
 
   let userWhereClause: any = {
     id: { not: user.id },
-    isApprove: "APPROVED",
     role: { not: "superAdmin" },
   };
+
+  if (search && typeof search === "string" && search.trim() !== "") {
+    const searchTerm = search.trim();
+    userWhereClause.OR = [
+      { fullName: { contains: searchTerm, mode: "insensitive" } },
+      { email: { contains: searchTerm, mode: "insensitive" } },
+      { licenseNo: { contains: searchTerm, mode: "insensitive" } },
+      { provider: { speciality: { contains: searchTerm, mode: "insensitive" } } },
+    ];
+  }
 
   if (fullUser?.role === "provider" && fullUser.provider) {
     // A provider can chat with ALL other providers, but ONLY their own clients
     const myClientUserIds = fullUser.provider.clientList.map(pc => pc.client.userId);
-    userWhereClause.OR = [
+    const roleOr = [
       { role: "provider" },
       { role: "client", id: { in: myClientUserIds } }
     ];
+    if (userWhereClause.OR) {
+      userWhereClause.AND = [{ OR: userWhereClause.OR }, { OR: roleOr }];
+      delete userWhereClause.OR;
+    } else {
+      userWhereClause.OR = roleOr;
+    }
   } else if (fullUser?.role === "client" && fullUser.client) {
     // A client can ONLY chat with their assigned providers
     const myProviderUserIds = fullUser.client.providerList.map(pc => pc.provider.userId);

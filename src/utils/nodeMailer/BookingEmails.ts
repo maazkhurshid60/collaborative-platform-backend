@@ -4,6 +4,7 @@ import { renderEmail } from "../emailTemplateRenderer";
 import { bookingRequestProviderTemplate } from "../../templates/emails/bookingRequestProvider.template";
 import { bookingAcceptedGuestTemplate } from "../../templates/emails/bookingAcceptedGuest.template";
 import { bookingDeclinedGuestTemplate } from "../../templates/emails/bookingDeclinedGuest.template";
+import { bookingRescheduledGuestTemplate } from "../../templates/emails/bookingRescheduledGuest.template";
 
 export interface BookingRequestEmailData {
   providerName: string;
@@ -26,6 +27,10 @@ export interface BookingDecisionEmailData {
   sessionType: string;
   cancelUrl?: string;
   callJoinUrl?: string;
+}
+
+export interface BookingRescheduledEmailData extends BookingDecisionEmailData {
+  reason?: string;
 }
 
 export async function sendBookingRequestEmailToProvider(data: BookingRequestEmailData) {
@@ -72,6 +77,22 @@ export async function sendBookingDeclinedEmailToGuest(data: BookingDecisionEmail
     from: `"Kolabme Platform" <${process.env.NODE_MAILER_EMAIL}>`,
     to: data.guestEmail,
     subject: `Update on your booking request with ${data.providerName}`,
+    html,
+  });
+}
+
+export async function sendBookingRescheduledEmailToGuest(data: BookingRescheduledEmailData) {
+  const html = renderEmail(
+    "booking-rescheduled-guest",
+    bookingRescheduledGuestTemplate,
+    data,
+    "Appointment Rescheduled",
+  );
+
+  await transporter.sendMail({
+    from: `"Kolabme Platform" <${process.env.NODE_MAILER_EMAIL}>`,
+    to: data.guestEmail,
+    subject: `Your appointment with ${data.providerName} has been rescheduled`,
     html,
   });
 }

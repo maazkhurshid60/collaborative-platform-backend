@@ -4,13 +4,24 @@ import prisma from "../db/db.config";
 import { ApiError } from "../utils/apiError";
 import { StatusCodes } from "http-status-codes";
 import { Approve } from "../generated/prisma/enums";
-import { AppointmentStatus, AppointmentSessionType } from "../generated/prisma/enums";
+import {
+  AppointmentStatus,
+  AppointmentSessionType,
+} from "../generated/prisma/enums";
 import { io } from "../socket/socket";
 import { emailQueue } from "./EmailQueue";
 import logger from "../utils/logger";
 import { AvailabilityService } from "./AvailabilityService";
-import { getLandingSiteUrl, getAppSiteUrl } from "../utils/nodeMailer/getLandingSiteUrl";
-import { CALL_JOIN_WINDOW_BEFORE_MINUTES, isWithinCallJoinWindow, signCallToken, verifyCallToken } from "../utils/callAuth";
+import {
+  getLandingSiteUrl,
+  getAppSiteUrl,
+} from "../utils/nodeMailer/getLandingSiteUrl";
+import {
+  CALL_JOIN_WINDOW_BEFORE_MINUTES,
+  isWithinCallJoinWindow,
+  signCallToken,
+  verifyCallToken,
+} from "../utils/callAuth";
 
 const availabilityService = new AvailabilityService();
 
@@ -19,7 +30,9 @@ const availabilityService = new AvailabilityService();
 // since the underlying DB change (booking/accept/decline) has already committed.
 async function queueEmail(jobName: string, data: Record<string, unknown>) {
   if (!emailQueue) {
-    logger.warn(`[AppointmentService] emailQueue not initialized, skipping ${jobName}`);
+    logger.warn(
+      `[AppointmentService] emailQueue not initialized, skipping ${jobName}`,
+    );
     return;
   }
   try {
@@ -75,7 +88,10 @@ export class AppointmentService {
     }
 
     if (!profile.timezone) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "This provider hasn't set up booking yet.");
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "This provider hasn't set up booking yet.",
+      );
     }
 
     const sessionTypeAllowed =
@@ -84,7 +100,10 @@ export class AppointmentService {
       (data.sessionType === "HOME_VISIT" && profile.offersHomeVisits);
 
     if (!sessionTypeAllowed) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "This provider doesn't offer that session type.");
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "This provider doesn't offer that session type.",
+      );
     }
 
     const startTime = new Date(data.startTime);
@@ -92,17 +111,29 @@ export class AppointmentService {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid start time");
     }
     if (startTime.getTime() <= Date.now()) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "Appointments can only be scheduled for future dates and times.");
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Appointments can only be scheduled for future dates and times.",
+      );
     }
-    const endTime = new Date(startTime.getTime() + profile.appointmentDurationMinutes * 60000);
+    const endTime = new Date(
+      startTime.getTime() + profile.appointmentDurationMinutes * 60000,
+    );
 
     // Re-validate inside a transaction so two guests racing for the same slot
     // can't both succeed — the DB unique constraint on (providerId, startTime)
     // is the last-resort guard if the pre-check below still races.
     const appointment = await prisma.$transaction(async (tx) => {
-      const stillAvailable = await availabilityService.isSlotStillAvailable(provider.id, startTime, endTime);
+      const stillAvailable = await availabilityService.isSlotStillAvailable(
+        provider.id,
+        startTime,
+        endTime,
+      );
       if (!stillAvailable) {
-        throw new ApiError(StatusCodes.CONFLICT, "This slot is no longer available. Please pick another time.");
+        throw new ApiError(
+          StatusCodes.CONFLICT,
+          "This slot is no longer available. Please pick another time.",
+        );
       }
 
       return tx.appointment.create({
@@ -129,7 +160,10 @@ export class AppointmentService {
         type: "APPOINTMENT_BOOKED",
       },
     });
-    io.to(`notification_room_${provider.userId}`).emit("new_notification", notification);
+    io.to(`notification_room_${provider.userId}`).emit(
+      "new_notification",
+      notification,
+    );
 
     await queueEmail("send-booking-request-email", {
       providerName: provider.user.fullName,
@@ -147,7 +181,9 @@ export class AppointmentService {
   }
 
   private async getProviderOrThrow(loginUserId: string) {
-    const provider = await prisma.provider.findUnique({ where: { userId: loginUserId } });
+    const provider = await prisma.provider.findUnique({
+      where: { userId: loginUserId },
+    });
     if (!provider) {
       throw new ApiError(StatusCodes.NOT_FOUND, "Provider not found");
     }
@@ -187,24 +223,36 @@ export class AppointmentService {
       }
     }
 
-    if (!targetProvider || !targetProvider.profile || !targetProvider.profile.isPublished) {
+    if (
+      !targetProvider ||
+      !targetProvider.profile ||
+      !targetProvider.profile.isPublished
+    ) {
       throw new ApiError(StatusCodes.NOT_FOUND, "Target provider not found");
     }
 
     if (targetProvider.id === bookingProvider.id) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "You cannot book a session with yourself.");
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "You cannot book a session with yourself.",
+      );
     }
 
     const { profile } = targetProvider;
     if (!profile.timezone) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "This provider hasn't set up booking yet.");
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "This provider hasn't set up booking yet.",
+      );
     }
 
     const startTime = new Date(data.startTime);
     if (Number.isNaN(startTime.getTime())) {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid start time");
     }
-    const endTime = new Date(startTime.getTime() + profile.appointmentDurationMinutes * 60000);
+    const endTime = new Date(
+      startTime.getTime() + profile.appointmentDurationMinutes * 60000,
+    );
 
     const appointment = await prisma.$transaction(async (tx) => {
       const stillAvailable = await availabilityService.isSlotStillAvailable(
@@ -251,7 +299,10 @@ export class AppointmentService {
       },
     });
 
-    io.to(`notification_room_${targetProvider.userId}`).emit("new_notification", notification);
+    io.to(`notification_room_${targetProvider.userId}`).emit(
+      "new_notification",
+      notification,
+    );
 
     return appointment;
   }
@@ -341,7 +392,10 @@ export class AppointmentService {
         },
       });
     } catch (err) {
-      logger.error("[AppointmentService] Failed to create initial call log:", err);
+      logger.error(
+        "[AppointmentService] Failed to create initial call log:",
+        err,
+      );
     }
 
     const callerToken = signCallToken({
@@ -360,7 +414,9 @@ export class AppointmentService {
     const callerJoinUrl = `${meetingUrl}?token=${callerToken}${modeParam}`;
     const calleeJoinUrl = `${meetingUrl}?token=${calleeToken}${modeParam}`;
 
-    const targetRoom = io.sockets.adapter.rooms.get(`notification_room_${targetProvider.userId}`);
+    const targetRoom = io.sockets.adapter.rooms.get(
+      `notification_room_${targetProvider.userId}`,
+    );
     const isTargetOnline = !!(targetRoom && targetRoom.size > 0);
 
     // Emit real-time ringing event to target provider
@@ -378,16 +434,16 @@ export class AppointmentService {
   // Provider-only — own appointments. `status` here reflects CANCELLED as
   // stored, but CONFIRMED-past-endTime is computed as "COMPLETED" for display
   // rather than written anywhere (no cron needed).
-  async getMyAppointments(loginUserId: string, filters: { status?: string; from?: string; to?: string }) {
+  async getMyAppointments(
+    loginUserId: string,
+    filters: { status?: string; from?: string; to?: string },
+  ) {
     const provider = await this.getProviderOrThrow(loginUserId);
     const now = new Date();
 
     const appointments = await prisma.appointment.findMany({
       where: {
-        OR: [
-          { providerId: provider.id },
-          { bookingProviderId: provider.id },
-        ],
+        OR: [{ providerId: provider.id }, { bookingProviderId: provider.id }],
         ...(filters.from ? { startTime: { gte: new Date(filters.from) } } : {}),
         ...(filters.to ? { startTime: { lte: new Date(filters.to) } } : {}),
       },
@@ -403,7 +459,9 @@ export class AppointmentService {
       ...a,
       isMyBooking: a.bookingProviderId === provider.id,
       displayStatus:
-        a.status === AppointmentStatus.CONFIRMED && a.endTime < now ? "COMPLETED" : a.status,
+        a.status === AppointmentStatus.CONFIRMED && a.endTime < now
+          ? "COMPLETED"
+          : a.status,
     }));
 
     if (!filters.status) return withComputedStatus;
@@ -432,12 +490,96 @@ export class AppointmentService {
     });
   }
 
+  async rescheduleAppointment(
+    loginUserId: string,
+    appointmentId: string,
+    newStartTimeISO: string,
+    reason?: string,
+  ) {
+    const provider = await this.getProviderOrThrow(loginUserId);
+
+    const existing = await prisma.appointment.findFirst({
+      where: {
+        id: appointmentId,
+        OR: [{ providerId: provider.id }, { bookingProviderId: provider.id }],
+      },
+      include: { provider: { include: { user: true, profile: true } } },
+    });
+
+    if (!existing) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Appointment not found");
+    }
+
+    if (
+      existing.status === AppointmentStatus.CANCELLED ||
+      existing.status === AppointmentStatus.DECLINED
+    ) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Cannot reschedule a cancelled or declined appointment.",
+      );
+    }
+
+    const newStartTime = new Date(newStartTimeISO);
+    if (isNaN(newStartTime.getTime())) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Invalid date/time provided.",
+      );
+    }
+
+    if (newStartTime < new Date()) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "New start time must be in the future.",
+      );
+    }
+
+    const durationMs =
+      existing.endTime.getTime() - existing.startTime.getTime();
+    const newEndTime = new Date(newStartTime.getTime() + durationMs);
+
+    const updated = await prisma.appointment.update({
+      where: { id: appointmentId },
+      data: {
+        startTime: newStartTime,
+        endTime: newEndTime,
+      },
+    });
+
+    // Send email update to guest
+    const isOnline = existing.sessionType === AppointmentSessionType.ONLINE;
+    const emailData: Record<string, unknown> = {
+      ...this.buildDecisionEmailData(existing.provider, updated),
+      reason: reason || "Schedule adjustment by provider",
+      cancelUrl: `${getLandingSiteUrl()}/appointments/cancel/${existing.cancelToken}`,
+    };
+
+    if (isOnline && existing.meetingUrl) {
+      const guestCallToken = signCallToken({
+        appointmentId: existing.id,
+        role: "guest",
+        participantId: "guest",
+      });
+      emailData.callJoinUrl = `${existing.meetingUrl}?token=${guestCallToken}`;
+    }
+
+    await queueEmail("send-booking-rescheduled-email", emailData);
+
+    return updated;
+  }
+
   async acceptAppointment(loginUserId: string, appointmentId: string) {
-    const { provider, existing } = await this.getPendingAppointmentOrThrow(loginUserId, appointmentId);
+    const { provider, existing } = await this.getPendingAppointmentOrThrow(
+      loginUserId,
+      appointmentId,
+    );
 
     const isOnline = existing.sessionType === AppointmentSessionType.ONLINE;
     const meetingRoomId = isOnline ? `call_${existing.id}` : null;
-    const baseUrl = existing.bookingProviderId ? getAppSiteUrl() : getLandingSiteUrl();
+    const baseUrl = existing.bookingProviderId
+      ? getAppSiteUrl()
+      : getLandingSiteUrl();
     const meetingUrl = isOnline ? `${baseUrl}/call/${existing.id}` : null;
 
     const updated = await prisma.appointment.update({
@@ -467,7 +609,10 @@ export class AppointmentService {
   }
 
   async declineAppointment(loginUserId: string, appointmentId: string) {
-    const { provider, existing } = await this.getPendingAppointmentOrThrow(loginUserId, appointmentId);
+    const { provider, existing } = await this.getPendingAppointmentOrThrow(
+      loginUserId,
+      appointmentId,
+    );
 
     // Declining frees the slot immediately, same as cancelling.
     const updated = await prisma.appointment.update({
@@ -475,7 +620,10 @@ export class AppointmentService {
       data: { status: AppointmentStatus.DECLINED },
     });
 
-    await queueEmail("send-booking-declined-email", this.buildDecisionEmailData(provider, existing));
+    await queueEmail(
+      "send-booking-declined-email",
+      this.buildDecisionEmailData(provider, existing),
+    );
 
     return updated;
   }
@@ -500,8 +648,12 @@ export class AppointmentService {
     }
 
     const isOnline = appointment.sessionType === AppointmentSessionType.ONLINE;
-    const baseUrl = appointment.bookingProviderId ? getAppSiteUrl() : getLandingSiteUrl();
-    const meetingUrl = appointment.meetingUrl || (isOnline ? `${baseUrl}/call/${appointment.id}` : null);
+    const baseUrl = appointment.bookingProviderId
+      ? getAppSiteUrl()
+      : getLandingSiteUrl();
+    const meetingUrl =
+      appointment.meetingUrl ||
+      (isOnline ? `${baseUrl}/call/${appointment.id}` : null);
 
     const emailData: Record<string, unknown> = {
       ...this.buildDecisionEmailData(provider, appointment),
@@ -522,7 +674,10 @@ export class AppointmentService {
     return { message: "Meeting link email resent successfully." };
   }
 
-  private async getPendingAppointmentOrThrow(loginUserId: string, appointmentId: string) {
+  private async getPendingAppointmentOrThrow(
+    loginUserId: string,
+    appointmentId: string,
+  ) {
     const provider = await prisma.provider.findUnique({
       where: { userId: loginUserId },
       include: { user: true, profile: true },
@@ -538,15 +693,26 @@ export class AppointmentService {
       throw new ApiError(StatusCodes.NOT_FOUND, "Appointment not found");
     }
     if (existing.status !== AppointmentStatus.PENDING) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "Only pending requests can be accepted or declined.");
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Only pending requests can be accepted or declined.",
+      );
     }
 
     return { provider, existing };
   }
 
   private buildDecisionEmailData(
-    provider: { user: { fullName: string }; profile: { timezone: string | null } | null },
-    appointment: { guestName: string; guestEmail: string; startTime: Date; sessionType: AppointmentSessionType },
+    provider: {
+      user: { fullName: string };
+      profile: { timezone: string | null } | null;
+    },
+    appointment: {
+      guestName: string;
+      guestEmail: string;
+      startTime: Date;
+      sessionType: AppointmentSessionType;
+    },
   ) {
     const timezone = provider.profile?.timezone || "UTC";
     return {
@@ -559,8 +725,6 @@ export class AppointmentService {
     };
   }
 
-  // Public — no auth. Lets the landing page's cancel page show the guest what
-  // they're about to cancel before they confirm.
   async getPublicAppointmentByToken(cancelToken: string) {
     const appointment = await prisma.appointment.findUnique({
       where: { cancelToken },
@@ -574,7 +738,8 @@ export class AppointmentService {
     const timezone = appointment.provider.profile?.timezone || "UTC";
     const now = new Date();
     const displayStatus =
-      appointment.status === AppointmentStatus.CONFIRMED && appointment.endTime < now
+      appointment.status === AppointmentStatus.CONFIRMED &&
+      appointment.endTime < now
         ? "COMPLETED"
         : appointment.status;
 
@@ -589,8 +754,6 @@ export class AppointmentService {
     };
   }
 
-  // Public — no auth. The guest's self-service cancel, reached via the link in
-  // their confirmation email. Identified solely by the unguessable cancelToken.
   async cancelByGuestToken(cancelToken: string) {
     const appointment = await prisma.appointment.findUnique({
       where: { cancelToken },
@@ -601,12 +764,21 @@ export class AppointmentService {
       throw new ApiError(StatusCodes.NOT_FOUND, "Appointment not found");
     }
 
-    if (appointment.status === AppointmentStatus.CANCELLED || appointment.status === AppointmentStatus.DECLINED) {
+    if (
+      appointment.status === AppointmentStatus.CANCELLED ||
+      appointment.status === AppointmentStatus.DECLINED
+    ) {
       return appointment;
     }
 
-    if (appointment.status === AppointmentStatus.CONFIRMED && appointment.endTime < new Date()) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "This appointment has already taken place and can't be cancelled.");
+    if (
+      appointment.status === AppointmentStatus.CONFIRMED &&
+      appointment.endTime < new Date()
+    ) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "This appointment has already taken place and can't be cancelled.",
+      );
     }
 
     const updated = await prisma.appointment.update({
@@ -623,14 +795,14 @@ export class AppointmentService {
         type: "APPOINTMENT_CANCELLED",
       },
     });
-    io.to(`notification_room_${provider.userId}`).emit("new_notification", notification);
+    io.to(`notification_room_${provider.userId}`).emit(
+      "new_notification",
+      notification,
+    );
 
     return updated;
   }
 
-  // Provider-only. Mints this provider's own call join token — the dashboard's
-  // "Join Video Call" button fetches this, then opens the returned URL (which
-  // lives on the public landing site, since the guest side has no account).
   async getProviderCallJoinInfo(loginUserId: string, appointmentId: string) {
     const provider = await this.getProviderOrThrow(loginUserId);
 
@@ -643,11 +815,20 @@ export class AppointmentService {
     if (!appointment) {
       throw new ApiError(StatusCodes.NOT_FOUND, "Appointment not found");
     }
-    if (appointment.sessionType !== AppointmentSessionType.ONLINE || !appointment.meetingUrl) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "This appointment doesn't have a video call set up.");
+    if (
+      appointment.sessionType !== AppointmentSessionType.ONLINE ||
+      !appointment.meetingUrl
+    ) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "This appointment doesn't have a video call set up.",
+      );
     }
     if (appointment.status !== AppointmentStatus.CONFIRMED) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "This appointment isn't confirmed.");
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "This appointment isn't confirmed.",
+      );
     }
     if (!isWithinCallJoinWindow(appointment.startTime, appointment.endTime)) {
       throw new ApiError(
@@ -656,12 +837,20 @@ export class AppointmentService {
       );
     }
 
-    const token = signCallToken({ appointmentId: appointment.id, role: "provider", participantId: loginUserId });
-    const appMeetingUrl = (appointment.meetingUrl || "").replace(getLandingSiteUrl(), getAppSiteUrl());
-    return { joinUrl: `${appMeetingUrl || `${getAppSiteUrl()}/call/${appointment.id}`}?token=${token}` };
+    const token = signCallToken({
+      appointmentId: appointment.id,
+      role: "provider",
+      participantId: loginUserId,
+    });
+    const appMeetingUrl = (appointment.meetingUrl || "").replace(
+      getLandingSiteUrl(),
+      getAppSiteUrl(),
+    );
+    return {
+      joinUrl: `${appMeetingUrl || `${getAppSiteUrl()}/call/${appointment.id}`}?token=${token}`,
+    };
   }
 
-  // Mints a shareable guest call link for an appointment without 10-min window check so it can be copied & shared anytime
   async getAppointmentShareLink(loginUserId: string, appointmentId: string) {
     const provider = await this.getProviderOrThrow(loginUserId);
 
@@ -675,27 +864,39 @@ export class AppointmentService {
       throw new ApiError(StatusCodes.NOT_FOUND, "Appointment not found");
     }
     if (appointment.sessionType !== AppointmentSessionType.ONLINE) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "This appointment doesn't have a video call set up.");
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "This appointment doesn't have a video call set up.",
+      );
     }
     if (appointment.status !== AppointmentStatus.CONFIRMED) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "This appointment isn't confirmed.");
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "This appointment isn't confirmed.",
+      );
     }
 
-    const token = signCallToken({ appointmentId: appointment.id, role: "guest", participantId: "guest" });
-    const baseUrl = appointment.bookingProviderId ? getAppSiteUrl() : getLandingSiteUrl();
-    const meetingUrl = appointment.meetingUrl || `${baseUrl}/call/${appointment.id}`;
+    const token = signCallToken({
+      appointmentId: appointment.id,
+      role: "guest",
+      participantId: "guest",
+    });
+    const baseUrl = appointment.bookingProviderId
+      ? getAppSiteUrl()
+      : getLandingSiteUrl();
+    const meetingUrl =
+      appointment.meetingUrl || `${baseUrl}/call/${appointment.id}`;
 
     return { shareUrl: `${meetingUrl}?token=${token}` };
   }
 
-  // Public — no auth. Verifies a call join token (guest or provider) and
-  // returns display info for the call page, WITHOUT any TURN credentials —
-  // those are only ever issued over the authorized Socket.IO channel, after
-  // the stronger join_call check (see socket.ts).
   async getPublicCallInfo(token: string) {
     const payload = verifyCallToken(token);
     if (!payload) {
-      throw new ApiError(StatusCodes.UNAUTHORIZED, "This call link is invalid or has expired.");
+      throw new ApiError(
+        StatusCodes.UNAUTHORIZED,
+        "This call link is invalid or has expired.",
+      );
     }
 
     const appointment = await prisma.appointment.findUnique({
@@ -706,13 +907,22 @@ export class AppointmentService {
       throw new ApiError(StatusCodes.NOT_FOUND, "Appointment not found");
     }
     if (appointment.sessionType !== AppointmentSessionType.ONLINE) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "This isn't an online session.");
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "This isn't an online session.",
+      );
     }
     if (appointment.status !== AppointmentStatus.CONFIRMED) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, "This appointment isn't confirmed.");
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "This appointment isn't confirmed.",
+      );
     }
 
-    const canJoinNow = isWithinCallJoinWindow(appointment.startTime, appointment.endTime);
+    const canJoinNow = isWithinCallJoinWindow(
+      appointment.startTime,
+      appointment.endTime,
+    );
 
     return {
       appointmentId: appointment.id,
@@ -768,8 +978,14 @@ export class AppointmentService {
     const appointments = await prisma.appointment.findMany({
       where: {
         OR: [
-          { providerId: loginProvider.id, bookingProviderId: targetProvider.id },
-          { providerId: targetProvider.id, bookingProviderId: loginProvider.id },
+          {
+            providerId: loginProvider.id,
+            bookingProviderId: targetProvider.id,
+          },
+          {
+            providerId: targetProvider.id,
+            bookingProviderId: loginProvider.id,
+          },
         ],
       },
       include: {
@@ -831,10 +1047,81 @@ export class AppointmentService {
   ) {
     try {
       await prisma.appointmentCallLog.create({
-        data: { appointmentId, role, participantId, event, connectionMeta: connectionMeta as any },
+        data: {
+          appointmentId,
+          role,
+          participantId,
+          event,
+          connectionMeta: connectionMeta as any,
+        },
       });
     } catch (error) {
       logger.error("[AppointmentService] Failed to write call log:", error);
     }
+  }
+
+  // Delete a single call log
+  async deleteSingleCallLog(loginUserId: string, appointmentId: string) {
+    const provider = await this.getProviderOrThrow(loginUserId);
+
+    const appt = await prisma.appointment.findFirst({
+      where: {
+        id: appointmentId,
+        OR: [{ providerId: provider.id }, { bookingProviderId: provider.id }],
+      },
+    });
+    if (!appt) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Call log not found");
+    }
+
+    // Delete appointment (cascades and deletes associated call logs)
+    await prisma.appointment.delete({
+      where: { id: appointmentId },
+    });
+
+    return { message: "Call log deleted successfully" };
+  }
+
+  // Bulk delete call logs by appointment IDs
+  async bulkDeleteCallLogs(loginUserId: string, appointmentIds: string[]) {
+    const provider = await this.getProviderOrThrow(loginUserId);
+
+    const appts = await prisma.appointment.findMany({
+      where: {
+        id: { in: appointmentIds },
+        OR: [{ providerId: provider.id }, { bookingProviderId: provider.id }],
+      },
+      select: { id: true },
+    });
+
+    const validIds = appts.map((a) => a.id);
+    if (validIds.length > 0) {
+      await prisma.appointment.deleteMany({
+        where: { id: { in: validIds } },
+      });
+    }
+
+    return { message: `${validIds.length} call logs deleted successfully` };
+  }
+
+  // Clear all call logs for logged-in provider
+  async clearAllCallLogs(loginUserId: string) {
+    const provider = await this.getProviderOrThrow(loginUserId);
+
+    const appts = await prisma.appointment.findMany({
+      where: {
+        OR: [{ providerId: provider.id }, { bookingProviderId: provider.id }],
+      },
+      select: { id: true },
+    });
+
+    const allIds = appts.map((a) => a.id);
+    if (allIds.length > 0) {
+      await prisma.appointment.deleteMany({
+        where: { id: { in: allIds } },
+      });
+    }
+
+    return { message: "All call logs cleared successfully" };
   }
 }

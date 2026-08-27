@@ -233,6 +233,16 @@ export class AvailabilityService {
       throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid date range");
     }
 
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    if (startDate < startOfToday || endDate < startOfToday) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Cannot schedule time off for past dates",
+      );
+    }
+
     // Set start to start of day and end to end of day if dates match or single day time-off
     if (endDate <= startDate) {
       endDate = new Date(startDate);

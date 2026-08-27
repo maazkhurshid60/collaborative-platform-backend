@@ -6,6 +6,7 @@ import {
   sendBookingRequestEmailToProvider,
   sendBookingAcceptedEmailToGuest,
   sendBookingDeclinedEmailToGuest,
+  sendBookingRescheduledEmailToGuest,
 } from "../utils/nodeMailer/BookingEmails";
 import { sendQueryReceivedEmailToProvider } from "../utils/nodeMailer/QueryEmails";
 
@@ -51,6 +52,8 @@ export const initEmailWorker = () => {
           await sendBookingAcceptedEmailToGuest(job.data);
         } else if (job.name === "send-booking-declined-email") {
           await sendBookingDeclinedEmailToGuest(job.data);
+        } else if (job.name === "send-booking-rescheduled-email") {
+          await sendBookingRescheduledEmailToGuest(job.data);
         } else if (job.name === "send-query-received-email") {
           await sendQueryReceivedEmailToProvider(job.data);
         } else {
@@ -58,9 +61,7 @@ export const initEmailWorker = () => {
           return { success: false };
         }
 
-        logger.debug(
-          `[EmailWorker] Successfully sent email for job ${job.id}`,
-        );
+        logger.debug(`[EmailWorker] Successfully sent email for job ${job.id}`);
 
         return { success: true };
       } catch (error) {
