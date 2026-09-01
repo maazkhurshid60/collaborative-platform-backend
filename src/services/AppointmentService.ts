@@ -22,6 +22,7 @@ import {
   signCallToken,
   verifyCallToken,
 } from "../utils/callAuth";
+import { canUsePremiumFeature, canBothPartiesCall } from "../utils/subscriptionAccess";
 
 const availabilityService = new AvailabilityService();
 
@@ -317,7 +318,7 @@ export class AppointmentService {
   ) {
     const bookingProvider = await prisma.provider.findUnique({
       where: { userId: bookingUserId },
-      include: { user: true },
+      include: { user: { include: { subscription: true } } },
     });
     if (!bookingProvider) {
       throw new ApiError(StatusCodes.NOT_FOUND, "Caller provider not found");
@@ -325,13 +326,13 @@ export class AppointmentService {
 
     let targetProvider = await prisma.provider.findUnique({
       where: { id: data.targetProviderId },
-      include: { user: true },
+      include: { user: { include: { subscription: true } } },
     });
 
     if (!targetProvider) {
       const profile = await prisma.providerProfile.findUnique({
         where: { slug: data.targetProviderId },
-        include: { provider: { include: { user: true } } },
+        include: { provider: { include: { user: { include: { subscription: true } } } } },
       });
       if (profile) {
         targetProvider = profile.provider as any;
@@ -341,7 +342,7 @@ export class AppointmentService {
     if (!targetProvider) {
       targetProvider = await prisma.provider.findFirst({
         where: { userId: data.targetProviderId },
-        include: { user: true },
+        include: { user: { include: { subscription: true } } },
       });
     }
 
@@ -351,6 +352,20 @@ export class AppointmentService {
 
     if (targetProvider.id === bookingProvider.id) {
       throw new ApiError(StatusCodes.BAD_REQUEST, "You cannot call yourself.");
+    }
+
+    // Calling requires BOTH providers to have active/trialing calling access.
+    if (!canUsePremiumFeature(bookingProvider.user.subscription)) {
+      throw new ApiError(
+        StatusCodes.FORBIDDEN,
+        "Your trial's calling access has ended. Upgrade to keep making calls.",
+      );
+    }
+    if (!canUsePremiumFeature(targetProvider.user.subscription)) {
+      throw new ApiError(
+        StatusCodes.FORBIDDEN,
+        `${targetProvider.user.fullName || "This provider"}'s trial calling access has ended. Calls require both providers to have an active plan or be within their trial period.`,
+      );
     }
 
     const now = new Date();
@@ -811,10 +826,29 @@ export class AppointmentService {
         id: appointmentId,
         OR: [{ providerId: provider.id }, { bookingProviderId: provider.id }],
       },
+      include: {
+        provider: { include: { user: { include: { subscription: true } } } },
+        bookingProvider: { include: { user: { include: { subscription: true } } } },
+      },
     });
     if (!appointment) {
       throw new ApiError(StatusCodes.NOT_FOUND, "Appointment not found");
     }
+
+    // Calling requires BOTH providers to have active/trialing calling access
+    // when both sides are providers (bookingProvider is null for guest bookings).
+    if (
+      !canBothPartiesCall(
+        appointment.provider.user.subscription,
+        appointment.bookingProvider?.user.subscription,
+      )
+    ) {
+      throw new ApiError(
+        StatusCodes.FORBIDDEN,
+        "Calling isn't available — one of the providers' trial calling access has ended. Upgrade to keep making calls.",
+      );
+    }
+
     if (
       appointment.sessionType !== AppointmentSessionType.ONLINE ||
       !appointment.meetingUrl

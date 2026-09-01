@@ -14,6 +14,7 @@ import { getFrontendUrl } from "../../utils/nodeMailer/getFrontendUrl";
 import { emailQueue } from "../../services/EmailQueue";
 import crypto from "crypto";
 import { AuditLogService } from "../../services/AuditLogService";
+import { canUsePremiumFeature } from "../../utils/subscriptionAccess";
 
 const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
   const { groupName, membersId, createdBy } = req.body;
@@ -484,7 +485,7 @@ const updateGroupPermissionsApi = asyncHandler(
 
 const sendMessageToGroupApi = asyncHandler(
   async (req: Request, res: Response) => {
-    const { groupId, senderId, message, type, isPhi, phiClientId } = req.body;
+    const { groupId, senderId, message, type, isPhi, phiClientId, durationSeconds } = req.body;
     const files = req.files as Express.Multer.File[];
 
     try {
@@ -504,6 +505,18 @@ const sendMessageToGroupApi = asyncHandler(
 
       const userIdToUse = provider.userId;
 
+      if (type === "audio") {
+        const sender = await prisma.user.findUnique({
+          where: { id: userIdToUse },
+          include: { subscription: true },
+        });
+        if (!canUsePremiumFeature(sender?.subscription)) {
+          return res.status(StatusCodes.FORBIDDEN).json({
+            message: "Your trial's voice messaging access has ended. Upgrade to keep sending voice notes.",
+          });
+        }
+      }
+
       // Upload media files to S3
       let uploadedMediaUrls: string[] = [];
       if (files && files.length > 0) {
@@ -519,6 +532,7 @@ const sendMessageToGroupApi = asyncHandler(
           message: encryptedMessage,
           mediaUrl: uploadedMediaUrls.join(","),
           type: type || "text",
+          durationSeconds: durationSeconds ? parseInt(durationSeconds as string) : null,
           isPhi: isPhi === "true" || isPhi === true,
           phiClientId: phiClientId || null,
           groupId: groupId,
@@ -620,7 +634,7 @@ const sendMessageToGroupApi = asyncHandler(
             name: "send-chat-notification",
             data: {
               email: member.user.email,
-              senderName: chatMessage.sender.fullName,
+              senderName: (chatMessage as any).sender?.fullName || "User",
               chatLink: `${getFrontendUrl()}/chat`,
               chatType: "group",
               chatName: groupMembers.name
@@ -767,12 +781,12 @@ const getGroupMessageApi = asyncHandler(async (req: Request, res: Response) => {
 
   // Get total messages count for the group (useful for frontend pagination)
   const totalMessages = await prisma.chatMessage.count({
-    where: { groupId },
+    where: { groupId, NOT: { deletedFor: { has: loginUserId } } },
   });
 
   // Fetch paginated messages
   const groupMessages = await prisma.chatMessage.findMany({
-    where: { groupId },
+    where: { groupId, NOT: { deletedFor: { has: loginUserId } } },
     orderBy: { createdAt: "desc" }, // latest messages first
     skip,
     take: limit,

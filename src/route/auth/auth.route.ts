@@ -8,7 +8,6 @@ import {
   logoutApi,
   resetPasswordApi,
   signupApi,
-  startTrialApi,
   verifyInvitationToken,
   checkEmailExistsApi,
   verifyEmailApi,
@@ -36,7 +35,6 @@ authRouter.post("/logout", authJWT, logoutApi);
 authRouter.patch("/change-password", authJWT, changePasswordApi);
 authRouter.post("/forgot-password", forgotPasswordApi);
 authRouter.patch("/reset-password/:token", resetPasswordApi);
-authRouter.post("/start-trial", startTrialApi);
 authRouter.post("/verify-invitation", verifyInvitationToken);
 
 // Email Verification APIs

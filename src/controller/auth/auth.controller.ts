@@ -14,11 +14,9 @@ import { generateResetToken } from "../../utils/generateResetPasswordToken";
 import { sendResetPasswordEmail } from "../../utils/nodeMailer/ResetPassword";
 import { sendVerifyEmailLink } from "../../utils/nodeMailer/VerifyEmailLink";
 import { AuthService } from "../../services/AuthService";
-import { SubscriptionService } from "../../services/SubscriptionService";
 import { AuditLogService } from "../../services/AuditLogService";
 
 const authService = new AuthService();
-const subscriptionService = new SubscriptionService();
 
 const signupApi = asyncHandler(async (req: Request, res: Response) => {
   const userParsedData = userSchema.safeParse(req.body);
@@ -284,8 +282,9 @@ const changePasswordApi = asyncHandler(async (req: Request, res: Response) => {
 
 const forgotPasswordApi = asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body;
+  const cleanEmail = email && typeof email === "string" ? email.trim().toLowerCase() : email;
 
-  const user = await prisma.user.findFirst({ where: { email } });
+  const user = await prisma.user.findFirst({ where: { email: cleanEmail } });
 
   if (!user) {
     return res
@@ -293,7 +292,7 @@ const forgotPasswordApi = asyncHandler(async (req: Request, res: Response) => {
       .json(
         new ApiResponse(
           StatusCodes.CONFLICT,
-          { error: `Email: ${email} is not found.` },
+          { error: `Email: ${cleanEmail} is not found.` },
           "Validation failed",
         ),
       );
@@ -390,34 +389,6 @@ const resetPasswordApi = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
-const startTrialApi = asyncHandler(async (req: Request, res: Response) => {
-  const { newProviderId, invitedById } = req.body;
-
-  if (!newProviderId) {
-    return res
-      .status(StatusCodes.BAD_REQUEST)
-      .json(
-        new ApiResponse(
-          StatusCodes.BAD_REQUEST,
-          null,
-          "newProviderId is required.",
-        ),
-      );
-  }
-
-  await subscriptionService.startTrial(newProviderId, invitedById);
-
-  return res
-    .status(StatusCodes.OK)
-    .json(
-      new ApiResponse(
-        StatusCodes.OK,
-        { message: "Trial started successfully." },
-        "OK",
-      ),
-    );
-});
-
 const verifyInvitationToken = asyncHandler(
   async (req: Request, res: Response) => {
     const { token } = req.body;
@@ -491,8 +462,10 @@ const checkEmailExistsApi = asyncHandler(
         );
     }
 
+    const cleanEmail = typeof email === "string" ? email.trim().toLowerCase() : email;
+
     const existingEmail = await prisma.user.findUnique({
-      where: { email },
+      where: { email: cleanEmail },
     });
 
     if (existingEmail) {
@@ -688,7 +661,6 @@ export {
   changePasswordApi,
   forgotPasswordApi,
   resetPasswordApi,
-  startTrialApi,
   verifyInvitationToken,
   checkEmailExistsApi,
   verifyEmailApi,

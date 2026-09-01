@@ -5,6 +5,7 @@ import logger from "../utils/logger";
 import prisma from "../db/db.config";
 import { AppointmentStatus, AppointmentSessionType } from "../generated/prisma/enums";
 import { CALL_GRACE_MINUTES, getIceServers, isWithinCallJoinWindow, verifyCallToken } from "../utils/callAuth";
+import { canBothPartiesCall } from "../utils/subscriptionAccess";
 
 // ─── Video call signaling (self-hosted WebRTC) ──────────────────────────────
 // Room name alone (`call_${appointmentId}`) is guessable/enumerable, so it is
@@ -17,6 +18,7 @@ interface CallAuthResult {
     participantId: string;
     endTime: Date;
     guestName?: string;
+    callingAllowed: boolean;
 }
 
 async function authorizeCallJoin(appointmentId: string, token: string | undefined): Promise<CallAuthResult | null> {
@@ -27,7 +29,10 @@ async function authorizeCallJoin(appointmentId: string, token: string | undefine
 
     const appointment = await prisma.appointment.findUnique({
         where: { id: appointmentId },
-        include: { provider: true, bookingProvider: true },
+        include: {
+            provider: { include: { user: { include: { subscription: true } } } },
+            bookingProvider: { include: { user: { include: { subscription: true } } } },
+        },
     });
     if (!appointment) return null;
     if (appointment.status !== AppointmentStatus.CONFIRMED) return null;
@@ -45,6 +50,12 @@ async function authorizeCallJoin(appointmentId: string, token: string | undefine
         participantId: payload.participantId,
         endTime: appointment.endTime,
         guestName: appointment.guestName || "Guest",
+        // Calling requires BOTH providers to have active/trialing calling access
+        // when both sides are providers (bookingProvider is null for guest bookings).
+        callingAllowed: canBothPartiesCall(
+            appointment.provider.user.subscription,
+            appointment.bookingProvider?.user.subscription,
+        ),
     };
 }
 
@@ -271,6 +282,14 @@ export function setupSocket(server: any) {
                     return;
                 }
 
+                // Calling requires both providers (when both sides are providers) to
+                // have active/trialing calling access — see authorizeCallJoin.
+                if (!auth.callingAllowed) {
+                    socket.emit('call_error', { message: 'Calling isn\'t available — one of the providers\' trial calling access has ended.' });
+                    logCallEvent(appointmentId, auth.role, auth.participantId, 'auth_failed');
+                    return;
+                }
+
                 const room = `call_${appointmentId}`;
                 const waitingRoom = `waiting_room_${appointmentId}`;
                 socket.data.callParticipant = auth;
@@ -448,6 +467,20 @@ export function setupSocket(server: any) {
             const room = `call_${appointmentId}`;
             if (!socket.rooms.has(room)) return;
             socket.to(room).emit('ice_candidate', { candidate });
+        });
+
+        // Mid-call media upgrade consent (e.g. audio-only -> video): relay only,
+        // the peer connection renegotiation itself rides on webrtc_offer/webrtc_answer above.
+        socket.on('call_media_request', ({ appointmentId, kind }: { appointmentId: string; kind: string }) => {
+            const room = `call_${appointmentId}`;
+            if (!socket.rooms.has(room)) return;
+            socket.to(room).emit('call_media_request', { kind });
+        });
+
+        socket.on('call_media_response', ({ appointmentId, kind, accepted }: { appointmentId: string; kind: string; accepted: boolean }) => {
+            const room = `call_${appointmentId}`;
+            if (!socket.rooms.has(room)) return;
+            socket.to(room).emit('call_media_response', { kind, accepted });
         });
 
         socket.on('leave_call', ({ appointmentId, durationSeconds }: { appointmentId: string; durationSeconds?: number }) => {

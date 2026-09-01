@@ -343,8 +343,10 @@ model ChatMessage {
   message           String
   mediaUrl          String?
   type              String
+  durationSeconds   Int?
   isPhi             Boolean            @default(false)
   phiClientId       String? // Associated client if message contains PHI
+  deletedFor        String[]           @default([]) // userIds who deleted this message for themselves only
   createdAt         DateTime           @default(now())
   chatChannel       ChatChannel?       @relation(fields: [chatChannelId], references: [id])
   group             GroupChat?         @relation(fields: [groupId], references: [id])

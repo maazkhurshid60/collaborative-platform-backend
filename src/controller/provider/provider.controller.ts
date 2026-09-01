@@ -351,9 +351,100 @@ const updateProvider = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
+const getProviderStats = asyncHandler(async (req: Request, res: Response) => {
+  const rawUserId =
+    req.params.loginUserId || req.query.loginUserId || req.body?.loginUserId;
+  const loginUserId = Array.isArray(rawUserId)
+    ? (rawUserId[0] as string)
+    : (rawUserId as string | undefined);
+
+  let totalClients = 0;
+  let totalProviders = 0;
+  let plan = "Standard";
+
+  if (loginUserId) {
+    let user = await prisma.user.findUnique({
+      where: { id: loginUserId },
+      include: { subscription: true },
+    });
+
+    let provider = await prisma.provider.findFirst({
+      where: {
+        OR: [{ userId: loginUserId }, { id: loginUserId }],
+      },
+    });
+
+    if (!user && provider) {
+      user = await prisma.user.findUnique({
+        where: { id: provider.userId },
+        include: { subscription: true },
+      });
+    }
+
+    if (user?.subscription?.plan) {
+      const rawPlan = user.subscription.plan;
+      plan = rawPlan.charAt(0).toUpperCase() + rawPlan.slice(1).toLowerCase();
+    }
+
+    if (provider) {
+      totalClients = await prisma.client.count({
+        where: {
+          OR: [
+            { createdByProviderId: provider.id },
+            {
+              providerList: {
+                some: {
+                  providerId: provider.id,
+                },
+              },
+            },
+          ],
+        },
+      });
+    } else {
+      totalClients = 0;
+    }
+
+    totalProviders = await prisma.provider.count({
+      where: {
+        user: {
+          NOT: {
+            blockedMembers: {
+              has: user?.id || loginUserId,
+            },
+          },
+        },
+      },
+    });
+  } else {
+    totalClients = await prisma.client.count();
+    totalProviders = await prisma.provider.count();
+  }
+
+  const totalConnected = totalClients + totalProviders;
+
+  console.log("totalClients", totalClients);
+  console.log("totalProviders", totalProviders);
+  console.log("totalConnected", totalConnected);
+  console.log("plan", plan);
+  return res.status(StatusCodes.OK).json(
+    new ApiResponse(
+      StatusCodes.OK,
+      {
+        totalClients,
+        totalProviders,
+        totalConnected,
+        plan,
+      },
+      "Provider dashboard stats fetched successfully",
+    ),
+  );
+});
+
 export {
   getAllUnblockProviders,
   deletProvider,
   updateProvider,
   getTotalProviders,
+  getProviderStats,
 };

@@ -3,6 +3,7 @@ import {
   getAllSingleConservationMessage,
   sendMessageToSingleConservation,
   deleteMessageToSingleConservation,
+  deleteMessageForMe,
   getAllConversations,
   markMessagesAsRead,
   deleteChatChannelForUser,
@@ -29,6 +30,7 @@ chatRouter.delete(
   "/single-chat/delete-message",
   deleteMessageToSingleConservation,
 );
+chatRouter.delete("/single-chat/delete-message-for-me", deleteMessageForMe);
 chatRouter.delete("/single-chat/delete-channel", deleteChatChannelForUser);
 
 export default chatRouter;
