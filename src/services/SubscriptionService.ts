@@ -119,61 +119,6 @@ export class SubscriptionService {
     return fallbackPlan || "STANDARD";
   }
 
-  async startTrial(providerId: string, invitedById?: string) {
-    const provider = await prisma.provider.findUnique({
-      where: { id: providerId },
-      include: {
-        user: {
-          omit: {
-            password: true,
-          },
-        },
-      },
-    });
-
-    if (!provider) {
-      throw new ApiError(StatusCodes.NOT_FOUND, "Provider not found.");
-    }
-
-    // 1. Create or retrieve Stripe Customer
-    const customer = await stripeService.createCustomer(
-      provider.user.email,
-      provider.user.fullName,
-      { userId: provider.user.id },
-    );
-
-    // 2. Create Subscription in DB (Unlimited Free Plan)
-    const sub = await prisma.subscription.create({
-      data: {
-        userId: provider.user.id,
-        stripeCustomerId: customer.id,
-        plan: "STANDARD",
-        status: "TRIALING",
-      },
-    });
-
-    // 4. Handle Invited Chat Initialization
-    if (invitedById) {
-      const inviter = await prisma.provider.findUnique({
-        where: { id: invitedById },
-        select: { userId: true },
-      });
-
-      if (inviter) {
-        const [a, b] = [provider.user.id, inviter.userId].sort();
-        await prisma.chatChannel.upsert({
-          where: {
-            providerAId_providerBId: { providerAId: a, providerBId: b },
-          },
-          update: {},
-          create: { providerAId: a, providerBId: b },
-        });
-      }
-    }
-
-    return sub;
-  }
-
   async createCheckoutSession(
     userId: string,
     planType: string,

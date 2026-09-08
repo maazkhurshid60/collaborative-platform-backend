@@ -487,12 +487,12 @@ const submitFormApi = asyncHandler(async (req: Request, res: Response) => {
 
     if (shareCheck.clientId && shareCheck.clientId !== submittedBy) {
       return res
-        .status(StatusCodes.UNAUTHORIZED)
+        .status(StatusCodes.FORBIDDEN)
         .json(
           new ApiResponse(
-            StatusCodes.UNAUTHORIZED,
+            StatusCodes.FORBIDDEN,
             { error: "You are not authorized to submit this form." },
-            "Unauthorized",
+            "Forbidden",
           ),
         );
     }

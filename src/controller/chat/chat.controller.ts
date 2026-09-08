@@ -14,6 +14,8 @@ import { getFrontendUrl } from "../../utils/nodeMailer/getFrontendUrl";
 import { emailQueue } from "../../services/EmailQueue";
 import { AuditLogService } from "../../services/AuditLogService";
 import { resolveChatUser } from "../../utils/resolveChatUser";
+import { canUsePremiumFeature } from "../../utils/subscriptionAccess";
+import { io } from "../../socket/socket";
 
 const getAllSingleConservationMessage = asyncHandler(
   async (req: Request, res: Response) => {
@@ -57,12 +59,12 @@ const getAllSingleConservationMessage = asyncHandler(
 
       // Get total message count (optional, useful for frontend pagination)
       const totalMessages = await prisma.chatMessage.count({
-        where: { chatChannelId },
+        where: { chatChannelId, NOT: { deletedFor: { has: userIdToCheck } } },
       });
 
       // Get paginated messages
       const messages = await prisma.chatMessage.findMany({
-        where: { chatChannelId },
+        where: { chatChannelId, NOT: { deletedFor: { has: userIdToCheck } } },
         orderBy: { createdAt: "desc" }, // latest first
         skip,
         take: limit,
@@ -114,7 +116,7 @@ const getAllSingleConservationMessage = asyncHandler(
 
 const sendMessageToSingleConservation = asyncHandler(
   async (req: Request, res: Response) => {
-    const { chatChannelId, message, type, senderId, isPhi, phiClientId } =
+    const { chatChannelId, message, type, senderId, isPhi, phiClientId, durationSeconds } =
       req.body;
     const files = req.files as Express.Multer.File[]; // files from multer
 
@@ -142,6 +144,18 @@ const sendMessageToSingleConservation = asyncHandler(
         return res.status(400).json({ message: "Chat channel does not exist" });
       }
 
+      if (type === "audio") {
+        const sender = await prisma.user.findUnique({
+          where: { id: userIdToUse },
+          include: { subscription: true },
+        });
+        if (sender?.role === "provider" && !canUsePremiumFeature(sender.subscription)) {
+          return res.status(StatusCodes.FORBIDDEN).json({
+            message: "Your trial's voice messaging access has ended. Upgrade to keep sending voice notes.",
+          });
+        }
+      }
+
       // Upload media files to S3
       let uploadedMediaUrls: string[] = [];
       if (files && files.length > 0) {
@@ -159,6 +173,7 @@ const sendMessageToSingleConservation = asyncHandler(
           chatChannelId,
           mediaUrl: uploadedMediaUrls.join(","),
           type: type || "text",
+          durationSeconds: durationSeconds ? parseInt(durationSeconds as string) : null,
           isPhi: isPhi === "true" || isPhi === true,
           phiClientId: phiClientId || null,
           readReceipts: {
@@ -218,7 +233,7 @@ const sendMessageToSingleConservation = asyncHandler(
         if (emailQueue) {
           await emailQueue.add("send-chat-notification", {
             email: receiver.email,
-            senderName: chatMessage.sender.fullName,
+            senderName: (chatMessage as any).sender?.fullName || "User",
             chatLink: `${getFrontendUrl()}/chat`,
             chatType: "individual"
           });
@@ -247,6 +262,17 @@ const sendMessageToSingleConservation = asyncHandler(
           phiClientId: chatMessage.phiClientId,
         },
       });
+
+      // Broadcast real-time message to socket room instantly
+      try {
+        if (io) {
+          io.to(chatChannelId).emit("receive_direct", { ...plainMessage, chatChannelId });
+          io.to(chatChannelId).emit("receive_message", { ...plainMessage, chatChannelId });
+          io.to(chatChannelId).emit("new_message", { ...plainMessage, chatChannelId });
+        }
+      } catch (socketErr) {
+        console.warn("Socket broadcast error:", socketErr);
+      }
 
       return res
         .status(StatusCodes.OK)
@@ -349,6 +375,60 @@ const deleteMessageToSingleConservation = asyncHandler(
   },
 );
 
+// Hides a message for the requesting user only — the message still exists
+// for everyone else. Any participant may do this to their own view (unlike
+// deleteMessageToSingleConservation above, which hard-deletes for everyone
+// and is restricted to the original sender).
+const deleteMessageForMe = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { channelId, messageId, loginUserId } = req.body;
+
+    const user = await resolveChatUser(loginUserId);
+    if (!user) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "User not found",
+      });
+    }
+    const userIdToCheck = user.id;
+
+    const message = await prisma.chatMessage.findFirst({
+      where: {
+        id: messageId,
+        OR: [{ chatChannelId: channelId }, { groupId: channelId }],
+      },
+    });
+
+    if (!message) {
+      return res
+        .status(StatusCodes.NOT_FOUND)
+        .json(
+          new ApiResponse(
+            StatusCodes.NOT_FOUND,
+            { message: `Message not found in this chat.` },
+            "Message Not Found",
+          ),
+        );
+    }
+
+    if (!message.deletedFor.includes(userIdToCheck)) {
+      await prisma.chatMessage.update({
+        where: { id: messageId },
+        data: { deletedFor: { push: userIdToCheck } },
+      });
+    }
+
+    return res
+      .status(StatusCodes.OK)
+      .json(
+        new ApiResponse(
+          StatusCodes.OK,
+          { messageId },
+          "Message deleted for you.",
+        ),
+      );
+  },
+);
+
 const deleteChatChannelForUser = asyncHandler(
   async (req: Request, res: Response) => {
     const { channelId, loginUserId } = req.body;
@@ -374,21 +454,21 @@ const deleteChatChannelForUser = asyncHandler(
         .json({ message: "Chat channel not found" });
     }
 
-    if (channel.providerAId === userId) {
-      await prisma.chatChannel.update({
-        where: { id: channelId },
-        data: { deletedByA: true },
-      });
-    } else if (channel.providerBId === userId) {
-      await prisma.chatChannel.update({
-        where: { id: channelId },
-        data: { deletedByB: true },
-      });
-    } else {
+    if (channel.providerAId !== userId && channel.providerBId !== userId) {
       return res
         .status(StatusCodes.FORBIDDEN)
         .json({ message: "You are not authorized to delete this chat" });
     }
+
+    // Delete all messages associated with the chat channel
+    await prisma.chatMessage.deleteMany({
+      where: { chatChannelId: channelId },
+    });
+
+    // Delete the chat channel
+    await prisma.chatChannel.delete({
+      where: { id: channelId },
+    });
 
     return res
       .status(StatusCodes.OK)
@@ -396,7 +476,7 @@ const deleteChatChannelForUser = asyncHandler(
         new ApiResponse(
           StatusCodes.OK,
           null,
-          "Chat deleted for you successfully",
+          "Chat and all associated messages deleted successfully",
         ),
       );
   },
@@ -424,10 +504,25 @@ const getAllConversations = asyncHandler(
             { providerBId: userIdToUse, deletedByB: false },
           ],
         },
-        select: {
-          id: true,
-          providerAId: true,
-          providerBId: true,
+        include: {
+          providerA: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              profileImage: true,
+              role: true,
+            },
+          },
+          providerB: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              profileImage: true,
+              role: true,
+            },
+          },
         },
       });
 
@@ -437,10 +532,9 @@ const getAllConversations = asyncHandler(
           .json({ message: "No chat channels found for this user" });
       }
 
-      // For each channel, fetch the last message
+      // For each channel, fetch the last message & count unread messages
       const chatChannelsWithLastMessage = await Promise.all(
         chatChannels.map(async (channel) => {
-          // Fetch the last message in the channel
           const lastMessage = await prisma.chatMessage.findFirst({
             where: { chatChannelId: channel.id },
             orderBy: { createdAt: "desc" },
@@ -451,17 +545,22 @@ const getAllConversations = asyncHandler(
             },
           });
 
-          // return {
-          //     ...channel,
-          //     lastMessage: lastMessage
-          //         ? {
-          //             ...lastMessage,
-          //             message: lastMessage.message
-          //         }
-          //         : null // Include the last message (if any)
-          // };
+          const unreadCount = await prisma.chatMessage.count({
+            where: {
+              chatChannelId: channel.id,
+              NOT: { senderId: userIdToUse },
+              readReceipts: {
+                none: {
+                  userId: userIdToUse,
+                },
+              },
+            },
+          });
+
           return {
             ...channel,
+            unreadCount,
+            totalUnread: unreadCount,
             lastMessage: lastMessage
               ? {
                   ...lastMessage,
@@ -703,6 +802,7 @@ export {
   getAllSingleConservationMessage,
   sendMessageToSingleConservation,
   deleteMessageToSingleConservation,
+  deleteMessageForMe,
   deleteChatChannelForUser,
   getAllConversations,
   getAllPublicSingleConservationMessage,

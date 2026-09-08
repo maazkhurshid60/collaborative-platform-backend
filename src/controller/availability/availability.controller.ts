@@ -30,11 +30,12 @@ const getMyBookingSettingsApi = asyncHandler(async (req: Request, res: Response)
 
 const setMyBookingSettingsApi = asyncHandler(async (req: Request, res: Response) => {
   const loginUserId = (req as any).user.id;
-  const { timezone, appointmentDurationMinutes, bufferMinutes } = req.body;
+  const { timezone, appointmentDurationMinutes, bufferMinutes, isRecurringWeekly } = req.body;
   const settings = await availabilityService.setMyBookingSettings(loginUserId, {
     timezone,
     appointmentDurationMinutes,
     bufferMinutes,
+    isRecurringWeekly,
   });
   return res
     .status(StatusCodes.OK)

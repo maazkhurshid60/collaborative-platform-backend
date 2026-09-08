@@ -41,28 +41,41 @@ export class AuthService {
     else if (genderInput === "other" || genderInput === "OTHER")
       genderEnum = Gender.OTHER;
 
+    const cleanEmail =
+      email && typeof email === "string" ? email.trim().toLowerCase() : email;
+
+    const cleanLicenseNo =
+      licenseNo && typeof licenseNo === "string" && licenseNo.trim() !== ""
+        ? licenseNo.trim()
+        : null;
+
     // 2. Check for duplicate email or licenseNo
-    const existingEmail = await prisma.user.findFirst({ where: { email } });
+    const existingEmail = await prisma.user.findFirst({
+      where: { email: cleanEmail },
+    });
     if (existingEmail) {
       throw new ApiError(
         StatusCodes.CONFLICT,
-        `Email ${email} is already registered.`,
+        `Email ${cleanEmail} is already registered.`,
       );
     }
 
-    if (licenseNo) {
+    if (cleanLicenseNo) {
       const existingLicense = await prisma.user.findFirst({
-        where: { licenseNo },
+        where: { licenseNo: cleanLicenseNo },
       });
       if (existingLicense) {
         throw new ApiError(
           StatusCodes.CONFLICT,
-          `License Number ${licenseNo} is already registered.`,
+          `License Number ${cleanLicenseNo} is already registered.`,
         );
       }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    const trialStart = new Date();
+    const trialEnd = new Date(trialStart.getTime() + 3 * 24 * 60 * 60 * 1000);
 
     // 3. Handle Stripe trial for FREE plan or fetch existing subscription details
     let stripeData: {
@@ -101,7 +114,7 @@ export class AuthService {
       mappedPlanType = "STANDARD";
       try {
         const customer = await stripe.customers.create({
-          email: email,
+          email: cleanEmail,
           name: fullName,
           metadata: { role },
         });
@@ -124,20 +137,19 @@ export class AuthService {
       const userCreated = await tx.user.create({
         data: {
           fullName,
-          email,
+          email: cleanEmail,
           password: hashedPassword,
           gender: genderEnum,
           age: age ?? null,
           contactNo: contactNo ?? null,
           address: address ?? null,
           status: status || "active",
-          licenseNo: licenseNo ?? null,
+          licenseNo: cleanLicenseNo,
           role,
           isApprove: userData.subscriptionId
             ? Approve.APPROVED
             : Approve.PENDING,
-          //   country,
-          state,
+          state: state || "",
           publicKey: publicKey ?? null,
           privateKey: privateKey ?? null,
           isLicenseValid: false,
@@ -173,6 +185,11 @@ export class AuthService {
                     stripeData?.stripeSubscriptionId || null,
                   plan: mappedPlanType,
                   status: planType === "FREE" ? "TRIALING" : "ACTIVE",
+                  // 3-day calling/voice-messaging trial window — see subscriptionAccess.ts.
+                  ...(planType === "FREE" && {
+                    trialStart,
+                    trialEnd,
+                  }),
                   ...(stripeData?.currentPeriodEnd && {
                     currentPeriodEnd: stripeData.currentPeriodEnd,
                   }),
@@ -193,7 +210,10 @@ export class AuthService {
         });
       } else if (role === Role.provider) {
         roleRecord = await tx.provider.create({
-          data: { userId: userCreated.id, speciality: userData.speciality },
+          data: {
+            userId: userCreated.id,
+            speciality: userData.speciality || "General Practice",
+          },
           include: { user: true },
         });
       } else if (role === Role.superAdmin) {
@@ -209,20 +229,29 @@ export class AuthService {
     if (role === Role.provider && userData.inviteToken) {
       await this.processInvitation(
         userData.inviteToken,
-        userData.email,
+        cleanEmail,
         (userResult as any).userId,
       );
     }
 
     // 6. Sync user to Kit via BullMQ (both providers and clients)
-    console.log(`[Kit Sync Debug] Checking if we should sync user. Role: ${role}, email: ${email}, kitQueue exists: ${!!kitQueue}`);
+    console.log(
+      `[Kit Sync Debug] Checking if we should sync user. Role: ${role}, email: ${cleanEmail}, kitQueue exists: ${!!kitQueue}`,
+    );
     if ((role === Role.provider || role === Role.client) && kitQueue) {
-      console.log(`[Kit Sync Debug] Enqueueing Kit sync job for ${email}...`);
-      kitQueue.add("sync-subscriber", { email, fullName }).then(job => {
-        console.log(`[Kit Sync Debug] Successfully enqueued Kit sync job ${job.id}`);
-      }).catch((err) => {
-        console.error("Failed to enqueue Kit sync job:", err);
-      });
+      console.log(
+        `[Kit Sync Debug] Enqueueing Kit sync job for ${cleanEmail}...`,
+      );
+      kitQueue
+        .add("sync-subscriber", { email: cleanEmail, fullName })
+        .then((job) => {
+          console.log(
+            `[Kit Sync Debug] Successfully enqueued Kit sync job ${job.id}`,
+          );
+        })
+        .catch((err) => {
+          console.error("Failed to enqueue Kit sync job:", err);
+        });
     }
 
     return await this.getCompleteUserData((userResult as any).userId, role);
@@ -388,13 +417,19 @@ export class AuthService {
   }
 
   async login(email: string, passwordInput: string) {
+    const cleanEmail =
+      email && typeof email === "string" ? email.trim().toLowerCase() : email;
+
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: cleanEmail },
       include: { client: true, provider: true, superAdmin: true },
     });
 
     if (!user) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, `Email: ${email} not found`);
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Email: ${cleanEmail} not found`,
+      );
     }
 
     if (!user.password) {

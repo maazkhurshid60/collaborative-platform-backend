@@ -138,18 +138,33 @@ describe('AuthService.signup', () => {
 
   it('creates Stripe customer and trial subscription when planType is FREE', async () => {
     mockStripeCustomersCreate.mockResolvedValue({ id: 'cus_123' });
-    mockStripeSubscriptionsCreate.mockResolvedValue(mockStripeTrialSub);
 
     await service.signup({ ...baseProviderData, planType: 'FREE' });
 
     expect(mockStripeCustomersCreate).toHaveBeenCalledWith(
       expect.objectContaining({ email: 'jane@example.com', name: 'Jane Provider' })
     );
-    expect(mockStripeSubscriptionsCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        customer: 'cus_123',
-        trial_period_days: 14,
-      })
+  });
+
+  it('normalizes email with whitespace and uppercase letters during signup', async () => {
+    let capturedTxUserCreate: any;
+    mockPrismaTransaction.mockImplementation(async (fn: any) => {
+      const tx = {
+        user: {
+          create: jest.fn().mockImplementation((args) => {
+            capturedTxUserCreate = args.data;
+            return fakeUser;
+          }),
+        },
+        provider: { create: jest.fn().mockResolvedValue(fakeProvider) },
+      };
+      return fn(tx);
+    });
+
+    await service.signup({ ...baseProviderData, email: '  JANE.DOE@EXAMPLE.COM  ' });
+
+    expect(capturedTxUserCreate).toEqual(
+      expect.objectContaining({ email: 'jane.doe@example.com' })
     );
   });
 
@@ -294,5 +309,18 @@ describe('AuthService.login', () => {
       expect.objectContaining({ where: { userId: 'user-1' } })
     );
     expect(result).toEqual(fakeClient);
+  });
+
+  it('normalizes email with whitespace and uppercase letters during login', async () => {
+    mockPrismaUser.findUnique.mockResolvedValue(fakeDbUser);
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+    await service.login('  JANE@EXAMPLE.COM  ', 'Password123!');
+
+    expect(mockPrismaUser.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { email: 'jane@example.com' },
+      })
+    );
   });
 });

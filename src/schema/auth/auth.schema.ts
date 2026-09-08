@@ -35,10 +35,10 @@ export const userSchema = z.object({
     licenseNo: z.string().optional(),
     role: z.enum(["client", "provider", "superAdmin"], { message: "Role must be either client or provider" }),
     isApprove: z.string().optional(),
-    email: z.string().nonempty("Email is required").email("Enter a valid Email"),
+    email: z.string().trim().toLowerCase().pipe(z.string().nonempty("Email is required").email("Enter a valid Email")),
     password: strongPassword.optional(),
     // country: z.literal("US", { message: "Only United States is supported" }),
-    state: z.string().nonempty("State must be selected"),
+    state: z.string().optional(),
     publicKey: z.string().optional(),
     privateKey: z.string().optional(),
 })
@@ -50,9 +50,9 @@ export const clientSchema = userSchema.extend({
 })
 // Provider Schema (Extends User)
 export const providerSchema = userSchema.extend({
-    speciality: z.string().nonempty("Speciality is required"),
+    speciality: z.string().optional(),
     inviteToken: z.string().optional(),
-    licenseNo: licenseNoValidator.optional(),
+    licenseNo: z.string().optional().nullable(),
 })
 // Super Admin Schema (Extends User)
 export const superAdminSchema = userSchema.extend({
@@ -60,7 +60,7 @@ export const superAdminSchema = userSchema.extend({
 })
 // Login Schema
 export const loginSchema = z.object({
-    email: z.string().nonempty("Email is required").email("Enter a valid Email"),
+    email: z.string().trim().toLowerCase().pipe(z.string().nonempty("Email is required").email("Enter a valid Email")),
     password: z.string().nonempty("Password is required"),
 })
 

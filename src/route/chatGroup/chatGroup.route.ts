@@ -3,6 +3,7 @@ import {
   createGroupApi,
   deleteGroupChannel,
   getAllGroupsApi,
+  getAllGroupsMobileApi,
   getGroupMessageApi,
   sendMessageToGroupApi,
   updateGroupApi,
@@ -24,6 +25,7 @@ chatGroupRouter.post(
   sendMessageToGroupApi,
 );
 chatGroupRouter.post("/get-all-group", getAllGroupsApi);
+chatGroupRouter.post("/get-all-group-mobile", getAllGroupsMobileApi);
 chatGroupRouter.post("/share-group-chat", shareGroupChatByEmail);
 chatGroupRouter.post("/read-message", markMessagesAsRead);
 chatGroupRouter.patch("/update-group", updateGroupApi);

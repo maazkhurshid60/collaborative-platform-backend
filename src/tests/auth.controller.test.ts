@@ -8,7 +8,10 @@ const mockPrismaUser = {
 
 jest.mock('../db/db.config', () => ({
   __esModule: true,
-  default: { user: mockPrismaUser },
+  default: {
+    user: mockPrismaUser,
+    baaDocument: { findFirst: jest.fn().mockResolvedValue(null) },
+  },
 }));
 
 const mockAuthServiceInstance = {
@@ -26,10 +29,6 @@ jest.mock('../services/UserService', () => ({
     getMe: jest.fn(),
     deleteUser: jest.fn(),
   })),
-}));
-
-jest.mock('../services/SubscriptionService', () => ({
-  SubscriptionService: jest.fn(() => ({ startTrial: jest.fn() })),
 }));
 
 jest.mock('jsonwebtoken', () => ({

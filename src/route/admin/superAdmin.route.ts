@@ -18,6 +18,7 @@ import {
   createOrUpdateBaa,
   getAdminBaa,
   getBaaAcceptedProviders,
+  getAllAppointmentsAdmin,
 } from "../../controller/admin/superAdmin.controller";
 
 import { uploadImg } from "../../utils/multer/s3ImgUploader";
@@ -32,10 +33,11 @@ router.use(authorizeRoles("superAdmin"));
 router.get("/first", getSuperAdminFirst);
 router.get("/dashboard/stats", getSuperAdminDashboardStats);
 
-// BAA (Business Associate Agreement) - placed above dynamic params
+// BAA (Business Associate Agreement) & Appointments Audit
 router.get("/baa", getAdminBaa);
 router.post("/baa", createOrUpdateBaa);
 router.get("/baa-providers", getBaaAcceptedProviders);
+router.get("/appointments/all", getAllAppointmentsAdmin);
 
 router.get("/contact-queries", getContactQueries);
 
