@@ -50,7 +50,9 @@ export class AuthService {
         : null;
 
     // 2. Check for duplicate email or licenseNo
-    const existingEmail = await prisma.user.findFirst({ where: { email: cleanEmail } });
+    const existingEmail = await prisma.user.findFirst({
+      where: { email: cleanEmail },
+    });
     if (existingEmail) {
       throw new ApiError(
         StatusCodes.CONFLICT,
@@ -237,7 +239,9 @@ export class AuthService {
       `[Kit Sync Debug] Checking if we should sync user. Role: ${role}, email: ${cleanEmail}, kitQueue exists: ${!!kitQueue}`,
     );
     if ((role === Role.provider || role === Role.client) && kitQueue) {
-      console.log(`[Kit Sync Debug] Enqueueing Kit sync job for ${cleanEmail}...`);
+      console.log(
+        `[Kit Sync Debug] Enqueueing Kit sync job for ${cleanEmail}...`,
+      );
       kitQueue
         .add("sync-subscriber", { email: cleanEmail, fullName })
         .then((job) => {
@@ -422,7 +426,10 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new ApiError(StatusCodes.BAD_REQUEST, `Email: ${cleanEmail} not found`);
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        `Email: ${cleanEmail} not found`,
+      );
     }
 
     if (!user.password) {

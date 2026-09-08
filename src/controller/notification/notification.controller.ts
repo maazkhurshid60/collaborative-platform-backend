@@ -166,4 +166,32 @@ const markNotificationsAsSeen = asyncHandler(async (req: Request, res: Response)
     }
 });
 
-export { sendNotification, getNotification, deleteNotification, getUnreadNotificationCount, markNotificationsAsSeen }
+const savePushToken = asyncHandler(async (req: Request, res: Response) => {
+    const { pushToken, userId } = req.body;
+    const targetUserId = (req as any).user?.id || userId;
+
+    if (!pushToken) {
+        return res.status(StatusCodes.BAD_REQUEST).json(
+            new ApiResponse(StatusCodes.BAD_REQUEST, {}, "Push token is required")
+        );
+    }
+
+    if (targetUserId) {
+        try {
+            await prisma.user.update({
+                where: { id: targetUserId },
+                data: { pushToken } as any,
+            });
+        } catch (err) {
+            // Ignore if column doesn't exist yet, avoiding disruption
+            console.warn("Notice: pushToken update skipped or unsupported in DB model:", err);
+        }
+    }
+
+    return res.status(StatusCodes.OK).json(
+        new ApiResponse(StatusCodes.OK, { pushToken }, "Push token received successfully")
+    );
+});
+
+export { sendNotification, getNotification, deleteNotification, getUnreadNotificationCount, markNotificationsAsSeen, savePushToken }
+

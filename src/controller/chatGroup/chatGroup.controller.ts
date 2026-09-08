@@ -15,6 +15,7 @@ import { emailQueue } from "../../services/EmailQueue";
 import crypto from "crypto";
 import { AuditLogService } from "../../services/AuditLogService";
 import { canUsePremiumFeature } from "../../utils/subscriptionAccess";
+import { resolveChatUser } from "../../utils/resolveChatUser";
 
 const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
   const { groupName, membersId, createdBy } = req.body;
@@ -485,7 +486,15 @@ const updateGroupPermissionsApi = asyncHandler(
 
 const sendMessageToGroupApi = asyncHandler(
   async (req: Request, res: Response) => {
-    const { groupId, senderId, message, type, isPhi, phiClientId, durationSeconds } = req.body;
+    const {
+      groupId,
+      senderId,
+      message,
+      type,
+      isPhi,
+      phiClientId,
+      durationSeconds,
+    } = req.body;
     const files = req.files as Express.Multer.File[];
 
     try {
@@ -512,7 +521,8 @@ const sendMessageToGroupApi = asyncHandler(
         });
         if (!canUsePremiumFeature(sender?.subscription)) {
           return res.status(StatusCodes.FORBIDDEN).json({
-            message: "Your trial's voice messaging access has ended. Upgrade to keep sending voice notes.",
+            message:
+              "Your trial's voice messaging access has ended. Upgrade to keep sending voice notes.",
           });
         }
       }
@@ -532,7 +542,9 @@ const sendMessageToGroupApi = asyncHandler(
           message: encryptedMessage,
           mediaUrl: uploadedMediaUrls.join(","),
           type: type || "text",
-          durationSeconds: durationSeconds ? parseInt(durationSeconds as string) : null,
+          durationSeconds: durationSeconds
+            ? parseInt(durationSeconds as string)
+            : null,
           isPhi: isPhi === "true" || isPhi === true,
           phiClientId: phiClientId || null,
           groupId: groupId,
@@ -637,20 +649,28 @@ const sendMessageToGroupApi = asyncHandler(
               senderName: (chatMessage as any).sender?.fullName || "User",
               chatLink: `${getFrontendUrl()}/chat`,
               chatType: "group",
-              chatName: groupMembers.name
-            }
+              chatName: groupMembers.name,
+            },
           }));
-          
-          emailQueue.addBulk(emailJobs).then(() => {
-            console.log("[Email Debug] All email jobs added to BullMQ successfully");
-          }).catch(err => {
-            console.error("[Email Debug] Failed to add some group chat emails to BullMQ", err);
-          });
+
+          emailQueue
+            .addBulk(emailJobs)
+            .then(() => {
+              console.log(
+                "[Email Debug] All email jobs added to BullMQ successfully",
+              );
+            })
+            .catch((err) => {
+              console.error(
+                "[Email Debug] Failed to add some group chat emails to BullMQ",
+                err,
+              );
+            });
         } else {
-          console.warn("[Email Debug] emailQueue is not initialized, skipping group emails.");
+          console.warn(
+            "[Email Debug] emailQueue is not initialized, skipping group emails.",
+          );
         }
-
-
 
         // Update lastEmailSentAt for notified members
         const memberIdsToUpdate = membersToNotify.map((m) => m.id);
@@ -1031,6 +1051,116 @@ const getAllGroupsApi = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
+const getAllGroupsMobileApi = asyncHandler(async (req: Request, res: Response) => {
+  const { loginUserId, search } = req.body;
+
+  const user = await resolveChatUser(loginUserId);
+  const targetUserId = user?.id || loginUserId;
+
+  const allgroups = await prisma.groupChat.findMany({
+    where: {
+      AND: [
+        {
+          members: {
+            some: { userId: targetUserId },
+          },
+        },
+        ...(search
+          ? [
+              {
+                name: {
+                  contains: search,
+                  mode: "insensitive" as any,
+                },
+              },
+            ]
+          : []),
+      ],
+    },
+    include: {
+      provider: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              fullName: true,
+            },
+          },
+        },
+      },
+      members: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              profileImage: true,
+              provider: {
+                select: {
+                  id: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const enrichedGroups = await Promise.all(
+    allgroups.map(async (group) => {
+      const lastMessage = await prisma.chatMessage.findFirst({
+        where: { groupId: group.id },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          message: true,
+          createdAt: true,
+          senderId: true,
+          type: true,
+          mediaUrl: true,
+        },
+      });
+
+      const unreadCount = await prisma.chatMessage.count({
+        where: {
+          groupId: group.id,
+          senderId: { not: targetUserId },
+          groupReadReceipts: {
+            none: {
+              userId: targetUserId,
+            },
+          },
+        },
+      });
+
+      return {
+        ...group,
+        lastMessage: lastMessage
+          ? {
+              ...lastMessage,
+              message: lastMessage.message
+                ? decryptText(lastMessage.message)
+                : "",
+            }
+          : null,
+        unreadCount: unreadCount || 0,
+      };
+    }),
+  );
+
+  return res
+    .status(StatusCodes.OK)
+    .json(
+      new ApiResponse(
+        StatusCodes.OK,
+        { allgroups: enrichedGroups },
+        "Fetched all groups.",
+      ),
+    );
+});
+
 const deleteGroupChannel = asyncHandler(async (req: Request, res: Response) => {
   const { id, createdBy } = req.body;
 
@@ -1266,6 +1396,7 @@ export {
   sendMessageToGroupApi,
   getGroupMessageApi,
   getAllGroupsApi,
+  getAllGroupsMobileApi,
   updateGroupApi,
   deleteGroupChannel,
   shareGroupChatByEmail,

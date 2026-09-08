@@ -15,6 +15,7 @@ import { emailQueue } from "../../services/EmailQueue";
 import { AuditLogService } from "../../services/AuditLogService";
 import { resolveChatUser } from "../../utils/resolveChatUser";
 import { canUsePremiumFeature } from "../../utils/subscriptionAccess";
+import { io } from "../../socket/socket";
 
 const getAllSingleConservationMessage = asyncHandler(
   async (req: Request, res: Response) => {
@@ -262,6 +263,17 @@ const sendMessageToSingleConservation = asyncHandler(
         },
       });
 
+      // Broadcast real-time message to socket room instantly
+      try {
+        if (io) {
+          io.to(chatChannelId).emit("receive_direct", { ...plainMessage, chatChannelId });
+          io.to(chatChannelId).emit("receive_message", { ...plainMessage, chatChannelId });
+          io.to(chatChannelId).emit("new_message", { ...plainMessage, chatChannelId });
+        }
+      } catch (socketErr) {
+        console.warn("Socket broadcast error:", socketErr);
+      }
+
       return res
         .status(StatusCodes.OK)
         .json(
@@ -492,10 +504,25 @@ const getAllConversations = asyncHandler(
             { providerBId: userIdToUse, deletedByB: false },
           ],
         },
-        select: {
-          id: true,
-          providerAId: true,
-          providerBId: true,
+        include: {
+          providerA: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              profileImage: true,
+              role: true,
+            },
+          },
+          providerB: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              profileImage: true,
+              role: true,
+            },
+          },
         },
       });
 
@@ -505,10 +532,9 @@ const getAllConversations = asyncHandler(
           .json({ message: "No chat channels found for this user" });
       }
 
-      // For each channel, fetch the last message
+      // For each channel, fetch the last message & count unread messages
       const chatChannelsWithLastMessage = await Promise.all(
         chatChannels.map(async (channel) => {
-          // Fetch the last message in the channel
           const lastMessage = await prisma.chatMessage.findFirst({
             where: { chatChannelId: channel.id },
             orderBy: { createdAt: "desc" },
@@ -519,17 +545,22 @@ const getAllConversations = asyncHandler(
             },
           });
 
-          // return {
-          //     ...channel,
-          //     lastMessage: lastMessage
-          //         ? {
-          //             ...lastMessage,
-          //             message: lastMessage.message
-          //         }
-          //         : null // Include the last message (if any)
-          // };
+          const unreadCount = await prisma.chatMessage.count({
+            where: {
+              chatChannelId: channel.id,
+              NOT: { senderId: userIdToUse },
+              readReceipts: {
+                none: {
+                  userId: userIdToUse,
+                },
+              },
+            },
+          });
+
           return {
             ...channel,
+            unreadCount,
+            totalUnread: unreadCount,
             lastMessage: lastMessage
               ? {
                   ...lastMessage,

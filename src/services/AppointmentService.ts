@@ -22,7 +22,10 @@ import {
   signCallToken,
   verifyCallToken,
 } from "../utils/callAuth";
-import { canUsePremiumFeature, canBothPartiesCall } from "../utils/subscriptionAccess";
+import {
+  canUsePremiumFeature,
+  canBothPartiesCall,
+} from "../utils/subscriptionAccess";
 
 const availabilityService = new AvailabilityService();
 
@@ -316,12 +319,28 @@ export class AppointmentService {
       callType: "audio" | "video";
     },
   ) {
-    const bookingProvider = await prisma.provider.findUnique({
+    let bookingProvider = await prisma.provider.findUnique({
       where: { userId: bookingUserId },
       include: { user: { include: { subscription: true } } },
     });
+
     if (!bookingProvider) {
-      throw new ApiError(StatusCodes.NOT_FOUND, "Caller provider not found");
+      bookingProvider = await prisma.provider.findUnique({
+        where: { id: bookingUserId },
+        include: { user: { include: { subscription: true } } },
+      });
+    }
+
+    let bookingClient = null;
+    if (!bookingProvider) {
+      bookingClient = await prisma.client.findFirst({
+        where: { OR: [{ userId: bookingUserId }, { id: bookingUserId }] },
+        include: { user: true },
+      });
+    }
+
+    if (!bookingProvider && !bookingClient) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Caller account not found");
     }
 
     let targetProvider = await prisma.provider.findUnique({
@@ -332,7 +351,9 @@ export class AppointmentService {
     if (!targetProvider) {
       const profile = await prisma.providerProfile.findUnique({
         where: { slug: data.targetProviderId },
-        include: { provider: { include: { user: { include: { subscription: true } } } } },
+        include: {
+          provider: { include: { user: { include: { subscription: true } } } },
+        },
       });
       if (profile) {
         targetProvider = profile.provider as any;
@@ -350,12 +371,16 @@ export class AppointmentService {
       throw new ApiError(StatusCodes.NOT_FOUND, "Target provider not found");
     }
 
-    if (targetProvider.id === bookingProvider.id) {
+    if (bookingProvider && targetProvider.id === bookingProvider.id) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, "You cannot call yourself.");
+    }
+    if (bookingClient && targetProvider.userId === bookingClient.userId) {
       throw new ApiError(StatusCodes.BAD_REQUEST, "You cannot call yourself.");
     }
 
-    // Calling requires BOTH providers to have active/trialing calling access.
-    if (!canUsePremiumFeature(bookingProvider.user.subscription)) {
+    // Calling requires target provider to have active calling access.
+    // If caller is also a provider, both must have active/trialing calling access.
+    if (bookingProvider && !canUsePremiumFeature(bookingProvider.user.subscription)) {
       throw new ApiError(
         StatusCodes.FORBIDDEN,
         "Your trial's calling access has ended. Upgrade to keep making calls.",
@@ -364,9 +389,12 @@ export class AppointmentService {
     if (!canUsePremiumFeature(targetProvider.user.subscription)) {
       throw new ApiError(
         StatusCodes.FORBIDDEN,
-        `${targetProvider.user.fullName || "This provider"}'s trial calling access has ended. Calls require both providers to have an active plan or be within their trial period.`,
+        `${targetProvider.user.fullName || "This provider"}'s trial calling access has ended. Calls require active plan or trial period.`,
       );
     }
+
+    const callerUser = bookingProvider ? bookingProvider.user : bookingClient!.user;
+    const isCallerProvider = !!bookingProvider;
 
     const now = new Date();
     const endTime = new Date(now.getTime() + 60 * 60 * 1000);
@@ -375,14 +403,15 @@ export class AppointmentService {
     const appointment = await prisma.appointment.create({
       data: {
         providerId: targetProvider.id,
-        bookingProviderId: bookingProvider.id,
+        bookingProviderId: bookingProvider ? bookingProvider.id : null,
+        clientId: bookingClient ? bookingClient.id : null,
         startTime: now,
         endTime: endTime,
         sessionType: AppointmentSessionType.ONLINE,
         status: AppointmentStatus.CONFIRMED,
-        guestName: bookingProvider.user.fullName,
-        guestEmail: bookingProvider.user.email,
-        guestPhone: bookingProvider.user.contactNo || null,
+        guestName: callerUser.fullName || "Client",
+        guestEmail: callerUser.email,
+        guestPhone: callerUser.contactNo || null,
         notes: `Instant ${data.callType === "audio" ? "Voice" : "Video"} Call`,
         cancelToken,
       },
@@ -401,8 +430,8 @@ export class AppointmentService {
       await prisma.appointmentCallLog.create({
         data: {
           appointmentId: appointment.id,
-          participantId: bookingUserId,
-          role: "provider",
+          participantId: isCallerProvider ? bookingUserId : "guest",
+          role: isCallerProvider ? "provider" : "guest",
           event: "join",
         },
       });
@@ -415,8 +444,8 @@ export class AppointmentService {
 
     const callerToken = signCallToken({
       appointmentId: appointment.id,
-      role: "provider",
-      participantId: bookingUserId,
+      role: isCallerProvider ? "provider" : "guest",
+      participantId: isCallerProvider ? bookingUserId : "guest",
     });
 
     const calleeToken = signCallToken({
@@ -438,8 +467,8 @@ export class AppointmentService {
     io.to(`notification_room_${targetProvider.userId}`).emit("incoming_call", {
       appointmentId: appointment.id,
       callType: data.callType,
-      callerName: bookingProvider.user.fullName,
-      callerProfileImage: bookingProvider.user.profileImage,
+      callerName: callerUser.fullName || "Client",
+      callerProfileImage: callerUser.profileImage,
       calleeJoinUrl,
     });
 
@@ -828,7 +857,9 @@ export class AppointmentService {
       },
       include: {
         provider: { include: { user: { include: { subscription: true } } } },
-        bookingProvider: { include: { user: { include: { subscription: true } } } },
+        bookingProvider: {
+          include: { user: { include: { subscription: true } } },
+        },
       },
     });
     if (!appointment) {
@@ -969,7 +1000,7 @@ export class AppointmentService {
     };
   }
 
-  // Fetch all direct call logs between logged-in provider and target provider
+  // Fetch all direct call logs between logged-in user (provider or client) and target provider
   async getDirectCallLogs(loginUserId: string, targetIdentifier: string) {
     let loginProvider = await prisma.provider.findUnique({
       where: { userId: loginUserId },
@@ -979,8 +1010,16 @@ export class AppointmentService {
         where: { id: loginUserId },
       });
     }
+
+    let loginClient = null;
     if (!loginProvider) {
-      throw new ApiError(StatusCodes.NOT_FOUND, "Caller provider not found");
+      loginClient = await prisma.client.findFirst({
+        where: { OR: [{ userId: loginUserId }, { id: loginUserId }] },
+      });
+    }
+
+    if (!loginProvider && !loginClient) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Caller account not found");
     }
 
     let targetProvider = await prisma.provider.findUnique({
@@ -1009,25 +1048,37 @@ export class AppointmentService {
       throw new ApiError(StatusCodes.NOT_FOUND, "Target provider not found");
     }
 
+    const whereClause: any = loginProvider
+      ? {
+          OR: [
+            {
+              providerId: loginProvider.id,
+              bookingProviderId: targetProvider.id,
+            },
+            {
+              providerId: targetProvider.id,
+              bookingProviderId: loginProvider.id,
+            },
+            {
+              providerId: loginProvider.id,
+              clientId: targetIdentifier,
+            },
+          ],
+        }
+      : {
+          providerId: targetProvider.id,
+          clientId: loginClient!.id,
+        };
+
     const appointments = await prisma.appointment.findMany({
-      where: {
-        OR: [
-          {
-            providerId: loginProvider.id,
-            bookingProviderId: targetProvider.id,
-          },
-          {
-            providerId: targetProvider.id,
-            bookingProviderId: loginProvider.id,
-          },
-        ],
-      },
+      where: whereClause,
       include: {
         callLogs: {
           orderBy: { occurredAt: "desc" },
         },
         provider: { include: { user: true } },
         bookingProvider: { include: { user: true } },
+        client: { include: { user: true } },
       },
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -1036,7 +1087,7 @@ export class AppointmentService {
     return appointments;
   }
 
-  // Fetch all call logs for the logged-in provider across all appointments and direct calls
+  // Fetch all call logs for the logged-in provider or client across all appointments and direct calls
   async getAllMyCallLogs(loginUserId: string) {
     let loginProvider = await prisma.provider.findUnique({
       where: { userId: loginUserId },
@@ -1046,23 +1097,38 @@ export class AppointmentService {
         where: { id: loginUserId },
       });
     }
+
+    let loginClient = null;
     if (!loginProvider) {
-      throw new ApiError(StatusCodes.NOT_FOUND, "Provider not found");
+      loginClient = await prisma.client.findFirst({
+        where: { OR: [{ userId: loginUserId }, { id: loginUserId }] },
+      });
     }
 
+    if (!loginProvider && !loginClient) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Account not found");
+    }
+
+    const whereClause: any = loginProvider
+      ? {
+          OR: [
+            { providerId: loginProvider.id },
+            { bookingProviderId: loginProvider.id },
+          ],
+        }
+      : {
+          clientId: loginClient!.id,
+        };
+
     const appointments = await prisma.appointment.findMany({
-      where: {
-        OR: [
-          { providerId: loginProvider.id },
-          { bookingProviderId: loginProvider.id },
-        ],
-      },
+      where: whereClause,
       include: {
         callLogs: {
           orderBy: { occurredAt: "desc" },
         },
         provider: { include: { user: true } },
         bookingProvider: { include: { user: true } },
+        client: { include: { user: true } },
       },
       orderBy: { createdAt: "desc" },
       take: 100,

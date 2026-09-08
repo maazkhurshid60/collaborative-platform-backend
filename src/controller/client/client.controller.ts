@@ -1381,186 +1381,186 @@ const updateExistingClientOnLicenseNo = asyncHandler(
   },
 );
 
-const getProviderClients = asyncHandler(
-  async (req: Request, res: Response) => {
-    const rawUserId =
-      (req as any).user?.id ||
-      req.params.loginUserId ||
-      req.body?.loginUserId ||
-      req.query?.loginUserId;
-    const loginUserId = Array.isArray(rawUserId)
-      ? (rawUserId[0] as string)
-      : (rawUserId as string | undefined);
+const getProviderClients = asyncHandler(async (req: Request, res: Response) => {
+  const rawUserId =
+    (req as any).user?.id ||
+    req.params.loginUserId ||
+    req.body?.loginUserId ||
+    req.query?.loginUserId;
+  const loginUserId = Array.isArray(rawUserId)
+    ? (rawUserId[0] as string)
+    : (rawUserId as string | undefined);
 
-    if (!loginUserId) {
-      return res
-        .status(StatusCodes.BAD_REQUEST)
-        .json(
-          new ApiResponse(
-            StatusCodes.BAD_REQUEST,
-            { error: "loginUserId is required" },
-            "Validation failed",
-          ),
-        );
-    }
+  if (!loginUserId) {
+    return res
+      .status(StatusCodes.BAD_REQUEST)
+      .json(
+        new ApiResponse(
+          StatusCodes.BAD_REQUEST,
+          { error: "loginUserId is required" },
+          "Validation failed",
+        ),
+      );
+  }
 
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 1000;
-    const skip = (page - 1) * limit;
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 1000;
+  const skip = (page - 1) * limit;
 
-    const provider = await prisma.provider.findFirst({
-      where: {
-        OR: [{ userId: loginUserId }, { id: loginUserId }],
+  const provider = await prisma.provider.findFirst({
+    where: {
+      OR: [{ userId: loginUserId }, { id: loginUserId }],
+    },
+  });
+
+  const providerId = provider?.id;
+
+  const search =
+    typeof req.body?.search === "string"
+      ? req.body.search
+      : typeof req.query?.search === "string"
+        ? req.query.search
+        : undefined;
+
+  const filter =
+    typeof req.body?.filter === "string"
+      ? req.body.filter
+      : typeof req.query?.filter === "string"
+        ? req.query.filter
+        : undefined;
+
+  const whereClause: any = {
+    OR: [
+      ...(providerId ? [{ createdByProviderId: providerId }] : []),
+      { createdByProviderId: loginUserId },
+      {
+        providerList: {
+          some: {
+            OR: [
+              ...(providerId ? [{ providerId: providerId }] : []),
+              { provider: { userId: loginUserId } },
+            ],
+          },
+        },
+      },
+    ],
+  };
+
+  const conditions: any[] = [];
+
+  if (search && search.trim() !== "") {
+    const searchStr = search.trim();
+    conditions.push({
+      OR: [
+        { clientId: { contains: searchStr, mode: "insensitive" } },
+        { user: { fullName: { contains: searchStr, mode: "insensitive" } } },
+        { user: { email: { contains: searchStr, mode: "insensitive" } } },
+        { user: { contactNo: { contains: searchStr, mode: "insensitive" } } },
+      ],
+    });
+  }
+
+  if (filter === "signed") {
+    conditions.push({
+      receivedDocument: {
+        some: { isAgree: true },
       },
     });
+  } else if (filter === "pending") {
+    conditions.push({
+      receivedDocument: {
+        none: { isAgree: true },
+      },
+    });
+  }
 
-    const providerId = provider?.id;
+  if (conditions.length > 0) {
+    whereClause.AND = conditions;
+  }
 
-    const search =
-      typeof req.body?.search === "string"
-        ? req.body.search
-        : typeof req.query?.search === "string"
-          ? req.query.search
-          : undefined;
+  const safeUserSelect = {
+    id: true,
+    fullName: true,
+    profileImage: true,
+    gender: true,
+    age: true,
+    contactNo: true,
+    address: true,
+    status: true,
+    isLicenseValid: true,
+    blockedMembers: true,
+    createdAt: true,
+    updatedAt: true,
+    role: true,
+    isApprove: true,
+    state: true,
+    email: true,
+  };
 
-    const filter =
-      typeof req.body?.filter === "string"
-        ? req.body.filter
-        : typeof req.query?.filter === "string"
-          ? req.query.filter
-          : undefined;
-
-    const whereClause: any = {
-      OR: [
-        ...(providerId ? [{ createdByProviderId: providerId }] : []),
-        { createdByProviderId: loginUserId },
-        {
-          providerList: {
-            some: {
-              OR: [
-                ...(providerId ? [{ providerId: providerId }] : []),
-                { provider: { userId: loginUserId } },
-              ],
-            },
-          },
-        },
-      ],
-    };
-
-    const conditions: any[] = [];
-
-    if (search && search.trim() !== "") {
-      const searchStr = search.trim();
-      conditions.push({
-        OR: [
-          { clientId: { contains: searchStr, mode: "insensitive" } },
-          { user: { fullName: { contains: searchStr, mode: "insensitive" } } },
-          { user: { email: { contains: searchStr, mode: "insensitive" } } },
-          { user: { contactNo: { contains: searchStr, mode: "insensitive" } } },
-        ],
-      });
-    }
-
-    if (filter === "signed") {
-      conditions.push({
-        receivedDocument: {
-          some: { isAgree: true },
-        },
-      });
-    } else if (filter === "pending") {
-      conditions.push({
-        receivedDocument: {
-          none: { isAgree: true },
-        },
-      });
-    }
-
-    if (conditions.length > 0) {
-      whereClause.AND = conditions;
-    }
-
-    const safeUserSelect = {
+  const clients = await prisma.client.findMany({
+    where: whereClause,
+    skip,
+    take: limit,
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
       id: true,
-      fullName: true,
-      profileImage: true,
-      gender: true,
-      age: true,
-      contactNo: true,
-      address: true,
-      status: true,
-      isLicenseValid: true,
-      blockedMembers: true,
+      clientId: true,
+      isAccountCreatedByOwnClient: true,
+      eSignature: true,
+      clientShowToOthers: true,
+      createdByProviderId: true,
       createdAt: true,
       updatedAt: true,
-      role: true,
-      isApprove: true,
-      state: true,
-      email: true,
-    };
-
-    const clients = await prisma.client.findMany({
-      where: whereClause,
-      skip,
-      take: limit,
-      orderBy: {
-        createdAt: "desc",
+      userId: true,
+      user: {
+        select: safeUserSelect,
       },
-      select: {
-        id: true,
-        clientId: true,
-        isAccountCreatedByOwnClient: true,
-        eSignature: true,
-        clientShowToOthers: true,
-        createdByProviderId: true,
-        createdAt: true,
-        updatedAt: true,
-        userId: true,
-        user: {
-          select: safeUserSelect,
+      receivedDocument: {
+        select: {
+          id: true,
+          eSignature: true,
+          isAgree: true,
+          clientId: true,
+          providerId: true,
+          documentId: true,
+          createdAt: true,
+          updatedAt: true,
         },
-        receivedDocument: {
-          select: {
-            id: true,
-            eSignature: true,
-            isAgree: true,
-            clientId: true,
-            providerId: true,
-            documentId: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        providerList: {
-          select: {
-            id: true,
-            clientId: true,
-            providerId: true,
-            createdAt: true,
-            updatedAt: true,
-            provider: {
-              select: {
-                id: true,
-                user: {
-                  select: safeUserSelect,
-                },
+      },
+      providerList: {
+        select: {
+          id: true,
+          clientId: true,
+          providerId: true,
+          createdAt: true,
+          updatedAt: true,
+          provider: {
+            select: {
+              id: true,
+              user: {
+                select: safeUserSelect,
               },
             },
           },
         },
       },
-    });
+    },
+  });
 
-    const totalClients = await prisma.client.count({ where: whereClause });
+  const totalClients = await prisma.client.count({ where: whereClause });
 
-    return res.status(StatusCodes.OK).json(
+  return res
+    .status(StatusCodes.OK)
+    .json(
       new ApiResponse(
         StatusCodes.OK,
         { totalClients, clients },
         "Provider clients fetched successfully",
       ),
     );
-  },
-);
+});
 
 export {
   getAllClients,
