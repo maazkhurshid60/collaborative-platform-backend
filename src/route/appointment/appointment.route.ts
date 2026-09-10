@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authJWT } from "../../middlewares/auth.middleware";
+import { authorizeRoles } from "../../middlewares/roleCheck.middleware";
 import {
     getPublicAvailableSlotsApi,
     bookPublicAppointmentApi,
@@ -22,6 +23,7 @@ import {
     getAppointmentCallLogsApi,
     getDirectCallLogsApi,
     getAllMyCallLogsApi,
+    addSessionNotesApi,
 } from "../../controller/appointment/appointment.controller";
 
 const appointmentRouter = Router();
@@ -57,5 +59,6 @@ appointmentRouter.post("/me/:appointmentId/resend-email", authJWT, resendAppoint
 appointmentRouter.get("/me/:appointmentId/share-link", authJWT, getAppointmentShareLinkApi);
 appointmentRouter.get("/me/:appointmentId/call-join", authJWT, getMyCallJoinInfoApi);
 appointmentRouter.get("/me/:appointmentId/call-logs", authJWT, getAppointmentCallLogsApi);
+appointmentRouter.patch("/me/:appointmentId/notes", authJWT, authorizeRoles("provider"), addSessionNotesApi);
 
 export default appointmentRouter;

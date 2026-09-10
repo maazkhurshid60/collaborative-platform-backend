@@ -733,8 +733,9 @@ export function setupSocket(server: any) {
         const participant = (
           socket.data as { callParticipant?: CallAuthResult }
         ).callParticipant;
+        const wasCompletedSession = !!(durationSeconds && durationSeconds > 0);
         if (participant) {
-          if (durationSeconds && durationSeconds > 0) {
+          if (wasCompletedSession) {
             logCallEvent(
               appointmentId,
               participant.role,
@@ -753,6 +754,14 @@ export function setupSocket(server: any) {
         }
         // Tell whoever is still in the room the call is over
         socket.to(room).emit("call_ended", { reason: "ended_by_peer" });
+        // A real (non-trivial) session — separate from call_ended so clients
+        // can distinguish "call dropped/rejoinable" from "session actually
+        // happened", and prompt the provider for a completion/notes step.
+        if (wasCompletedSession) {
+          socket
+            .to(room)
+            .emit("session_ended", { appointmentId, durationSeconds });
+        }
         socket.leave(room);
       },
     );

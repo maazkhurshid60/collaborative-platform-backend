@@ -426,10 +426,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new ApiError(
-        StatusCodes.BAD_REQUEST,
-        `Email: ${cleanEmail} not found`,
-      );
+      throw new ApiError(StatusCodes.BAD_REQUEST, `Invalid credentails`);
     }
 
     if (!user.password) {

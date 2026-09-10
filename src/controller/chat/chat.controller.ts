@@ -16,6 +16,7 @@ import { AuditLogService } from "../../services/AuditLogService";
 import { resolveChatUser } from "../../utils/resolveChatUser";
 import { canUsePremiumFeature } from "../../utils/subscriptionAccess";
 import { io } from "../../socket/socket";
+import { sendPushNotification } from "../../services/expoNotificationService";
 
 const getAllSingleConservationMessage = asyncHandler(
   async (req: Request, res: Response) => {
@@ -272,6 +273,21 @@ const sendMessageToSingleConservation = asyncHandler(
         }
       } catch (socketErr) {
         console.warn("Socket broadcast error:", socketErr);
+      }
+
+      // Push notification — fires on every message, independent of the email
+      // cooldown above (push is the "instant" channel, email is the slower
+      // digest-style fallback). No message content in the body — PHI-adjacent
+      // chats shouldn't leak content into a notification tray.
+      if (receiver.pushToken) {
+        sendPushNotification({
+          to: receiver.pushToken,
+          title: (chatMessage as any).sender?.fullName || "New message",
+          body: type === "audio" ? "Sent a voice message" : "Sent you a message",
+          data: { type: "chat_message", chatChannelId },
+        }).catch((pushErr) => {
+          console.warn("Push notification error:", pushErr);
+        });
       }
 
       return res

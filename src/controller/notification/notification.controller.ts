@@ -177,15 +177,10 @@ const savePushToken = asyncHandler(async (req: Request, res: Response) => {
     }
 
     if (targetUserId) {
-        try {
-            await prisma.user.update({
-                where: { id: targetUserId },
-                data: { pushToken } as any,
-            });
-        } catch (err) {
-            // Ignore if column doesn't exist yet, avoiding disruption
-            console.warn("Notice: pushToken update skipped or unsupported in DB model:", err);
-        }
+        await prisma.user.update({
+            where: { id: targetUserId },
+            data: { pushToken },
+        });
     }
 
     return res.status(StatusCodes.OK).json(

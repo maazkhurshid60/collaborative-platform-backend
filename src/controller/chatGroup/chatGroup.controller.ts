@@ -16,6 +16,7 @@ import crypto from "crypto";
 import { AuditLogService } from "../../services/AuditLogService";
 import { canUsePremiumFeature } from "../../utils/subscriptionAccess";
 import { resolveChatUser } from "../../utils/resolveChatUser";
+import { sendPushNotification } from "../../services/expoNotificationService";
 
 const createGroupApi = asyncHandler(async (req: Request, res: Response) => {
   const { groupName, membersId, createdBy } = req.body;
@@ -570,7 +571,7 @@ const sendMessageToGroupApi = asyncHandler(
               id: true,
               userId: true,
               lastEmailSentAt: true,
-              user: { select: { email: true } },
+              user: { select: { email: true, pushToken: true } },
             },
           },
         },
@@ -684,6 +685,27 @@ const sendMessageToGroupApi = asyncHandler(
         ...chatMessage,
         message: chatMessage.message ? decryptText(chatMessage.message) : "",
       };
+
+      // Push notification — fires for every member on every message,
+      // independent of the email digest cooldown above. No message content in
+      // the body — PHI-adjacent chats shouldn't leak content into a
+      // notification tray.
+      const pushTokens = groupMembers.members
+        .filter((member) => member.userId !== userIdToUse && member.user.pushToken)
+        .map((member) => member.user.pushToken as string);
+
+      if (pushTokens.length > 0) {
+        sendPushNotification({
+          to: pushTokens,
+          title: groupMembers.name,
+          body: `${(chatMessage as any).sender?.fullName || "Someone"}: ${
+            type === "audio" ? "Sent a voice message" : "New message"
+          }`,
+          data: { type: "group_message", groupId },
+        }).catch((pushErr) => {
+          console.warn("Push notification error:", pushErr);
+        });
+      }
 
       // Audit Log for Group Chat Message
       await AuditLogService.createLog({

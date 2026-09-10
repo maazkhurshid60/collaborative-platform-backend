@@ -22,6 +22,7 @@ import providerProfileRouter from "./route/providerProfile/providerProfile.route
 import providerQueryRouter from "./route/providerQuery/providerQuery.route";
 import availabilityRouter from "./route/availability/availability.route";
 import appointmentRouter from "./route/appointment/appointment.route";
+import reviewRouter from "./route/review/review.route";
 import chatRouter from "./route/chat/chat.route";
 import chatChannelRouter from "./route/chatChannel/chatChannel.route";
 import chatGroupRouter from "./route/chatGroup/chatGroup.route";
@@ -112,6 +113,8 @@ app.use("/api/v1/provider-profile", providerProfileRouter);
 app.use("/api/v1/provider-query", providerQueryRouter);
 app.use("/api/v1/availability", availabilityRouter);
 app.use("/api/v1/appointments", appointmentRouter);
+// Not gated with a blanket authJWT here — the /provider/:providerId listing must stay unauthenticated.
+app.use("/api/v1/reviews", reviewRouter);
 app.use("/api/v1/chat", authJWT, chatRouter);
 app.use("/api/v1/public-chat", publicChatRouter);
 app.use("/api/v1/chat-channel", authJWT, chatChannelRouter);

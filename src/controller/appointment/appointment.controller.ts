@@ -285,6 +285,19 @@ const clearAllCallLogsApi = asyncHandler(async (req: Request, res: Response) => 
   return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, result, "All call logs cleared successfully"));
 });
 
+const addSessionNotesApi = asyncHandler(async (req: Request, res: Response) => {
+  const loginUserId = (req as any).user.id || (req as any).user?.userId;
+  const appointmentId = String(req.params.appointmentId);
+  const { sessionNotes } = req.body;
+
+  if (!String(sessionNotes || "").trim()) {
+    throw new ApiError(StatusCodes.BAD_REQUEST, "Session notes are required.");
+  }
+
+  const result = await appointmentService.addSessionNotes(loginUserId, appointmentId, String(sessionNotes).trim());
+  return res.status(StatusCodes.OK).json(new ApiResponse(StatusCodes.OK, result, "Session notes saved"));
+});
+
 export {
   getPublicAvailableSlotsApi,
   bookPublicAppointmentApi,
@@ -307,4 +320,5 @@ export {
   getAppointmentCallLogsApi,
   getDirectCallLogsApi,
   getAllMyCallLogsApi,
+  addSessionNotesApi,
 };

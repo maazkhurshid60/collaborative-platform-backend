@@ -1224,4 +1224,48 @@ export class AppointmentService {
 
     return { message: "All call logs cleared successfully" };
   }
+
+  // Whether an appointment reads as COMPLETED — mirrors the computed
+  // `displayStatus` in getMyAppointments. Kept here as the single source of
+  // truth so other domains (e.g. reviews) can reuse it instead of
+  // re-deriving the same condition.
+  isAppointmentCompleted(appointment: { status: AppointmentStatus; endTime: Date }) {
+    return (
+      appointment.status === AppointmentStatus.CONFIRMED &&
+      appointment.endTime < new Date()
+    );
+  }
+
+  // Provider-authored notes captured after a session. Only allowed once the
+  // appointment's computed status is COMPLETED — completion itself stays
+  // derived (see isAppointmentCompleted), this just records what happened.
+  async addSessionNotes(
+    loginUserId: string,
+    appointmentId: string,
+    sessionNotes: string,
+  ) {
+    const provider = await this.getProviderOrThrow(loginUserId);
+
+    const existing = await prisma.appointment.findFirst({
+      where: {
+        id: appointmentId,
+        OR: [{ providerId: provider.id }, { bookingProviderId: provider.id }],
+      },
+    });
+    if (!existing) {
+      throw new ApiError(StatusCodes.NOT_FOUND, "Appointment not found");
+    }
+
+    if (!this.isAppointmentCompleted(existing)) {
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        "Session notes can only be added once the session is complete.",
+      );
+    }
+
+    return prisma.appointment.update({
+      where: { id: appointmentId },
+      data: { sessionNotes, notesAddedAt: new Date() },
+    });
+  }
 }
